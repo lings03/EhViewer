@@ -32,6 +32,7 @@ import com.hippo.ehviewer.client.EhTagDatabase
 import com.hippo.ehviewer.client.data.GalleryDetail
 import com.hippo.ehviewer.coil.MergeInterceptor
 import com.hippo.ehviewer.coil.installCronetHttpUriFetcher
+import com.hippo.ehviewer.cronet.cronetHttpClient
 import com.hippo.ehviewer.dailycheck.checkDawn
 import com.hippo.ehviewer.dao.SearchDatabase
 import com.hippo.ehviewer.download.DownloadManager
@@ -43,7 +44,6 @@ import com.hippo.ehviewer.ktbuilder.httpClient
 import com.hippo.ehviewer.ktbuilder.imageLoader
 import com.hippo.ehviewer.legacy.cleanObsoleteCache
 import com.hippo.ehviewer.legacy.migrateCookies
-import com.hippo.ehviewer.spider.cronetHttpClient
 import com.hippo.ehviewer.ui.keepNoMediaFileStatus
 import com.hippo.ehviewer.ui.lockObserver
 import com.hippo.ehviewer.util.AppConfig
