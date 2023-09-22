@@ -12,10 +12,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.Path.Companion.toOkioPath
-import org.chromium.net.CronetEngine
 import org.chromium.net.CronetException
+import org.chromium.net.ExperimentalCronetEngine
 import org.chromium.net.UrlRequest
 import org.chromium.net.UrlResponseInfo
+import org.json.JSONObject
 import splitties.init.appCtx
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -28,13 +29,31 @@ import kotlin.coroutines.resumeWithException
 private const val TAG = "CronetRequest"
 val pool = DirectByteBufferPool(32)
 
-val cronetHttpClient: CronetEngine = CronetEngine.Builder(appCtx).apply {
-    enableBrotli(true)
-    val cache = (appCtx.cacheDir.toOkioPath() / "http_cache").toFile().apply { mkdirs() }
-    setStoragePath(cache.absolutePath)
-    enableHttpCache(CronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
-    setUserAgent(CHROME_USER_AGENT)
+val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builder(appCtx).apply {
+        configureCronetEngineBuilder(this)
 }.build()
+
+fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
+        builder.enableBrotli(true)
+            .enableQuic(true)
+            .addQuicHint("e-hentai.org", 443, 443)
+            .addQuicHint("forums.e-hentai.org", 443, 443)
+            .addQuicHint("exhentai.org", 443, 443)
+        val cache = (appCtx.cacheDir.toOkioPath() / "http_cache").toFile().apply { mkdirs() }
+        builder.setStoragePath(cache.absolutePath)
+            .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
+        val experimentalOptions = JSONObject().put(
+                    "HostResolverRules",
+                    JSONObject().put(
+                                "host_resolver_rules",
+                                "MAP *.e-hentai.org skk.moe," +
+                                            "MAP e-hentai.org skk.moe," +
+                                            "MAP exhentai.org skk.moe," +
+                                            "MAP s.exhentai.org s.exhentai.org.cdn.cloudflare.net",
+                            ),
+                )
+        builder.setExperimentalOptions(experimentalOptions.toString())
+    }
 
 val cronetHttpClientExecutor = EhApplication.nonCacheOkHttpClient.dispatcher.executorService
 
