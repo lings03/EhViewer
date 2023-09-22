@@ -36,7 +36,7 @@ val cronetHttpClient: CronetEngine = CronetEngine.Builder(appCtx).apply {
     setUserAgent(CHROME_USER_AGENT)
 }.build()
 
-val cronetHttpClientExecutor = EhApplication.baseOkHttpClient.dispatcher.executorService
+val cronetHttpClientExecutor = EhApplication.nonCacheOkHttpClient.dispatcher.executorService
 
 // TODO: Rewrite this to use android.net.http.HttpEngine and make it Android 14 only when released
 class CronetRequest {

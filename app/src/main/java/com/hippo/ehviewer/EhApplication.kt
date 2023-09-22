@@ -26,6 +26,7 @@ import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
 import coil.util.DebugLogger
 import com.google.android.gms.net.CronetProviderInstaller
+import com.google.net.cronet.okhttptransport.RedirectStrategy.withoutRedirects
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhTagDatabase
 import com.hippo.ehviewer.client.data.GalleryDetail
@@ -36,11 +37,13 @@ import com.hippo.ehviewer.dao.SearchDatabase
 import com.hippo.ehviewer.download.DownloadManager
 import com.hippo.ehviewer.ktbuilder.cache
 import com.hippo.ehviewer.ktbuilder.chunker
+import com.hippo.ehviewer.ktbuilder.cronet
 import com.hippo.ehviewer.ktbuilder.diskCache
 import com.hippo.ehviewer.ktbuilder.httpClient
 import com.hippo.ehviewer.ktbuilder.imageLoader
 import com.hippo.ehviewer.legacy.cleanObsoleteCache
 import com.hippo.ehviewer.legacy.migrateCookies
+import com.hippo.ehviewer.spider.cronetHttpClient
 import com.hippo.ehviewer.ui.keepNoMediaFileStatus
 import com.hippo.ehviewer.ui.lockObserver
 import com.hippo.ehviewer.util.AppConfig
@@ -150,7 +153,7 @@ class EhApplication : Application(), ImageLoaderFactory {
                 callFactory { unreachable() }
                 installCronetHttpUriFetcher()
             } else {
-                callFactory(baseOkHttpClient)
+                callFactory(nonCacheOkHttpClient)
             }
             add { result, options, _ -> ImageDecoderDecoder(result.source, options, false) }
             add(MergeInterceptor)
@@ -163,7 +166,7 @@ class EhApplication : Application(), ImageLoaderFactory {
     }
 
     companion object {
-        val baseOkHttpClient by lazy {
+        private val baseOkHttpClient by lazy {
             httpClient {
                 cookieJar(EhCookieStore)
                 if (isAtLeastQ) {
@@ -174,15 +177,31 @@ class EhApplication : Application(), ImageLoaderFactory {
             }
         }
 
+        val nonCacheOkHttpClient by lazy {
+            httpClient(baseOkHttpClient) {
+                // TODO: Rewrite CronetInterceptor to use android.net.http.HttpEngine and make it Android 14 only when released
+                if (isCronetSupported) {
+                    addInterceptor(EhCookieStore)
+                    cronet(cronetHttpClient)
+                }
+            }
+        }
+
         val noRedirectOkHttpClient by lazy {
             httpClient(baseOkHttpClient) {
                 followRedirects(false)
+                if (isCronetSupported) {
+                    addInterceptor(EhCookieStore)
+                    cronet(cronetHttpClient) {
+                        setRedirectStrategy(withoutRedirects())
+                    }
+                }
             }
         }
 
         // Never use this okhttp client to download large blobs!!!
         val okHttpClient by lazy {
-            httpClient(baseOkHttpClient) {
+            httpClient(nonCacheOkHttpClient) {
                 cache(
                     appCtx.cacheDir.toOkioPath() / "http_cache",
                     20L * 1024L * 1024L,
