@@ -3,6 +3,7 @@ package com.hippo.ehviewer.cronet
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.client.CHROME_ACCEPT
 import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
+import com.hippo.ehviewer.client.CHROME_USER_AGENT
 import com.hippo.ehviewer.client.EhCookieStore
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.utils.io.pool.DirectByteBufferPool
@@ -41,6 +42,7 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     val cache = (appCtx.cacheDir.toOkioPath() / "http_cache").toFile().apply { mkdirs() }
     builder.setStoragePath(cache.absolutePath)
         .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
+        .setUserAgent(CHROME_USER_AGENT)
     val experimentalOptions = JSONObject().put(
         "HostResolverRules",
         JSONObject().put(
