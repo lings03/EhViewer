@@ -25,7 +25,6 @@ import androidx.lifecycle.coroutineScope
 import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
 import coil.util.DebugLogger
-import com.google.android.gms.net.CronetProviderInstaller
 import com.google.net.cronet.okhttptransport.RedirectStrategy.withoutRedirects
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhTagDatabase
@@ -81,7 +80,6 @@ class EhApplication : Application(), ImageLoaderFactory {
             handler?.uncaughtException(t, e)
         }
         super.onCreate()
-        CronetProviderInstaller.installProvider(appCtx)
         System.loadLibrary("ehviewer")
         System.loadLibrary("ehviewer_rust")
         ReadableTime.initialize(this)
