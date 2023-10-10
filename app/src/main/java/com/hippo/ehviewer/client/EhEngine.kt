@@ -92,7 +92,7 @@ private fun rethrowExactly(code: Int, headers: Headers, body: String, e: Throwab
     }
 
     // Check sad panda(without panda)
-    if ("text/html; charset=UTF-8" == headers["Content-Type"] && "0" == headers["Content-Length"] && EhUtils.isExHentai) {
+    if ("text/html; charset=UTF-8" == headers["Content-Type"] && (null == headers["Content-Length"] || "0" == headers["Content-Length"]) && EhUtils.isExHentai) {
         throw EhException("Sad Panda\n(without panda)")
     }
 
