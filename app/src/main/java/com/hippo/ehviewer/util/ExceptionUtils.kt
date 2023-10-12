@@ -24,6 +24,7 @@ import java.net.ProtocolException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.concurrent.ExecutionException
 import javax.net.ssl.SSLException
 
 object ExceptionUtils {
@@ -61,6 +62,17 @@ object ExceptionUtils {
 
             is SocketException, is SSLException -> appCtx.getString(R.string.error_socket)
             is EhException -> e.message!!
+            is ExecutionException -> {
+                val errorMessage = e.message
+                if (errorMessage != null) {
+                    val startIndex = errorMessage.lastIndexOf(": ") + 2
+                    val endIndex = errorMessage.indexOf(",", startIndex)
+                    if (startIndex != -1 && endIndex != -1) {
+                        return errorMessage.substring(startIndex, endIndex)
+                    }
+                }
+                return e.message!!
+            }
             else -> appCtx.getString(R.string.error_unknown)
         }
     }
