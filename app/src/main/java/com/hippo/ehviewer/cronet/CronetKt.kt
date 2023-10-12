@@ -37,8 +37,10 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     builder.enableBrotli(true)
         .enableQuic(true)
         .addQuicHint("e-hentai.org", 443, 443)
+        .addQuicHint("api.e-hentai.org", 443, 443)
         .addQuicHint("forums.e-hentai.org", 443, 443)
         .addQuicHint("exhentai.org", 443, 443)
+        .addQuicHint("s.exhentai.org", 443, 443)
     val cache = (appCtx.cacheDir.toOkioPath() / "http_cache").toFile().apply { mkdirs() }
     builder.setStoragePath(cache.absolutePath)
         .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
@@ -50,7 +52,7 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
             "MAP *.e-hentai.org skk.moe," +
                 "MAP e-hentai.org skk.moe," +
                 "MAP exhentai.org skk.moe," +
-                "MAP s.exhentai.org s.exhentai.org.cdn.cloudflare.net",
+                "MAP *.exhentai.org skk.moe",
         ),
     )
     builder.setExperimentalOptions(experimentalOptions.toString())
