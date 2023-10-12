@@ -27,6 +27,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 private const val TAG = "CronetRequest"
+const val CloudflareIP = "skk.moe"
 val pool = DirectByteBufferPool(32)
 
 val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builder(appCtx).apply {
@@ -49,10 +50,10 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
         "HostResolverRules",
         JSONObject().put(
             "host_resolver_rules",
-            "MAP *.e-hentai.org skk.moe," +
-                "MAP e-hentai.org skk.moe," +
-                "MAP exhentai.org skk.moe," +
-                "MAP *.exhentai.org skk.moe",
+            "MAP *.e-hentai.org $CloudflareIP," +
+                "MAP e-hentai.org $CloudflareIP," +
+                "MAP exhentai.org $CloudflareIP," +
+                "MAP *.exhentai.org $CloudflareIP",
         ),
     )
     builder.setExperimentalOptions(experimentalOptions.toString())
