@@ -27,7 +27,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 private const val TAG = "CronetRequest"
-const val CloudflareIP = "skk.moe"
+const val CloudflareIP = "lab.skk.moe.cdn.cloudflare.net"
 val pool = DirectByteBufferPool(32)
 
 val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builder(appCtx).apply {
