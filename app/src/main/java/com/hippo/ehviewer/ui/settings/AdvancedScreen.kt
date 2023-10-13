@@ -36,6 +36,7 @@ import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
 import com.hippo.ehviewer.ui.LocalNavController
 import com.hippo.ehviewer.ui.tools.observed
+import com.hippo.ehviewer.ui.tools.rememberDialogState
 import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.ReadableTime
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,10 @@ fun AdvancedScreen() {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope { Dispatchers.IO }
+    val cloudflareIPhint = stringResource(id = R.string.settings_advanced_cloudflare_ip_hint)
+    val cloudflareIPtitle = stringResource(id = R.string.settings_advanced_cloudflare_ip)
+    val dialogState = rememberDialogState()
+    dialogState.Intercept()
     fun launchSnackBar(content: String) = coroutineScope.launch { snackbarHostState.showSnackbar(content) }
     Scaffold(
         topBar = {
@@ -220,6 +225,21 @@ fun AdvancedScreen() {
                             Uri.parse("package:$packageName"),
                         )
                         startActivity(intent)
+                    }
+                }
+            }
+            Preference(
+                title = cloudflareIPtitle,
+                summary = Settings.CloudflareIP,
+            ) {
+                coroutineScope.launch {
+                    val newCloudflareIP = dialogState.awaitInputText(
+                        initial = Settings.CloudflareIP.toString(),
+                        title = cloudflareIPtitle,
+                        hint = cloudflareIPhint,
+                    )
+                    if (newCloudflareIP.isNotEmpty()) {
+                        Settings.CloudflareIP = newCloudflareIP
                     }
                 }
             }

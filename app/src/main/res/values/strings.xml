@@ -685,5 +685,7 @@
     <string name="action_save_to">Save to…</string>
     <string name="wide_color_gamut">Use Display P3 color space</string>
     <string name="settings_eh_request_news_timepicker">Set time to request news</string>
+    <string name="settings_advanced_cloudflare_ip">Cloudflare IP</string>
+    <string name="settings_advanced_cloudflare_ip_hint">Select which IP to MAP</string>
     <!-- Tachiyomi Reader End-->
 </resources>

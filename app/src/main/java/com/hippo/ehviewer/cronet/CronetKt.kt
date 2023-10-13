@@ -1,6 +1,7 @@
 package com.hippo.ehviewer.cronet
 
 import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.CHROME_ACCEPT
 import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
 import com.hippo.ehviewer.client.CHROME_USER_AGENT
@@ -27,7 +28,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 private const val TAG = "CronetRequest"
-const val CloudflareIP = "lab.skk.moe.cdn.cloudflare.net"
+val CloudflareIP = Settings.CloudflareIP
 val pool = DirectByteBufferPool(32)
 
 val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builder(appCtx).apply {
