@@ -81,6 +81,7 @@ object Settings : DataStorePreferences(null) {
     var lastDawnDay by longPref("last_dawn_day", 0)
     var lastUpdateDay by longPref("last_update_day", 0)
     var CloudflareIP by stringOrNullPref("cloudflare_ip", "cdn.sstatic.net")
+    var CloudflareIPOverride by boolPref("cloudflare_ip_override", false)
 
     init {
         if ("CN" == Locale.getDefault().country) {

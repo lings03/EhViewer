@@ -34,6 +34,8 @@ val pool = DirectByteBufferPool(32)
 val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builder(appCtx).apply {
     configureCronetEngineBuilder(this)
 }.build()
+var experimentalOptions = JSONObject()
+const val DNSPoisoningCircumventionSuffix = ".cdn.cloudflare.net"
 
 fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     builder.enableBrotli(true)
@@ -47,16 +49,30 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     builder.setStoragePath(cache.absolutePath)
         .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
         .setUserAgent(CHROME_USER_AGENT)
-    val experimentalOptions = JSONObject().put(
-        "HostResolverRules",
-        JSONObject().put(
-            "host_resolver_rules",
-            "MAP *.e-hentai.org $CloudflareIP," +
-                "MAP e-hentai.org $CloudflareIP," +
-                "MAP exhentai.org $CloudflareIP," +
-                "MAP *.exhentai.org $CloudflareIP",
-        ),
-    )
+    if (Settings.CloudflareIPOverride) {
+        experimentalOptions = JSONObject().put(
+            "HostResolverRules",
+            JSONObject().put(
+                "host_resolver_rules",
+                "MAP *.e-hentai.org $CloudflareIP," +
+                        "MAP e-hentai.org $CloudflareIP," +
+                        "MAP exhentai.org $CloudflareIP," +
+                        "MAP *.exhentai.org $CloudflareIP",
+            ),
+        )
+    }
+    else {
+        experimentalOptions = JSONObject().put(
+            "HostResolverRules",
+            JSONObject().put(
+                "host_resolver_rules",
+                "MAP *.e-hentai.org e-hentai.org$DNSPoisoningCircumventionSuffix," +
+                        "MAP e-hentai.org e-hentai.org$DNSPoisoningCircumventionSuffix," +
+                        "MAP exhentai.org exhentai.org$DNSPoisoningCircumventionSuffix," +
+                        "MAP *.exhentai.org exhentai.org$DNSPoisoningCircumventionSuffix",
+            ),
+        )
+    }
     builder.setExperimentalOptions(experimentalOptions.toString())
 }
 

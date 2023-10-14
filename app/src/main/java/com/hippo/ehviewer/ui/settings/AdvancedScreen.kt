@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.provider.Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -37,6 +38,7 @@ import com.hippo.ehviewer.client.data.FavListUrlBuilder
 import com.hippo.ehviewer.ui.LocalNavController
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.ui.tools.rememberDialogState
+import com.hippo.ehviewer.ui.tools.rememberedAccessor
 import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.ReadableTime
 import kotlinx.coroutines.Dispatchers
@@ -228,18 +230,26 @@ fun AdvancedScreen() {
                     }
                 }
             }
-            Preference(
-                title = cloudflareIPtitle,
-                summary = Settings.CloudflareIP,
-            ) {
-                coroutineScope.launch {
-                    val newCloudflareIP = dialogState.awaitInputText(
-                        initial = Settings.CloudflareIP.toString(),
-                        title = cloudflareIPtitle,
-                        hint = cloudflareIPhint,
-                    )
-                    if (newCloudflareIP.isNotEmpty()) {
-                        Settings.CloudflareIP = newCloudflareIP
+            val ifCloudflareIPOverride = Settings::CloudflareIPOverride.observed
+            SwitchPreference(
+                title = stringResource(id = R.string.settings_advanced_cloudflare_ip_override),
+                summary = stringResource(id = R.string.settings_advanced_cloudflare_ip_override_summary),
+                value = ifCloudflareIPOverride.rememberedAccessor,
+            )
+            AnimatedVisibility(visible = ifCloudflareIPOverride.value) {
+                Preference(
+                    title = cloudflareIPtitle,
+                    summary = Settings.CloudflareIP,
+                ) {
+                    coroutineScope.launch {
+                        val newCloudflareIP = dialogState.awaitInputText(
+                            initial = Settings.CloudflareIP.toString(),
+                            title = cloudflareIPtitle,
+                            hint = cloudflareIPhint,
+                        )
+                        if (newCloudflareIP.isNotEmpty()) {
+                            Settings.CloudflareIP = newCloudflareIP
+                        }
                     }
                 }
             }
