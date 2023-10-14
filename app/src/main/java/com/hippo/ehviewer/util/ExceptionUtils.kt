@@ -15,6 +15,7 @@
  */
 package com.hippo.ehviewer.util
 
+import com.google.net.cronet.okhttptransport.CronetTimeoutException
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.client.exception.EhException
 import splitties.init.appCtx
@@ -42,6 +43,7 @@ object ExceptionUtils {
         return when (e) {
             is MalformedURLException -> appCtx.getString(R.string.error_invalid_url)
             is SocketTimeoutException -> appCtx.getString(R.string.error_timeout)
+            is CronetTimeoutException -> appCtx.getString(R.string.error_timeout)
             is UnknownHostException -> appCtx.getString(R.string.error_unknown_host)
             is StatusCodeException -> {
                 val sb = StringBuilder()
