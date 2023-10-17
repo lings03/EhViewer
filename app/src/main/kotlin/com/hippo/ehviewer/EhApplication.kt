@@ -166,7 +166,7 @@ class EhApplication : Application(), ImageLoaderFactory {
     }
 
     companion object {
-        private val baseOkHttpClient by lazy {
+        val baseOkHttpClient by lazy {
             httpClient {
                 cookieJar(EhCookieStore)
                 if (isAtLeastQ) {

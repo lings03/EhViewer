@@ -1,6 +1,7 @@
 package com.hippo.ehviewer.cronet
 
 import com.hippo.ehviewer.EhApplication
+import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.CHROME_ACCEPT
 import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
 import com.hippo.ehviewer.client.CHROME_USER_AGENT
@@ -12,10 +13,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.Path.Companion.toOkioPath
-import org.chromium.net.CronetEngine
 import org.chromium.net.CronetException
+import org.chromium.net.ExperimentalCronetEngine
 import org.chromium.net.UrlRequest
 import org.chromium.net.UrlResponseInfo
+import org.json.JSONObject
 import splitties.init.appCtx
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -26,17 +28,54 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 private const val TAG = "CronetRequest"
+val CloudflareIP = Settings.cloudflareIp
 val pool = DirectByteBufferPool(32)
 
-val cronetHttpClient: CronetEngine = CronetEngine.Builder(appCtx).apply {
-    enableBrotli(true)
-    val cache = (appCtx.cacheDir.toOkioPath() / "http_cache").toFile().apply { mkdirs() }
-    setStoragePath(cache.absolutePath)
-    enableHttpCache(CronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
-    setUserAgent(CHROME_USER_AGENT)
+val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builder(appCtx).apply {
+    configureCronetEngineBuilder(this)
 }.build()
+var experimentalOptions = JSONObject()
+const val DNS_POISONING_CIRCUMVENTION_SUFFIX = ".cdn.cloudflare.net"
 
-val cronetHttpClientExecutor = EhApplication.baseOkHttpClient.dispatcher.executorService
+fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
+    builder.enableBrotli(true)
+        .enableQuic(true)
+        .addQuicHint("e-hentai.org", 443, 443)
+        .addQuicHint("api.e-hentai.org", 443, 443)
+        .addQuicHint("forums.e-hentai.org", 443, 443)
+        .addQuicHint("exhentai.org", 443, 443)
+        .addQuicHint("s.exhentai.org", 443, 443)
+    val cache = (appCtx.cacheDir.toOkioPath() / "http_cache").toFile().apply { mkdirs() }
+    builder.setStoragePath(cache.absolutePath)
+        .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
+        .setUserAgent(CHROME_USER_AGENT)
+    if (Settings.cloudflareIpOverride) {
+        experimentalOptions = JSONObject().put(
+            "HostResolverRules",
+            JSONObject().put(
+                "host_resolver_rules",
+                "MAP *.e-hentai.org $CloudflareIP," +
+                    "MAP e-hentai.org $CloudflareIP," +
+                    "MAP exhentai.org $CloudflareIP," +
+                    "MAP *.exhentai.org $CloudflareIP",
+            ),
+        )
+    } else {
+        experimentalOptions = JSONObject().put(
+            "HostResolverRules",
+            JSONObject().put(
+                "host_resolver_rules",
+                "MAP *.e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
+                    "MAP e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
+                    "MAP exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
+                    "MAP *.exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX",
+            ),
+        )
+    }
+    builder.setExperimentalOptions(experimentalOptions.toString())
+}
+
+val cronetHttpClientExecutor = EhApplication.nonCacheOkHttpClient.dispatcher.executorService
 
 // TODO: Rewrite this to use android.net.http.HttpEngine and make it Android 14 only when released
 class CronetRequest {
