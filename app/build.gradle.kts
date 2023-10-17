@@ -8,21 +8,21 @@ val isRelease: Boolean
     get() = gradle.startParameter.taskNames.any { it.contains("Release") }
 
 plugins {
-    id("com.android.application")
-    kotlin("android")
-    id("kotlin-parcelize")
-    kotlin("plugin.serialization")
-    id("com.google.devtools.ksp")
-    id("com.diffplug.spotless")
-    id("com.mikepenz.aboutlibraries.plugin")
-    id("org.mozilla.rust-android-gradle.rust-android")
-    id("dev.shreyaspatil.compose-compiler-report-generator")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.aboutlibrariesPlugin)
+    alias(libs.plugins.rustAndroidPlugin)
+    alias(libs.plugins.composeCompilerReportGenerator)
 }
 
 android {
     compileSdk = 34
     buildToolsVersion = "34.0.0"
-    ndkVersion = "26.0.10792818"
+    ndkVersion = "26.1.10909125"
 
     splits {
         abi {
@@ -32,7 +32,7 @@ android {
                 include("arm64-v8a", "x86_64", "armeabi-v7a", "x86")
                 isUniversalApk = true
             } else {
-                include("arm64-v8a")
+                include("arm64-v8a", "x86_64")
             }
         }
     }
@@ -91,6 +91,42 @@ android {
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
         buildConfigField("String", "REPO_NAME", "\"$repoName\"")
         buildConfigField("String", "VERSION_NAME_SUFFIX", "\"$versionNameSuffix\"")
+        ndk {
+            debugSymbolLevel = "FULL"
+        }
+    }
+
+    flavorDimensions += listOf("api", "oss")
+
+    productFlavors {
+        create("default") {
+            dimension = "api"
+        }
+        create("marshmallow") {
+            dimension = "api"
+            minSdk = 23
+            applicationIdSuffix = ".m"
+            versionNameSuffix = "-M"
+            externalNativeBuild {
+                cmake {
+                    targets += "noop"
+                }
+            }
+            compileOptions {
+                isCoreLibraryDesugaringEnabled = true
+            }
+            lint {
+                checkOnly += setOf("InlinedApi", "NewApi", "UnusedAttribute")
+                error += setOf("InlinedApi", "UnusedAttribute")
+            }
+        }
+        create("oss") {
+            dimension = "oss"
+        }
+        create("gms") {
+            dimension = "oss"
+            versionNameSuffix = "-gms"
+        }
     }
 
     externalNativeBuild {
@@ -168,7 +204,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
+        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
 
     namespace = "com.hippo.ehviewer"
@@ -176,88 +212,66 @@ android {
 
 dependencies {
     // https://developer.android.com/jetpack/androidx/releases/activity
-    implementation("androidx.activity:activity-compose:1.8.0-rc01")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("androidx.biometric:biometric-ktx:1.2.0-alpha05")
-    implementation("androidx.browser:browser:1.6.0")
-    implementation("androidx.collection:collection-ktx:1.3.0-rc01")
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.browser)
+    implementation(libs.androidx.collection)
 
     // https://developer.android.com/jetpack/androidx/releases/compose-material3
-    // api(platform("androidx.compose:compose-bom:2023.05.00"))
-    api(platform("dev.chrisbanes.compose:compose-bom:2023.07.00-alpha02"))
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material3:material3-window-size-class")
-    implementation("androidx.compose.ui:ui-util")
+    api(platform(libs.compose.bom))
+    implementation(libs.bundles.compose)
 
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation(libs.androidx.core)
 
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha12")
-    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
-    implementation("androidx.fragment:fragment-ktx:1.7.0-alpha05")
+    implementation(libs.androidx.constraintlayout.compose)
+    implementation(libs.androidx.coordinatorlayout)
+    implementation(libs.androidx.fragment)
     // https://developer.android.com/jetpack/androidx/releases/lifecycle
-    implementation("androidx.lifecycle:lifecycle-process:2.6.2")
+    implementation(libs.androidx.lifecycle.process)
 
     // https://developer.android.com/jetpack/androidx/releases/navigation
-    val navigation = "2.7.3"
-    implementation("androidx.navigation:navigation-fragment-ktx:$navigation")
-    implementation("androidx.navigation:navigation-ui-ktx:$navigation")
-    implementation("androidx.navigation:navigation-compose:$navigation")
+    implementation(libs.bundles.androidx.navigation)
 
     // https://developer.android.com/jetpack/androidx/releases/paging
-    val paging = "3.2.1"
-    implementation("androidx.paging:paging-compose:$paging")
-    implementation("androidx.paging:paging-runtime-ktx:$paging")
-    implementation("androidx.recyclerview:recyclerview:1.3.1")
-    implementation("androidx.recyclerview:recyclerview-selection:1.2.0-alpha01")
+    implementation(libs.bundles.androidx.paging)
+
+    implementation(libs.bundles.androidx.recyclerview)
 
     // https://developer.android.com/jetpack/androidx/releases/room
-    val room = "2.6.0-rc01"
-    ksp("androidx.room:room-compiler:$room")
-    implementation("androidx.room:room-paging:$room")
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.paging)
 
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01")
-    implementation("androidx.work:work-runtime-ktx:2.8.1")
-    implementation("com.drakeet.drawer:drawer:1.0.3")
-    implementation("com.github.chrisbanes:PhotoView:2.3.0") // Dead Dependency
-    implementation("com.github.tachiyomiorg:DirectionalViewPager:1.0.0") // Dead Dependency
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.drawer)
+    implementation(libs.photoview) // Dead Dependency
+    implementation(libs.directionalviewpager) // Dead Dependency
     // https://github.com/google/accompanist/releases
-    val accompanist = "0.32.0"
-    implementation("com.google.accompanist:accompanist-themeadapter-material3:$accompanist")
-    implementation("com.google.accompanist:accompanist-webview:$accompanist")
-    implementation("com.google.android.material:material:1.11.0-alpha03")
+    implementation(libs.bundles.accompanist)
+    implementation(libs.material)
 
-    val splitties = "3.0.0"
-    implementation("com.louiscad.splitties:splitties-appctx:$splitties")
-    implementation("com.louiscad.splitties:splitties-systemservices:$splitties")
-    implementation("com.louiscad.splitties:splitties-preferences:$splitties")
-    implementation("com.louiscad.splitties:splitties-arch-room:$splitties")
+    implementation(libs.bundles.splitties)
 
     // https://square.github.io/okhttp/changelogs/changelog/
-    implementation(platform("com.squareup.okhttp3:okhttp-bom:5.0.0-alpha.11"))
-    implementation("com.squareup.okhttp3:okhttp-android")
-    implementation("com.squareup.okhttp3:okhttp-coroutines")
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.bundles.okhttp)
 
-    implementation("com.squareup.okio:okio-jvm:3.5.0")
+    implementation(libs.okio.jvm)
 
-    implementation("com.mikepenz:aboutlibraries-core:10.9.1")
+    implementation(libs.aboutlibraries.core)
 
-    implementation("dev.chrisbanes.insetter:insetter:0.6.1") // Dead Dependency
-    implementation("dev.rikka.rikkax.core:core-ktx:1.4.1")
-    implementation("dev.rikka.rikkax.insets:insets:1.3.0")
-    implementation("dev.rikka.rikkax.layoutinflater:layoutinflater:1.3.0")
+    implementation(libs.insetter) // Dead Dependency
+    implementation(libs.bundles.rikkax)
 
-    implementation(platform("io.arrow-kt:arrow-stack:1.2.1"))
-    implementation("io.arrow-kt:arrow-fx-coroutines")
+    implementation(platform(libs.arrow.stack))
+    implementation(libs.arrow.fx.coroutines)
 
     // https://coil-kt.github.io/coil/changelog/
-    implementation(platform("io.coil-kt:coil-bom:2.4.0"))
-    implementation("io.coil-kt:coil-compose")
-    implementation("io.coil-kt:coil-gif")
+    implementation(platform(libs.coil.bom))
+    implementation(libs.bundles.coil)
 
-    val ktor = "2.3.4"
-    implementation("io.ktor:ktor-io-jvm:$ktor")
-    implementation("io.ktor:ktor-utils-jvm:$ktor")
+    implementation(libs.bundles.ktor)
 
     implementation("org.chromium.net:cronet-api:113.5672.61")
     implementation("org.chromium.net:cronet-embedded:113.5672.61")
@@ -267,15 +281,19 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:$serialization")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-okio:$serialization")
+    implementation(libs.bundles.kotlinx.serialization)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jsoup:jsoup:1.16.1")
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.jsoup)
 
-    val chunker = "4.0.0"
-    debugImplementation("com.github.chuckerteam.chucker:library:$chunker")
-    releaseImplementation("com.github.chuckerteam.chucker:library-no-op:$chunker")
+    debugImplementation(libs.chucker)
+    releaseImplementation(libs.chucker.nop)
 
-    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
+    debugImplementation(libs.leakcanary.android)
+
+    coreLibraryDesugaring(libs.desugar)
+
+    "gmsImplementation"(libs.bundles.cronet)
 }
 
 ksp {
@@ -301,25 +319,25 @@ aboutLibraries {
 cargo {
     module = "src/main/rust"
     libname = "ehviewer_rust"
-    targets = if (isRelease) listOf("arm", "x86", "arm64", "x86_64") else listOf("arm64")
+    targets = if (isRelease) listOf("arm", "x86", "arm64", "x86_64") else listOf("arm64", "x86_64")
     if (isRelease) profile = "release"
 }
 
+val ktlintVersion = libs.versions.ktlint.get()
+
 spotless {
     kotlin {
-        ktlint()
+        // https://github.com/diffplug/spotless/issues/111
+        target("src/**/*.kt")
+        ktlint(ktlintVersion)
     }
     kotlinGradle {
-        ktlint().editorConfigOverride(
-            mapOf(
-                "ktlint_standard_multiline-expression-wrapping" to "disabled",
-            ),
-        )
+        ktlint(ktlintVersion)
     }
 }
 
 tasks.configureEach {
-    if ((name == "mergeDebugJniLibFolders" || name == "mergeReleaseJniLibFolders")) {
+    if (name.startsWith("merge") && name.endsWith("JniLibFolders")) {
         dependsOn("cargoBuild")
         // fix mergeDebugJniLibFolders  UP-TO-DATE
         inputs.dir(layout.buildDirectory.dir("rustJniLibs/android"))
