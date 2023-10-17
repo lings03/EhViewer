@@ -28,14 +28,14 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 private const val TAG = "CronetRequest"
-val CloudflareIP = Settings.CloudflareIP
+val CloudflareIP = Settings.cloudflareIp
 val pool = DirectByteBufferPool(32)
 
 val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builder(appCtx).apply {
     configureCronetEngineBuilder(this)
 }.build()
 var experimentalOptions = JSONObject()
-const val DNSPoisoningCircumventionSuffix = ".cdn.cloudflare.net"
+const val DNS_POISONING_CIRCUMVENTION_SUFFIX = ".cdn.cloudflare.net"
 
 fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     builder.enableBrotli(true)
@@ -49,27 +49,26 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     builder.setStoragePath(cache.absolutePath)
         .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
         .setUserAgent(CHROME_USER_AGENT)
-    if (Settings.CloudflareIPOverride) {
+    if (Settings.cloudflareIpOverride) {
         experimentalOptions = JSONObject().put(
             "HostResolverRules",
             JSONObject().put(
                 "host_resolver_rules",
                 "MAP *.e-hentai.org $CloudflareIP," +
-                        "MAP e-hentai.org $CloudflareIP," +
-                        "MAP exhentai.org $CloudflareIP," +
-                        "MAP *.exhentai.org $CloudflareIP",
+                    "MAP e-hentai.org $CloudflareIP," +
+                    "MAP exhentai.org $CloudflareIP," +
+                    "MAP *.exhentai.org $CloudflareIP",
             ),
         )
-    }
-    else {
+    } else {
         experimentalOptions = JSONObject().put(
             "HostResolverRules",
             JSONObject().put(
                 "host_resolver_rules",
-                "MAP *.e-hentai.org e-hentai.org$DNSPoisoningCircumventionSuffix," +
-                        "MAP e-hentai.org e-hentai.org$DNSPoisoningCircumventionSuffix," +
-                        "MAP exhentai.org exhentai.org$DNSPoisoningCircumventionSuffix," +
-                        "MAP *.exhentai.org exhentai.org$DNSPoisoningCircumventionSuffix",
+                "MAP *.e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
+                    "MAP e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
+                    "MAP exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
+                    "MAP *.exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX",
             ),
         )
     }

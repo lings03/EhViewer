@@ -80,8 +80,8 @@ object Settings : DataStorePreferences(null) {
     var language by stringPref("app_language", "system").observed { updateWhenLocaleChanges() }
     var lastDawnDay by longPref("last_dawn_day", 0)
     var lastUpdateDay by longPref("last_update_day", 0)
-    var CloudflareIP by stringOrNullPref("cloudflare_ip", "cdn.sstatic.net")
-    var CloudflareIPOverride by boolPref("cloudflare_ip_override", false)
+    var cloudflareIp by stringOrNullPref("cloudflare_ip", "cdn.sstatic.net")
+    var cloudflareIpOverride by boolPref("cloudflare_ip_override", false)
 
     init {
         if ("CN" == Locale.getDefault().country) {

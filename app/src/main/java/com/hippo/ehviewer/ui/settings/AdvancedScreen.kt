@@ -230,7 +230,7 @@ fun AdvancedScreen() {
                     }
                 }
             }
-            val ifCloudflareIPOverride = Settings::CloudflareIPOverride.observed
+            val ifCloudflareIPOverride = Settings::cloudflareIpOverride.observed
             SwitchPreference(
                 title = stringResource(id = R.string.settings_advanced_cloudflare_ip_override),
                 summary = stringResource(id = R.string.settings_advanced_cloudflare_ip_override_summary),
@@ -239,16 +239,16 @@ fun AdvancedScreen() {
             AnimatedVisibility(visible = ifCloudflareIPOverride.value) {
                 Preference(
                     title = cloudflareIPtitle,
-                    summary = Settings.CloudflareIP,
+                    summary = Settings.cloudflareIp,
                 ) {
                     coroutineScope.launch {
                         val newCloudflareIP = dialogState.awaitInputText(
-                            initial = Settings.CloudflareIP.toString(),
+                            initial = Settings.cloudflareIp.toString(),
                             title = cloudflareIPtitle,
                             hint = cloudflareIPhint,
                         )
                         if (newCloudflareIP.isNotEmpty()) {
-                            Settings.CloudflareIP = newCloudflareIP
+                            Settings.cloudflareIp = newCloudflareIP
                         }
                     }
                 }
