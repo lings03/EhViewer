@@ -120,12 +120,9 @@ android {
                 error += setOf("InlinedApi", "UnusedAttribute")
             }
         }
-        create("oss") {
-            dimension = "oss"
-        }
         create("gms") {
             dimension = "oss"
-            versionNameSuffix = "-gms"
+            // versionNameSuffix = "-gms"
         }
     }
 

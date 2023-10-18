@@ -60,45 +60,6 @@ jobs:
           key: ${{ runner.os }}-cmake-${{ github.run_id }}
           restore-keys: ${{ runner.os }}-cmake-
 
-      - name: Build OSS
-        run: ./gradlew assembleDefaultOssRelease
-
-      - name: Upload OSS ARM64
-        uses: actions/upload-artifact@v3
-        with:
-          name: default-oss-arm64-v8a-${{ github.sha }}
-          path: app/build/outputs/apk/defaultOss/release/app-default-oss-arm64-v8a-release.apk
-
-      - name: Upload OSS x86_64
-        uses: actions/upload-artifact@v3
-        with:
-          name: default-oss-x86_64-${{ github.sha }}
-          path: app/build/outputs/apk/defaultOss/release/app-default-oss-x86_64-release.apk
-
-      - name: Upload OSS ARM32
-        uses: actions/upload-artifact@v3
-        with:
-          name: default-oss-armeabi-v7a-${{ github.sha }}
-          path: app/build/outputs/apk/defaultOss/release/app-default-oss-armeabi-v7a-release.apk
-
-      - name: Upload OSS x86
-        uses: actions/upload-artifact@v3
-        with:
-          name: default-oss-x86-${{ github.sha }}
-          path: app/build/outputs/apk/defaultOss/release/app-default-oss-x86-release.apk
-
-      - name: Upload OSS mapping
-        uses: actions/upload-artifact@v3
-        with:
-          name: default-oss-mapping-${{ github.sha }}
-          path: app/build/outputs/mapping/defaultOssRelease/mapping.txt
-
-      - name: Upload OSS native debug symbols
-        uses: actions/upload-artifact@v3
-        with:
-          name: default-oss-native-debug-symbols-${{ github.sha }}
-          path: app/build/outputs/native-debug-symbols/defaultOssRelease/native-debug-symbols.zip
-
       - name: Build GMS
         run: ./gradlew assembleDefaultGmsRelease
 
@@ -137,45 +98,6 @@ jobs:
         with:
           name: default-gms-native-debug-symbols-${{ github.sha }}
           path: app/build/outputs/native-debug-symbols/defaultGmsRelease/native-debug-symbols.zip
-
-      - name: Build Marshmallow OSS
-        run: ./gradlew assembleMarshmallowOssRelease
-
-      - name: Upload Marshmallow OSS ARM64
-        uses: actions/upload-artifact@v3
-        with:
-          name: marshmallow-oss-arm64-v8a-${{ github.sha }}
-          path: app/build/outputs/apk/marshmallowOss/release/app-marshmallow-oss-arm64-v8a-release.apk
-
-      - name: Upload Marshmallow OSS x86_64
-        uses: actions/upload-artifact@v3
-        with:
-          name: marshmallow-oss-x86_64-${{ github.sha }}
-          path: app/build/outputs/apk/marshmallowOss/release/app-marshmallow-oss-x86_64-release.apk
-
-      - name: Upload Marshmallow OSS ARM32
-        uses: actions/upload-artifact@v3
-        with:
-          name: marshmallow-oss-armeabi-v7a-${{ github.sha }}
-          path: app/build/outputs/apk/marshmallowOss/release/app-marshmallow-oss-armeabi-v7a-release.apk
-
-      - name: Upload Marshmallow OSS x86
-        uses: actions/upload-artifact@v3
-        with:
-          name: marshmallow-oss-x86-${{ github.sha }}
-          path: app/build/outputs/apk/marshmallowOss/release/app-marshmallow-oss-x86-release.apk
-
-      - name: Upload Marshmallow OSS mapping
-        uses: actions/upload-artifact@v3
-        with:
-          name: marshmallow-oss-mapping-${{ github.sha }}
-          path: app/build/outputs/mapping/marshmallowOssRelease/mapping.txt
-
-      - name: Upload Marshmallow OSS native debug symbols
-        uses: actions/upload-artifact@v3
-        with:
-          name: marshmallow-oss-native-debug-symbols-${{ github.sha }}
-          path: app/build/outputs/native-debug-symbols/marshmallowOssRelease/native-debug-symbols.zip
 
       - name: Build Marshmallow GMS
         run: ./gradlew assembleMarshmallowGmsRelease
