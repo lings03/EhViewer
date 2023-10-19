@@ -34,6 +34,7 @@ object Settings : DataStorePreferences(null) {
     var gallerySite by intPref("gallery_site_2", 0).observed { updateWhenGallerySiteChanges() }
     var multiThreadDownload by intPref("download_thread_2", 3)
     var preloadImage by intPref("preload_image_2", 5)
+    var downloadTimeout by intPref("download_timeout", 60)
     var theme by intPref("theme_2", -1).observed { updateWhenThemeChanges() }
     var listMode by intPref("list_mode_2", 0)
     var detailSize by intPref("detail_size_2", 0)
@@ -45,7 +46,7 @@ object Settings : DataStorePreferences(null) {
     var requestNews by boolPref("request_news", false).observed { updateWhenRequestNewsChanges() }
     var hideHvEvents by boolPref("hide_hv_events", false)
     var showJpnTitle by boolPref("show_jpn_title", false)
-    var showGalleryPages by boolPref("show_gallery_pages", false)
+    var showGalleryPages by boolPref("show_gallery_pages", true)
     var showTagTranslations by boolPref(KEY_SHOW_TAG_TRANSLATIONS, false).observed { updateWhenTagTranslationChanges() }
     var meteredNetworkWarning by boolPref("cellular_network_warning", false)
     var appLinkVerifyTip by boolPref("app_link_verify_tip", false)
@@ -63,6 +64,7 @@ object Settings : DataStorePreferences(null) {
     var harmonizeCategoryColor by boolPref("harmonize_category_color", true)
     var preloadThumbAggressively by boolPref("preload_thumb_aggressively", false)
     var downloadOriginImage by boolPref("download_origin_image", false)
+    var enableCronet by boolPref("enable_cronet", true)
     var thumbSizeDp by intPref("thumb_size_", 120)
     var recentFavCat by intPref("recent_fav_cat", FavListUrlBuilder.FAV_CAT_LOCAL)
     var defaultFavSlot by intPref("default_favorite_slot", -2)

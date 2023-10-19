@@ -68,8 +68,8 @@ android {
         applicationId = "moe.tarsin.ehviewer"
         minSdk = 28
         targetSdk = 34
-        versionCode = 180043
-        versionName = "1.8.9.7"
+        versionCode = 180044
+        versionName = "1.8.10.0"
         versionNameSuffix = "-censorcircum"
         resourceConfigurations.addAll(
             listOf(
@@ -132,19 +132,12 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
     kotlinOptions {
-        jvmTarget = "17"
         freeCompilerArgs = listOf(
             // https://kotlinlang.org/docs/compiler-reference.html#progressive
             "-progressive",
             "-Xjvm-default=all",
             "-Xlambdas=indy",
-            "-XXLanguage:+BreakContinueInInlineLambdas",
 
             "-opt-in=coil.annotation.ExperimentalCoilApi",
             "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
@@ -285,6 +278,10 @@ dependencies {
     coreLibraryDesugaring(libs.desugar)
 
     "gmsImplementation"(libs.bundles.cronet)
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 ksp {

@@ -379,6 +379,8 @@
     <string name="settings_advanced_dump_logcat_to">已保存日志至 %s</string>
     <string name="settings_advanced_read_cache_size">阅读缓存大小</string>
     <string name="settings_advanced_app_language_title">App 界面语言</string>
+    <string name="settings_advanced_cronet_integration">[实验性] Cronet 集成</string>
+    <string name="settings_advanced_cronet_integration_summary">使用 Cronet 下载图片（性能更好）</string>
     <string name="settings_advanced_export_data">导出数据</string>
     <string name="settings_advanced_export_data_summary">保存数据至外置存储器，例如下载列表，快速搜索列表</string>
     <string name="settings_advanced_export_data_to">已导出数据至 %s</string>
@@ -483,6 +485,7 @@
     <string name="download_start_all_reversed">全部开始（倒序）</string>
     <string name="settings_download_download_delay">下载延时</string>
     <string name="settings_download_download_delay_summary">每次下载延时 %s 毫秒</string>
+    <string name="settings_download_download_timeout">下载超时（秒）</string>
     <string name="no_browser_installed">请安装一个浏览器。</string>
     <string name="toplist_alltime">从始至终</string>
     <string name="toplist_pastyear">过去一年</string>
