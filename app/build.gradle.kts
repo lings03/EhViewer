@@ -65,7 +65,7 @@ android {
         minSdk = 28
         targetSdk = 34
         versionCode = 180044
-        versionName = "1.8.10.0"
+        versionName = "1.8.10.1"
         versionNameSuffix = "-censorcircum"
         resourceConfigurations.addAll(
             listOf(
@@ -207,6 +207,7 @@ dependencies {
     implementation(libs.bundles.compose)
 
     implementation(libs.androidx.core)
+    implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.androidx.coordinatorlayout)
