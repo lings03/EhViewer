@@ -60,7 +60,6 @@ import kotlinx.coroutines.withTimeout
 import moe.tarsin.coroutines.runSuspendCatching
 import splitties.init.appCtx
 import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
@@ -72,11 +71,9 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
     lateinit var mSpiderInfo: SpiderInfo
 
     val mSpiderDen: SpiderDen = SpiderDen(galleryInfo)
-    val mPagePercentMap = ConcurrentHashMap<Int, Float>()
     private val mPageStateLock = Any()
     private val mDownloadedPages = AtomicInteger(0)
     private val mFinishedPages = AtomicInteger(0)
-    private val mPageErrorMap = ConcurrentHashMap<Int, String>()
     private val mSpiderListeners: MutableList<OnSpiderListener> = ArrayList()
 
     private var mReadReference = 0
@@ -203,8 +200,6 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                     }
                     mDownloadedPages.lazySet(0)
                     mFinishedPages.lazySet(0)
-                    mPageErrorMap.clear()
-                    mPagePercentMap.clear()
                 }
                 mWorkerScope.enterDownloadMode()
             }
@@ -448,7 +443,7 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
 
     fun updatePageState(index: Int, @State state: Int, error: String? = null) {
         var oldState: Int
-        synchronized(mPageStateLock) {
+        synchronized<Unit>(mPageStateLock) {
             oldState = mPageStateArray[index]
             mPageStateArray[index] = state
             if (!isStateDone(oldState) && isStateDone(state)) {
@@ -460,18 +455,6 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                 mFinishedPages.incrementAndGet()
             } else if (oldState == STATE_FINISHED && state != STATE_FINISHED) {
                 mFinishedPages.decrementAndGet()
-            }
-
-            // Clear
-            if (state == STATE_DOWNLOADING) {
-                mPageErrorMap.remove(index)
-            } else if (isStateDone(state)) {
-                mPagePercentMap.remove(index)
-            }
-
-            // Get default error
-            if (state == STATE_FAILED) {
-                mPageErrorMap[index] = error ?: appCtx.getString(R.string.error_unknown)
             }
         }
 

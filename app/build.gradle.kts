@@ -46,10 +46,6 @@ android {
         enableV4Signing = true
     }
 
-    val branch = providers.exec {
-        commandLine = "git branch --show-current".split(' ')
-    }.standardOutput.asText.get().trim()
-
     val commitSha = providers.exec {
         commandLine = "git rev-parse --short=7 HEAD".split(' ')
     }.standardOutput.asText.get().trim()
@@ -87,10 +83,8 @@ android {
                 "nb-rNO",
             ),
         )
-        buildConfigField("String", "BRANCH", "\"$branch\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
         buildConfigField("String", "REPO_NAME", "\"$repoName\"")
-        buildConfigField("String", "VERSION_NAME_SUFFIX", "\"$versionNameSuffix\"")
         ndk {
             debugSymbolLevel = "FULL"
         }
