@@ -30,7 +30,6 @@ import com.hippo.ehviewer.client.EhUrl.getGalleryMultiPageViewerUrl
 import com.hippo.ehviewer.client.EhUrl.referer
 import com.hippo.ehviewer.client.data.GalleryInfo
 import com.hippo.ehviewer.client.ehRequest
-import com.hippo.ehviewer.client.exception.ParseException
 import com.hippo.ehviewer.client.exception.QuotaExceededException
 import com.hippo.ehviewer.client.execute
 import com.hippo.ehviewer.client.parser.GalleryDetailParser.parsePages
@@ -42,6 +41,9 @@ import com.hippo.ehviewer.image.Image
 import com.hippo.ehviewer.util.ExceptionUtils
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.util.lang.launchIO
+import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,9 +61,6 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeout
 import moe.tarsin.coroutines.runSuspendCatching
 import splitties.init.appCtx
-import java.time.Instant
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.seconds
 
 class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineScope {
     override val coroutineContext = Dispatchers.IO + Job()
@@ -650,7 +649,7 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                     }
 
                     if (imageUrl == null) {
-                        runCatching {
+                        runSuspendCatching {
                             EhEngine.getGalleryPageApi(
                                 mSpiderInfo.gid,
                                 index,
@@ -664,13 +663,8 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                                 originImageUrl = it.originImageUrl
                             }
                         }.onFailure {
-                            if (it is ParseException && "Key mismatch" == it.message) {
-                                // Show key is wrong, enter a new loop to get the new show key
-                                if (showKey == localShowKey) showKey = null
-                                return@repeat
-                            } else {
-                                throw it
-                            }
+                            forceHtml = true
+                            return@repeat
                         }
                     }
 

@@ -54,6 +54,10 @@ import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.StatusCodeException
 import com.hippo.ehviewer.util.isCronetSupported
 import io.ktor.utils.io.pool.DirectByteBufferPool
+import io.ktor.utils.io.pool.useInstance
+import java.io.File
+import java.nio.ByteBuffer
+import kotlin.math.ceil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.add
@@ -68,9 +72,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import org.jsoup.Jsoup
 import splitties.init.appCtx
-import java.io.File
-import java.nio.ByteBuffer
-import kotlin.math.ceil
 
 private const val TAG = "EhEngine"
 private const val MAX_REQUEST_SIZE = 25
@@ -116,33 +117,27 @@ private fun rethrowExactly(code: Int, body: String, e: Throwable): Nothing {
     throw e
 }
 
-val httpContentPool = DirectByteBufferPool(16, 16384)
+val httpContentPool = DirectByteBufferPool(16, 0x20000)
 
 suspend inline fun <T> fetchCompat(url: String, referer: String? = null, crossinline parser: (ByteBuffer) -> T): T {
     return if (isCronetSupported) {
         cronetRequest(url, referer).execute {
-            val buffer = httpContentPool.borrow()
-            try {
+            httpContentPool.useInstance { buffer ->
                 awaitBodyFully {
                     buffer.put(it)
                 }
                 buffer.flip()
                 parser(buffer)
-            } finally {
-                httpContentPool.recycle(buffer)
             }
         }
     } else {
         ehRequest(url, referer).execute {
-            val buffer = httpContentPool.borrow()
-            try {
+            httpContentPool.useInstance { buffer ->
                 while (true) {
                     if (body.source().read(buffer) == -1) break
                 }
                 buffer.flip()
                 parser(buffer)
-            } finally {
-                httpContentPool.recycle(buffer)
             }
         }
     }

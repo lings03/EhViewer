@@ -64,10 +64,10 @@ import com.hippo.ehviewer.util.ExceptionUtils
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
+import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.Cookie
-import java.util.Locale
 
 @Composable
 fun CookieSignInScene(windowSizeClass: WindowSizeClass) {
@@ -101,7 +101,6 @@ fun CookieSignInScene(windowSizeClass: WindowSizeClass) {
         EhCookieStore.addCookie(newCookie(EhCookieStore.KEY_IPB_PASS_HASH, hash, EhUrl.DOMAIN_E))
         EhCookieStore.addCookie(newCookie(EhCookieStore.KEY_IPB_PASS_HASH, hash, EhUrl.DOMAIN_EX))
         if (igneous.isNotBlank()) EhCookieStore.addCookie(newCookie(EhCookieStore.KEY_IGNEOUS, igneous, EhUrl.DOMAIN_EX))
-        EhCookieStore.flush()
     }
 
     fun login() {

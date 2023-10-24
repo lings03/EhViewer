@@ -19,6 +19,8 @@ import android.util.Log
 import com.hippo.ehviewer.EhApplication.Companion.noRedirectOkHttpClient
 import com.hippo.ehviewer.EhApplication.Companion.nonCacheOkHttpClient
 import com.hippo.ehviewer.EhApplication.Companion.okHttpClient
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -38,8 +40,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.executeAsync
 import okio.BufferedSource
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 inline fun ehRequest(url: String, referer: String? = null, origin: String? = null, builder: Request.Builder.() -> Unit = {}) = Request.Builder().url(url).apply {
     addHeader("User-Agent", CHROME_USER_AGENT)

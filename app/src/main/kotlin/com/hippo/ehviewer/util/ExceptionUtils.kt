@@ -17,8 +17,6 @@ package com.hippo.ehviewer.util
 
 import com.google.net.cronet.okhttptransport.CronetTimeoutException
 import com.hippo.ehviewer.R
-import com.hippo.ehviewer.client.exception.EhException
-import splitties.init.appCtx
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.ProtocolException
@@ -27,6 +25,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.ExecutionException
 import javax.net.ssl.SSLException
+import splitties.init.appCtx
 
 object ExceptionUtils {
     fun getReadableString(e: Throwable): String {
@@ -46,12 +45,12 @@ object ExceptionUtils {
             is CronetTimeoutException -> appCtx.getString(R.string.error_timeout)
             is UnknownHostException -> appCtx.getString(R.string.error_unknown_host)
             is StatusCodeException -> {
-                val sb = StringBuilder()
-                sb.append(appCtx.getString(R.string.error_bad_status_code, e.responseCode))
-                if (e.isIdentifiedResponseCode) {
-                    sb.append(", ").append(e.message)
+                buildString {
+                    append(appCtx.getString(R.string.error_bad_status_code, e.responseCode))
+                    if (e.isIdentifiedResponseCode) {
+                        append(", ").append(e.message)
+                    }
                 }
-                sb.toString()
             }
 
             is ProtocolException -> {
@@ -63,7 +62,6 @@ object ExceptionUtils {
             }
 
             is SocketException, is SSLException -> appCtx.getString(R.string.error_socket)
-            is EhException -> e.message!!
             is ExecutionException -> {
                 val errorMessage = e.message
                 if (errorMessage != null) {
@@ -75,7 +73,7 @@ object ExceptionUtils {
                 }
                 return e.message!!
             }
-            else -> appCtx.getString(R.string.error_unknown)
+            else -> e.message ?: appCtx.getString(R.string.error_unknown)
         }
     }
 
