@@ -51,7 +51,8 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
                 "MAP *.e-hentai.org $CloudflareIP," +
                     "MAP e-hentai.org $CloudflareIP," +
                     "MAP exhentai.org $CloudflareIP," +
-                    "MAP *.exhentai.org $CloudflareIP",
+                    "MAP *.exhentai.org $CloudflareIP," +
+                    "MAP cdn.jsdelivr.net $CloudflareIP",
             ),
         )
     } else {
@@ -62,7 +63,8 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
                 "MAP *.e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
                     "MAP e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
                     "MAP exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
-                    "MAP *.exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX",
+                    "MAP *.exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
+                    "MAP cdn.jsdelivr.net cdn.jsdelivr.net$DNS_POISONING_CIRCUMVENTION_SUFFIX",
             ),
         )
     }
