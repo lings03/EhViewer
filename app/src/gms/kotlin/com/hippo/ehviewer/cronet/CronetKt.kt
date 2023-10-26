@@ -39,6 +39,7 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
         .addQuicHint("forums.e-hentai.org", 443, 443)
         .addQuicHint("exhentai.org", 443, 443)
         .addQuicHint("s.exhentai.org", 443, 443)
+        .addQuicHint("cdn.jsdelivr.net", 443, 443)
     val cache = (appCtx.cacheDir.toOkioPath() / "http_cache").toFile().apply { mkdirs() }
     builder.setStoragePath(cache.absolutePath)
         .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
