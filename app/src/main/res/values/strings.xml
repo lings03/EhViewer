@@ -691,5 +691,12 @@
     <string name="dark_theme_follow_system">Follow system</string>
     <string name="dark_theme_off">Always off</string>
     <string name="dark_theme_on">Always on</string>
+    <string name="settings_advanced_built_in_hosts_title">Built-in hosts.txt</string>
+    <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
+    <string name="settings_advanced_domain_fronting_title">Domain fronting</string>
+    <string name="settings_advanced_domain_fronting_summary">Bypass SNI blocking.</string>
+    <string name="settings_advanced_bypass_vpn_title">Bypass VPN</string>
+    <string name="settings_advanced_bypass_vpn_summary">Try to bypass VPN when domain fronting is enabled</string>
+    <string name="settings_advanced_dns_over_http_hint">Server URL, blank: disable</string>
     <!-- Tachiyomi Reader End-->
 </resources>

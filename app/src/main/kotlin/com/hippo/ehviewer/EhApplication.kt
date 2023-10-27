@@ -25,10 +25,14 @@ import androidx.lifecycle.coroutineScope
 import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
 import coil.util.DebugLogger
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.google.net.cronet.okhttptransport.RedirectStrategy.withoutRedirects
 import com.hippo.ehviewer.client.EhCookieStore
+import com.hippo.ehviewer.client.EhDns
+import com.hippo.ehviewer.client.EhSSLSocketFactory
 import com.hippo.ehviewer.client.EhTagDatabase
 import com.hippo.ehviewer.client.data.GalleryDetail
+import com.hippo.ehviewer.client.install
 import com.hippo.ehviewer.coil.MergeInterceptor
 import com.hippo.ehviewer.coil.installCronetHttpUriFetcher
 import com.hippo.ehviewer.cronet.cronetHttpClient
@@ -183,6 +187,14 @@ class EhApplication : Application(), ImageLoaderFactory {
                 if (isCronetSupported) {
                     addInterceptor(EhCookieStore)
                     cronet(cronetHttpClient)
+                } else if (Settings.dF) {
+                    dns(EhDns)
+                    addInterceptor(
+                        ChuckerInterceptor.Builder(appCtx).apply {
+                            alwaysReadResponseBody(false)
+                        }.build(),
+                    )
+                    install(EhSSLSocketFactory)
                 }
             }
         }

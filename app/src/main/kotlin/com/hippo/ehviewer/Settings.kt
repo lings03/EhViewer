@@ -17,6 +17,8 @@ import splitties.preferences.edit
 
 object Settings : DataStorePreferences(null) {
     private const val KEY_SHOW_TAG_TRANSLATIONS = "show_tag_translations"
+    private const val KEY_BUILT_IN_HOSTS = "built_in_hosts_2"
+    private const val KEY_DOMAIN_FRONTING = "domain_fronting"
 
     private val _favFlow = MutableSharedFlow<Unit>()
     val favChangesFlow = _favFlow.debounce(1000)
@@ -59,13 +61,16 @@ object Settings : DataStorePreferences(null) {
     var saveParseErrorBody by boolPref("save_parse_error_body", true)
     var saveCrashLog by boolPref("save_crash_log", true)
     var security by boolPref("require_unlock", false)
+    var builtInHosts by boolPref(KEY_BUILT_IN_HOSTS, false)
     var removeImageFiles by boolPref("include_pic", true)
     var needSignIn by boolPref("need_sign_in", true).also { needSignInFlow = it.valueFlow() }
     var blackDarkTheme by boolPref("black_dark_theme", false).observed { updateWhenAmoledModeChanges() }
     var harmonizeCategoryColor by boolPref("harmonize_category_color", true)
     var preloadThumbAggressively by boolPref("preload_thumb_aggressively", false)
+    var dF by boolPref(KEY_DOMAIN_FRONTING, false)
     var downloadOriginImage by boolPref("download_origin_image", false)
     var enableCronet by boolPref("enable_cronet", true)
+    var bypassVpn by boolPref("bypass_vpn", true)
     var thumbSizeDp by intPref("thumb_size_", 120)
     var recentFavCat by intPref("recent_fav_cat", FavListUrlBuilder.FAV_CAT_LOCAL)
     var defaultFavSlot by intPref("default_favorite_slot", -2)
@@ -81,6 +86,7 @@ object Settings : DataStorePreferences(null) {
     var defaultDownloadLabel by stringOrNullPref("default_download_label", null)
     var displayName by stringOrNullPref("display_name", null)
     var avatar by stringOrNullPref("avatar", null)
+    var dohUrl by stringPref("doh_url", "")
     var language by stringPref("app_language", "system").observed { updateWhenLocaleChanges() }
     var lastDawnDay by longPref("last_dawn_day", 0)
     var lastUpdateDay by longPref("last_update_day", 0)
@@ -90,6 +96,8 @@ object Settings : DataStorePreferences(null) {
     init {
         if ("CN" == Locale.getDefault().country) {
             edit {
+                if (KEY_BUILT_IN_HOSTS !in prefs) builtInHosts = true
+                if (KEY_DOMAIN_FRONTING !in prefs) dF = true
                 if (KEY_SHOW_TAG_TRANSLATIONS !in prefs) showTagTranslations = true
             }
         }

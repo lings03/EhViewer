@@ -240,6 +240,10 @@ dependencies {
     // https://square.github.io/okhttp/changelogs/changelog/
     implementation(platform(libs.okhttp.bom))
     implementation(libs.bundles.okhttp)
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:5.0.0-alpha.11"))
+    implementation("com.squareup.okhttp3:okhttp-android")
+    implementation("com.squareup.okhttp3:okhttp-coroutines")
+    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps")
 
     implementation(libs.okio.jvm)
 
