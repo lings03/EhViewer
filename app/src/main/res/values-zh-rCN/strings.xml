@@ -625,5 +625,12 @@
     <string name="dark_theme_follow_system">跟随系统</string>
     <string name="dark_theme_off">总是关闭</string>
     <string name="dark_theme_on">总是开启</string>
+    <string name="settings_advanced_built_in_hosts_title">内置 hosts.txt</string>
+    <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
+    <string name="settings_advanced_domain_fronting_title">域名前置（重启应用后生效）</string>
+    <string name="settings_advanced_domain_fronting_summary">绕过 SNI 封锁\n启用时会禁用代理设置</string>
+    <string name="settings_advanced_bypass_vpn_title">绕过VPN</string>
+    <string name="settings_advanced_bypass_vpn_summary">启用域名前置时尝试绕过VPN</string>
+    <string name="settings_advanced_dns_over_http_hint">Server URL, blank: disable</string>
     <!-- Tachiyomi Reader End-->
 </resources>
