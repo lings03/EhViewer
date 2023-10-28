@@ -36,6 +36,7 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
         .enableQuic(true)
         .addQuicHint("e-hentai.org", 443, 443)
         .addQuicHint("api.e-hentai.org", 443, 443)
+        .addQuicHint("upload.e-hentai.org", 443, 443)
         .addQuicHint("forums.e-hentai.org", 443, 443)
         .addQuicHint("exhentai.org", 443, 443)
         .addQuicHint("s.exhentai.org", 443, 443)
