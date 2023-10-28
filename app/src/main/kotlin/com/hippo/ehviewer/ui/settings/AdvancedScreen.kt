@@ -240,10 +240,17 @@ fun AdvancedScreen() {
             val isEnableCronet = Settings::enableCronet.observed
             val isEnabledF = Settings::dF.observed
             val ifCloudflareIPOverride = Settings::cloudflareIpOverride.observed
+            if (isEnabledF.value) {
+                isEnableCronet.value = false
+            }
+            if (isEnableCronet.value) {
+                isEnabledF.value = false
+            }
             SwitchPreference(
                 title = stringResource(id = R.string.settings_advanced_cronet_integration),
                 summary = stringResource(id = R.string.settings_advanced_cronet_integration_summary),
                 value = isEnableCronet.rememberedAccessor,
+                enabled = !isEnabledF.value,
             )
             AnimatedVisibility(visible = isEnableCronet.value) {
                 SwitchPreference(
@@ -273,6 +280,7 @@ fun AdvancedScreen() {
                 title = stringResource(id = R.string.settings_advanced_domain_fronting_title),
                 summary = stringResource(id = R.string.settings_advanced_domain_fronting_summary),
                 value = isEnabledF.rememberedAccessor,
+                enabled = !isEnableCronet.value,
             )
             AnimatedVisibility(visible = isEnabledF.value) {
                 SwitchPreference(
