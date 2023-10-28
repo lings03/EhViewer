@@ -139,42 +139,6 @@ fun AdvancedScreen() {
                 value = Settings::language,
             )
             SwitchPreference(
-                title = stringResource(id = R.string.settings_advanced_cronet_integration),
-                summary = stringResource(id = R.string.settings_advanced_cronet_integration_summary),
-                value = Settings::enableCronet,
-            )
-            SwitchPreference(
-                title = stringResource(id = R.string.settings_advanced_built_in_hosts_title),
-                value = Settings::builtInHosts,
-            )
-            Preference(title = stringResource(id = R.string.settings_advanced_dns_over_http_title)) {
-                val builder = EditTextDialogBuilder(context, Settings.dohUrl, context.getString(R.string.settings_advanced_dns_over_http_hint))
-                builder.setTitle(R.string.settings_advanced_dns_over_http_title)
-                builder.setPositiveButton(android.R.string.ok, null)
-                val dialog = builder.create().apply { show() }
-                dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
-                    val text = builder.text.trim()
-                    runCatching {
-                        doh = if (text.isNotBlank()) buildDoHDNS(text) else null
-                    }.onFailure {
-                        builder.setError("Invalid URL!")
-                    }.onSuccess {
-                        Settings.dohUrl = text
-                        dialog.dismiss()
-                    }
-                }
-            }
-            SwitchPreference(
-                title = stringResource(id = R.string.settings_advanced_domain_fronting_title),
-                summary = stringResource(id = R.string.settings_advanced_domain_fronting_summary),
-                value = Settings::dF,
-            )
-            SwitchPreference(
-                title = stringResource(id = R.string.settings_advanced_bypass_vpn_title),
-                summary = stringResource(id = R.string.settings_advanced_bypass_vpn_summary),
-                value = Settings::bypassVpn,
-            )
-            SwitchPreference(
                 title = stringResource(id = R.string.preload_thumb_aggressively),
                 value = Settings::preloadThumbAggressively,
             )
@@ -273,13 +237,22 @@ fun AdvancedScreen() {
                     }
                 }
             }
+            val isEnableCronet = Settings::enableCronet.observed
+            val isEnabledF = Settings::dF.observed
             val ifCloudflareIPOverride = Settings::cloudflareIpOverride.observed
             SwitchPreference(
-                title = stringResource(id = R.string.settings_advanced_cloudflare_ip_override),
-                summary = stringResource(id = R.string.settings_advanced_cloudflare_ip_override_summary),
-                value = ifCloudflareIPOverride.rememberedAccessor,
+                title = stringResource(id = R.string.settings_advanced_cronet_integration),
+                summary = stringResource(id = R.string.settings_advanced_cronet_integration_summary),
+                value = isEnableCronet.rememberedAccessor,
             )
-            AnimatedVisibility(visible = ifCloudflareIPOverride.value) {
+            AnimatedVisibility(visible = isEnableCronet.value) {
+                SwitchPreference(
+                    title = stringResource(id = R.string.settings_advanced_cloudflare_ip_override),
+                    summary = stringResource(id = R.string.settings_advanced_cloudflare_ip_override_summary),
+                    value = ifCloudflareIPOverride.rememberedAccessor,
+                )
+            }
+            AnimatedVisibility(visible = ifCloudflareIPOverride.value && isEnableCronet.value) {
                 Preference(
                     title = cloudflareIPtitle,
                     summary = Settings.cloudflareIp,
@@ -292,6 +265,47 @@ fun AdvancedScreen() {
                         )
                         if (newCloudflareIP.isNotEmpty()) {
                             Settings.cloudflareIp = newCloudflareIP
+                        }
+                    }
+                }
+            }
+            SwitchPreference(
+                title = stringResource(id = R.string.settings_advanced_domain_fronting_title),
+                summary = stringResource(id = R.string.settings_advanced_domain_fronting_summary),
+                value = isEnabledF.rememberedAccessor,
+            )
+            AnimatedVisibility(visible = isEnabledF.value) {
+                SwitchPreference(
+                    title = stringResource(id = R.string.settings_advanced_bypass_vpn_title),
+                    summary = stringResource(id = R.string.settings_advanced_bypass_vpn_summary),
+                    value = Settings::bypassVpn,
+                )
+            }
+            AnimatedVisibility(visible = isEnabledF.value) {
+                SwitchPreference(
+                    title = stringResource(id = R.string.settings_advanced_built_in_hosts_title),
+                    value = Settings::builtInHosts,
+                )
+            }
+            AnimatedVisibility(visible = isEnabledF.value) {
+                Preference(title = stringResource(id = R.string.settings_advanced_dns_over_http_title)) {
+                    val builder = EditTextDialogBuilder(
+                        context,
+                        Settings.dohUrl,
+                        context.getString(R.string.settings_advanced_dns_over_http_hint),
+                    )
+                    builder.setTitle(R.string.settings_advanced_dns_over_http_title)
+                    builder.setPositiveButton(android.R.string.ok, null)
+                    val dialog = builder.create().apply { show() }
+                    dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+                        val text = builder.text.trim()
+                        runCatching {
+                            doh = if (text.isNotBlank()) buildDoHDNS(text) else null
+                        }.onFailure {
+                            builder.setError("Invalid URL!")
+                        }.onSuccess {
+                            Settings.dohUrl = text
+                            dialog.dismiss()
                         }
                     }
                 }
