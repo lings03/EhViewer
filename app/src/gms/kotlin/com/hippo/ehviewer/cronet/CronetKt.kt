@@ -3,7 +3,6 @@ package com.hippo.ehviewer.cronet
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.CHROME_ACCEPT
 import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
-import com.hippo.ehviewer.client.CHROME_USER_AGENT
 import com.hippo.ehviewer.client.EhCookieStore
 import java.nio.ByteBuffer
 import kotlin.contracts.InvocationKind
@@ -44,7 +43,7 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     val cache = (appCtx.cacheDir.toOkioPath() / "http_cache").toFile().apply { mkdirs() }
     builder.setStoragePath(cache.absolutePath)
         .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 100 * 1024)
-        .setUserAgent(CHROME_USER_AGENT)
+        .setUserAgent(Settings.userAgent)
     if (Settings.cloudflareIpOverride) {
         experimentalOptions = JSONObject().put(
             "HostResolverRules",

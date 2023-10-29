@@ -7,7 +7,7 @@
 | 变种 | 功能 |
 |-|-|
 | Default | Android 9+, 完全支持 |
-| Marshmallow | Android 6.0+, 有限支持* |
+| Marshmallow | Android 6.0-8.1, 有限支持* |
 
 \* 不支持压缩包和 GIF
 

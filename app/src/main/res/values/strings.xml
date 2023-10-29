@@ -585,6 +585,7 @@
     <string name="list_tile_thumb_size">Thumb size in thumb mode</string>
     <string name="account_name">Account</string>
     <string name="preload_thumb_aggressively">Preload thumbs aggressively</string>
+    <string name="user_agent">User Agent</string>
     <string name="auto_updates">Automatically check for updates</string>
     <string name="update_frequency_never">Never</string>
     <string name="update_frequency_daily">Daily</string>
@@ -631,6 +632,9 @@
     <string name="pref_color_filter_mode">Color filter blend mode</string>
     <string name="filter_mode_multiply">Multiply</string>
     <string name="filter_mode_screen">Screen</string>
+    <string name="filter_mode_overlay">Overlay</string>
+    <string name="filter_mode_lighten">Dodge / Lighten</string>
+    <string name="filter_mode_darken">Burn / Darken</string>
     <string name="pref_keep_screen_on">Keep screen on</string>
     <string name="pref_read_with_tapping_inverted">Invert tap zones</string>
     <string name="tapping_inverted_none">None</string>

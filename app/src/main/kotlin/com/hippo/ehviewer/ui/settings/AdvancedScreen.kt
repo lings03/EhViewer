@@ -23,8 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +36,7 @@ import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.EhDB
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
+import com.hippo.ehviewer.client.CHROME_USER_AGENT
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
@@ -68,6 +71,8 @@ fun AdvancedScreen() {
     val dialogState = rememberDialogState()
     dialogState.Intercept()
     fun launchSnackBar(content: String) = coroutineScope.launch { snackbarHostState.showSnackbar(content) }
+    val dialogState = rememberDialogState()
+    dialogState.Intercept()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -142,6 +147,19 @@ fun AdvancedScreen() {
                 title = stringResource(id = R.string.preload_thumb_aggressively),
                 value = Settings::preloadThumbAggressively,
             )
+            var userAgent by Settings::userAgent.observed
+            val userAgentTitle = stringResource(id = R.string.user_agent)
+            Preference(
+                title = userAgentTitle,
+                summary = userAgent,
+            ) {
+                coroutineScope.launch {
+                    userAgent = dialogState.awaitInputText(
+                        initial = userAgent,
+                        title = userAgentTitle,
+                    ).trim().takeUnless { it.isBlank() } ?: CHROME_USER_AGENT
+                }
+            }
             val exportFailed = stringResource(id = R.string.settings_advanced_export_data_failed)
             LauncherPreference(
                 title = stringResource(id = R.string.settings_advanced_export_data),
