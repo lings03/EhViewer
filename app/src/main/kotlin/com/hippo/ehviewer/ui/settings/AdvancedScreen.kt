@@ -68,8 +68,6 @@ fun AdvancedScreen() {
     val coroutineScope = rememberCoroutineScope { Dispatchers.IO }
     val cloudflareIPhint = stringResource(id = R.string.settings_advanced_cloudflare_ip_hint)
     val cloudflareIPtitle = stringResource(id = R.string.settings_advanced_cloudflare_ip)
-    val dialogState = rememberDialogState()
-    dialogState.Intercept()
     fun launchSnackBar(content: String) = coroutineScope.launch { snackbarHostState.showSnackbar(content) }
     val dialogState = rememberDialogState()
     dialogState.Intercept()
