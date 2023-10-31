@@ -44,7 +44,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -73,9 +72,10 @@ import eu.kanade.tachiyomi.util.system.pxToDp
 import kotlinx.coroutines.delay
 
 class HistoryScene : BaseScene() {
-    override val showLeftDrawer = true
+    // Disabled for breaking swipe-to-dismiss
+    override val enableDrawerGestures = false
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) = ComposeView(inflater.context).apply {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) = ComposeWithViewLifecycle().apply {
         setMD3Content {
             val dialogState = rememberDialogState()
             dialogState.Intercept()
@@ -161,14 +161,20 @@ class HistoryScene : BaseScene() {
                                 directions = setOf(DismissDirection.EndToStart),
                             )
                         } else {
-                            CrystalCard(modifier = Modifier.height(cardHeight).fillMaxWidth()) {}
+                            CrystalCard(
+                                modifier = Modifier
+                                    .height(cardHeight)
+                                    .fillMaxWidth(),
+                            ) {}
                         }
                     }
                 }
                 Deferred({ delay(200) }) {
                     if (historyData.itemCount == 0) {
                         Column(
-                            modifier = Modifier.padding(paddingValues).fillMaxSize(),
+                            modifier = Modifier
+                                .padding(paddingValues)
+                                .fillMaxSize(),
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {

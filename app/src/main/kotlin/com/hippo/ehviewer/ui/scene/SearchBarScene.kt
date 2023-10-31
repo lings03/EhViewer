@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.search.SearchView
@@ -72,7 +73,7 @@ abstract class SearchBarScene : BaseScene(), ToolBarScene {
     protected abstract val recyclerView: View
     protected abstract val contentView: View
 
-    override val showLeftDrawer = true
+    override val enableDrawerGestures = true
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = SceneSearchbarBinding.inflate(inflater, container, false)
@@ -83,6 +84,7 @@ abstract class SearchBarScene : BaseScene(), ToolBarScene {
             true
         }
         binding.searchBarList.consumeWindowInsets = false
+        binding.searchBarList.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnLifecycleDestroyed(viewLifecycleOwner))
         binding.searchBarList.setMD3Content {
             LazyColumn(modifier = Modifier.navigationBarsPadding().imePadding()) {
                 items(mSuggestionList) {
