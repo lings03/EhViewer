@@ -71,7 +71,6 @@ object Settings : DataStorePreferences(null) {
     var preloadThumbAggressively by boolPref("preload_thumb_aggressively", false)
     var dF by boolPref(KEY_DOMAIN_FRONTING, false)
     var downloadOriginImage by boolPref("download_origin_image", false)
-    var enableCronet by boolPref("enable_cronet", true)
     var bypassVpn by boolPref("bypass_vpn", true)
     var enableQuic by boolPref("enable_quic", true)
     var thumbSizeDp by intPref("thumb_size_", 120)
