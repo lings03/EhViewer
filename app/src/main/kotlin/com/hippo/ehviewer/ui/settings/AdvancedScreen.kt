@@ -141,6 +141,11 @@ fun AdvancedScreen() {
                 value = Settings::language,
             )
             SwitchPreference(
+                title = stringResource(id = R.string.settings_advanced_enable_quic),
+                summary = stringResource(id = R.string.settings_advanced_enable_quic_summary),
+                value = Settings::enableQuic,
+            )
+            SwitchPreference(
                 title = stringResource(id = R.string.preload_thumb_aggressively),
                 value = Settings::preloadThumbAggressively,
             )
