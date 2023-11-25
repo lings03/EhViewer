@@ -16,6 +16,7 @@
 package com.hippo.ehviewer.client.data
 
 import android.os.Parcelable
+import androidx.annotation.Keep
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
@@ -25,7 +26,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 @Entity(tableName = "GALLERIES")
-data class BaseGalleryInfo(
+data class BaseGalleryInfo @Keep constructor(
     @PrimaryKey
     @ColumnInfo(name = "GID")
     override var gid: Long = 0,

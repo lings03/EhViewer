@@ -164,7 +164,6 @@
     <string name="star_4">4 stars</string>
     <string name="star_5">5 stars</string>
     <!-- Gallery detail -->
-    <string name="error_cannot_find_gallery">Couldn\'t find the gallery</string>
     <string name="download">Download</string>
     <string name="read">Read</string>
     <plurals name="page_count">
@@ -246,7 +245,6 @@
     <string name="key_torrent_url">Torrent URL</string>
     <!-- Gallery Comments -->
     <string name="gallery_comments">Gallery Comments</string>
-    <string name="no_one_comments_gallery">No comment.</string>
     <string name="comment_successfully">Comment post successfully</string>
     <string name="comment_failed">Failed to post the comment</string>
     <string name="copy_comment_text">Copy comment text</string>
@@ -425,6 +423,8 @@
     <string name="settings_advanced_app_language_title">App language</string>
     <string name="settings_advanced_enable_quic">QUIC support</string>
     <string name="settings_advanced_enable_quic_summary">Enable QUIC protocol support (App restart required)</string>
+    <string name="settings_advanced_touch_slop">[Experimental] Touch slop factor</string>
+    <string name="settings_advanced_touch_slop_summary">Increasing this will reduce swipe gesture sensitivity</string>
     <string name="settings_advanced_export_data">Export data</string>
     <string name="settings_advanced_export_data_summary">Save data like download list, quick search list, to external storage</string>
     <string name="settings_advanced_export_data_to">Exported data to %s</string>
@@ -595,6 +595,7 @@
     <string name="update_frequency_weekly">Weekly</string>
     <string name="update_frequency_biweekly">Biweekly</string>
     <string name="update_frequency_monthly">Monthly</string>
+    <string name="update_failed">Update failed: %s</string>
     <string name="new_version_available">New version available!</string>
     <string name="already_latest_version">Already the latest version</string>
     <string name="permission_denied">Permission denied</string>

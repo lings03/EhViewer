@@ -1,15 +1,15 @@
 use catch_panic::catch_panic;
 use jni_fn::jni_fn;
-use jnix::jni::objects::{JClass, JString};
-use jnix::jni::sys::jobject;
+use jnix::jni::objects::{JByteBuffer, JClass};
+use jnix::jni::sys::{jint, jobject};
 use jnix::jni::JNIEnv;
 use jnix::{IntoJava, JnixEnv};
 use jnix_macros::IntoJava;
-use parse_jni_string;
 use quick_xml::escape::unescape;
 use std::borrow::Cow;
 use std::ops::Index;
 use tl::{Node, Parser};
+use {check_html, parse_bytebuffer};
 use {get_element_by_id, get_vdom_first_element_by_class_name};
 use {get_first_element_by_class_name, query_childs_first_match_attr};
 use {get_node_attr, get_node_handle_attr, regex};
@@ -99,7 +99,7 @@ fn parse_token_and_gid(str: &str) -> Option<(i64, String)> {
 }
 
 fn parse_uploader_and_pages(str: &str) -> (Option<String>, bool, i32) {
-    let uploader = regex!(r#"<div><a href="https://e[x-]hentai.org/uploader/.*?">(.*?)</a></div>"#)
+    let uploader = regex!(r#"<a href="https://e[x-]hentai.org/uploader/.*?">(.*?)</a>"#)
         .captures(str)
         .map(|grp| grp[1].to_string());
     let pages = match regex!(r"<div>(\d+) pages</div>").captures(str) {
@@ -197,9 +197,21 @@ fn parse_gallery_info(node: &Node, parser: &Parser) -> Option<BaseGalleryInfo> {
 #[catch_panic(default = "std::ptr::null_mut()")]
 #[allow(non_snake_case)]
 #[jni_fn("com.hippo.ehviewer.client.parser.GalleryListParserKt")]
-pub fn parseGalleryInfoList(env: JNIEnv, _class: JClass, input: JString) -> jobject {
+pub fn parseGalleryInfoList(
+    env: JNIEnv,
+    _class: JClass,
+    buffer: JByteBuffer,
+    limit: jint,
+) -> jobject {
     let mut env = JnixEnv { env };
-    parse_jni_string(&mut env, &input, |dom, parser, _env| {
+    parse_bytebuffer(&mut env, buffer, limit, |dom, parser, _, str| {
+        check_html(str);
+        if str.contains("<p>You do not have any watched tags") {
+            panic!("No watched tags!")
+        }
+        if str.contains("No hits found</p>") {
+            panic!("No hits found!")
+        }
         let itg = get_vdom_first_element_by_class_name(dom, "itg")?;
         let children = itg.children()?;
         let iter = children.top().iter();

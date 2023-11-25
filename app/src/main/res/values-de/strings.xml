@@ -100,7 +100,6 @@
     <string name="star_3">3 Sterne</string>
     <string name="star_4">4 Sterne</string>
     <string name="star_5">5 Sterne</string>
-    <string name="error_cannot_find_gallery">Die Galerie konnte gefunden nicht werden</string>
     <string name="download">Herunterladen</string>
     <string name="read">Lesen</string>
     <string name="share">Teilen</string>
@@ -165,7 +164,6 @@
     <string name="favored_times">♥ %d</string>
     <string name="rating_text">%1$s (%2$.2f, %3$d)</string>
     <string name="gallery_comments">Kommentare der Galerie</string>
-    <string name="no_one_comments_gallery">Keine Kommentare</string>
     <string name="comment_successfully">Kommentar erfolgreich gesendet</string>
     <string name="comment_failed">Kommentar nicht gesendet</string>
     <string name="copy_comment_text">Inhalt des Kommentars kopieren</string>

@@ -4,12 +4,12 @@ import com.hippo.ehviewer.BuildConfig
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.execute
 import com.hippo.ehviewer.client.executeAndParseAs
-import eu.kanade.tachiyomi.util.system.logcat
-import io.ktor.util.encodeBase64
 import java.io.File
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.zip.ZipInputStream
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import moe.tarsin.coroutines.runSuspendCatching
 import okhttp3.Request
 import okio.sink
@@ -34,7 +34,7 @@ object AppUpdater {
                 val branch = ghRequest(API_URL).execute {
                     JSONObject(body.string()).getString("default_branch")
                 }
-                val workflowRunsUrl = "$API_URL/actions/workflows/ci.yml/runs?branch=$branch&status=success&per_page=1"
+                val workflowRunsUrl = "$API_URL/actions/workflows/ci.yml/runs?branch=$branch&event=push&status=success&per_page=1"
                 val workflowRun = ghRequest(workflowRunsUrl).executeAndParseAs<GithubWorkflowRuns>().workflowRuns[0]
                 val shortSha = workflowRun.headSha.take(7)
                 if (shortSha != curSha) {
@@ -44,7 +44,9 @@ object AppUpdater {
                         val commitComparisonUrl = "$API_URL/compare/$curSha...$shortSha"
                         val result = ghRequest(commitComparisonUrl).executeAndParseAs<GithubCommitComparison>()
                         // TODO: Prettier format, Markdown?
-                        result.commits.joinToString("\n") { "${it.commit.message} (@${it.author.name})" }
+                        result.commits.joinToString("\n") { commit ->
+                            "${commit.commit.message.takeWhile { it != '\n' }} (@${commit.author.name})"
+                        }
                     }.getOrDefault(workflowRun.title)
                     return Release(shortSha, changelog, archiveUrl)
                 }
@@ -79,11 +81,11 @@ object AppUpdater {
         }
 }
 
+@OptIn(ExperimentalEncodingApi::class)
 private inline fun ghRequest(url: String, builder: Request.Builder.() -> Unit = {}) = Request.Builder().url(url).apply {
-    logcat { url }
     val token = "github_" + "pat_11AXZS" + "T4A0k3TArCGakP3t_7DzUE5S" + "mr1zw8rmmzVtCeRq62" + "A4qkuDMw6YQm5ZUtHSLZ2MLI3J4VSifLXZ"
     val user = "nullArrayList"
-    val base64 = "$user:$token".encodeBase64()
+    val base64 = Base64.encode("$user:$token".toByteArray())
     addHeader("Authorization", "Basic $base64")
 }.apply(builder).build()
 

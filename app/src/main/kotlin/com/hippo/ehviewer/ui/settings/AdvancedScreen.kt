@@ -41,13 +41,15 @@ import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
 import com.hippo.ehviewer.client.systemDns
-import com.hippo.ehviewer.ui.LocalNavController
 import com.hippo.ehviewer.ui.legacy.EditTextDialogBuilder
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.ui.tools.rememberedAccessor
 import com.hippo.ehviewer.util.AppConfig
+import com.hippo.ehviewer.util.Crash
 import com.hippo.ehviewer.util.ReadableTime
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import java.io.File
 import java.net.InetAddress
 import java.util.zip.ZipEntry
@@ -59,9 +61,9 @@ import moe.tarsin.coroutines.runSuspendCatching
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.dnsoverhttps.DnsOverHttps
 
+@Destination
 @Composable
-fun AdvancedScreen() {
-    val navController = LocalNavController.current
+fun AdvancedScreen(navigator: DestinationsNavigator) {
     val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -75,7 +77,7 @@ fun AdvancedScreen() {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.settings_advanced)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navigator.popBackStack() }) {
                         Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
                     }
                 },
@@ -118,6 +120,7 @@ fun AdvancedScreen() {
                                 }
                                 val logcatEntry = ZipEntry("logcat-" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".txt")
                                 zipOs.putNextEntry(logcatEntry)
+                                Crash.collectInfo(zipOs.writer())
                                 Runtime.getRuntime().exec("logcat -d").inputStream.use { it.copyTo(zipOs) }
                             }
                             launchSnackBar(getString(R.string.settings_advanced_dump_logcat_to, uri.toString()))
@@ -143,6 +146,13 @@ fun AdvancedScreen() {
             SwitchPreference(
                 title = stringResource(id = R.string.preload_thumb_aggressively),
                 value = Settings::preloadThumbAggressively,
+            )
+            IntSliderPreference(
+                maxValue = 5,
+                minValue = 1,
+                title = stringResource(id = R.string.settings_advanced_touch_slop),
+                summary = stringResource(id = R.string.settings_advanced_touch_slop_summary),
+                value = Settings::touchSlopFactor,
             )
             var userAgent by Settings::userAgent.observed
             val userAgentTitle = stringResource(id = R.string.user_agent)

@@ -109,10 +109,6 @@ android {
             compileOptions {
                 isCoreLibraryDesugaringEnabled = true
             }
-            lint {
-                checkOnly += setOf("InlinedApi", "NewApi", "UnusedAttribute")
-                error += setOf("InlinedApi", "UnusedAttribute")
-            }
         }
         create("gms") {
             dimension = "oss"
@@ -147,13 +143,15 @@ android {
             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
             "-opt-in=splitties.experimental.ExperimentalSplittiesApi",
             "-opt-in=splitties.preferences.DataStorePreferencesPreview",
+
+            "-P", "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=true",
+            "-P", "plugin:androidx.compose.compiler.plugins.kotlin:intrinsicRemember=true",
         )
     }
 
     lint {
-        abortOnError = true
-        checkReleaseBuilds = false
-        disable.add("MissingTranslation")
+        disable += setOf("MissingTranslation", "MissingQuantity")
+        fatal += setOf("NewApi", "InlineApi")
     }
 
     packaging {
@@ -200,11 +198,13 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.browser)
-    implementation(libs.androidx.collection)
 
     // https://developer.android.com/jetpack/androidx/releases/compose-material3
     api(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
+
+    implementation(libs.compose.destinations.core)
+    ksp(libs.compose.destinations.compiler)
 
     implementation(libs.androidx.core)
     implementation(libs.androidx.core.splashscreen)
@@ -214,6 +214,7 @@ dependencies {
     implementation(libs.androidx.fragment)
     // https://developer.android.com/jetpack/androidx/releases/lifecycle
     implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.lifecycle.compose)
 
     // https://developer.android.com/jetpack/androidx/releases/navigation
     implementation(libs.bundles.androidx.navigation)
@@ -247,9 +248,13 @@ dependencies {
 
     implementation(libs.okio.jvm)
 
+    implementation(libs.diff)
+
     implementation(libs.aboutlibraries.core)
 
     implementation(libs.insetter) // Dead Dependency
+
+    implementation(libs.reorderable)
 
     implementation(platform(libs.arrow.stack))
     implementation(libs.arrow.fx.coroutines)
@@ -270,11 +275,18 @@ dependencies {
     debugImplementation(libs.chucker)
     releaseImplementation(libs.chucker.nop)
 
-    debugImplementation(libs.leakcanary.android)
-
     coreLibraryDesugaring(libs.desugar)
 
     "gmsImplementation"(libs.bundles.cronet)
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Workaround IME won't show again once hidden.
+        // Google issue-tracker link?
+        force("androidx.compose.ui:ui-text-android:1.6.0-alpha08")
+        exclude("androidx.navigation", "navigation-compose")
+    }
 }
 
 kotlin {

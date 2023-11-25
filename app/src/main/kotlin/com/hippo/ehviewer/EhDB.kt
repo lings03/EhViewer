@@ -130,7 +130,7 @@ object EhDB {
         deleteGalleryInfo(galleryInfo)
     }
 
-    suspend fun removeLocalFavorites(galleryInfoList: List<BaseGalleryInfo>) {
+    suspend fun removeLocalFavorites(galleryInfoList: Collection<BaseGalleryInfo>) {
         galleryInfoList.forEach {
             removeLocalFavorites(it)
         }
@@ -146,7 +146,7 @@ object EhDB {
         db.localFavoritesDao().upsert(LocalFavoriteInfo(galleryInfo.gid))
     }
 
-    suspend fun putLocalFavorites(galleryInfoList: List<BaseGalleryInfo>) {
+    suspend fun putLocalFavorites(galleryInfoList: Collection<BaseGalleryInfo>) {
         galleryInfoList.forEach {
             putLocalFavorites(it)
         }
@@ -195,7 +195,7 @@ object EhDB {
         db.historyDao().upsert(HistoryInfo(galleryInfo.gid))
     }
 
-    suspend fun modifyHistoryInfoFavslotNonRefresh(gid: Long, slot: Int) {
+    suspend fun updateFavoriteSlot(gid: Long, slot: Int) {
         val dao = db.galleryDao()
         dao.load(gid)?.let {
             it.favoriteSlot = slot

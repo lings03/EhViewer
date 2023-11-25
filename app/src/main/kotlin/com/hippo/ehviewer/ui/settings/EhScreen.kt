@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.text.parseAsHtml
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
+import com.hippo.ehviewer.asMutableState
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.EhTagDatabase
@@ -43,17 +44,18 @@ import com.hippo.ehviewer.client.parser.HomeParser
 import com.hippo.ehviewer.dailycheck.schedHour
 import com.hippo.ehviewer.dailycheck.schedMinute
 import com.hippo.ehviewer.dailycheck.updateDailyCheckWork
-import com.hippo.ehviewer.ui.FILTER_SCREEN
-import com.hippo.ehviewer.ui.LocalNavController
-import com.hippo.ehviewer.ui.MYTAGS_SCREEN
-import com.hippo.ehviewer.ui.SIGN_IN_ROUTE_NAME
-import com.hippo.ehviewer.ui.UCONFIG_SCREEN
+import com.hippo.ehviewer.ui.destinations.FilterScreenDestination
+import com.hippo.ehviewer.ui.destinations.MyTagsScreenDestination
+import com.hippo.ehviewer.ui.destinations.SignInScreenDestination
+import com.hippo.ehviewer.ui.destinations.UConfigScreenDestination
 import com.hippo.ehviewer.ui.legacy.BaseDialogBuilder
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.TimePickerDialog
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.ui.tools.rememberedAccessor
 import com.hippo.ehviewer.util.copyTextToClipboard
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -61,9 +63,9 @@ import kotlinx.coroutines.launch
 import moe.tarsin.coroutines.runSuspendCatching
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
+@Destination
 @Composable
-fun EhScreen() {
-    val navController = LocalNavController.current
+fun EhScreen(navigator: DestinationsNavigator) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope { Dispatchers.IO }
@@ -76,7 +78,7 @@ fun EhScreen() {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.settings_eh)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navigator.popBackStack() }) {
                         Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
                     }
                 },
@@ -119,7 +121,7 @@ fun EhScreen() {
                     }
                     setPositiveButton(R.string.settings_eh_sign_out) { _, _ ->
                         EhUtils.signOut()
-                        navController.navigate(SIGN_IN_ROUTE_NAME)
+                        navigator.navigate(SignInScreenDestination)
                     }
                 }.show()
             }
@@ -184,11 +186,11 @@ fun EhScreen() {
                 Preference(
                     title = stringResource(id = R.string.settings_u_config),
                     summary = stringResource(id = R.string.settings_u_config_summary),
-                ) { navController.navigate(UCONFIG_SCREEN) }
+                ) { navigator.navigate(UConfigScreenDestination) }
                 Preference(
                     title = stringResource(id = R.string.settings_my_tags),
                     summary = stringResource(id = R.string.settings_my_tags_summary),
-                ) { navController.navigate(MYTAGS_SCREEN) }
+                ) { navigator.navigate(MyTagsScreenDestination) }
             }
             var defaultFavSlot by Settings::defaultFavSlot.observed
             val disabled = stringResource(id = R.string.disabled_nav)
@@ -198,17 +200,17 @@ fun EhScreen() {
                 in 0..9 -> Settings.favCat[defaultFavSlot]
                 else -> stringResource(id = R.string.default_favorites_warning)
             }
-            val items = if (signin) {
-                arrayOf(disabled, localFav, *Settings.favCat)
-            } else {
-                arrayOf(disabled, localFav)
-            }
             Preference(
                 title = stringResource(id = R.string.default_favorites_collection),
                 summary = summary,
             ) {
                 coroutineScope.launch {
-                    defaultFavSlot = dialogState.showSelectItem(*items, title = R.string.default_favorites_collection) - 2
+                    defaultFavSlot = dialogState.showSelectItem(
+                        disabled,
+                        localFav,
+                        *Settings.favCat.takeIf { signin } ?: emptyArray(),
+                        title = R.string.default_favorites_collection,
+                    ) - 2
                 }
             }
             SimpleMenuPreferenceInt(
@@ -235,27 +237,27 @@ fun EhScreen() {
                 title = stringResource(id = R.string.settings_eh_list_mode),
                 entry = R.array.list_mode_entries,
                 entryValueRes = R.array.list_mode_entry_values,
-                value = Settings::listMode.observed,
+                value = Settings.listMode.asMutableState(),
             )
             IntSliderPreference(
                 maxValue = 60,
                 minValue = 20,
                 step = 7,
                 title = stringResource(id = R.string.list_tile_thumb_size),
-                value = Settings::listThumbSize,
+                value = Settings.listThumbSize::value,
             )
             SimpleMenuPreferenceInt(
                 title = stringResource(id = R.string.settings_eh_detail_size),
                 entry = R.array.detail_size_entries,
                 entryValueRes = R.array.detail_size_entry_values,
-                value = Settings::detailSize.observed,
+                value = Settings.detailSize.asMutableState(),
             )
             IntSliderPreference(
                 maxValue = 400,
                 minValue = 80,
                 step = 7,
                 title = stringResource(id = R.string.settings_eh_thumb_size),
-                value = Settings::thumbSizeDp,
+                value = Settings.thumbSizeDp::value,
             )
             val thumbResolution = Settings::thumbResolution.observed
             val summary2 = stringResource(id = R.string.settings_eh_thumb_resolution_summary, stringArrayResource(id = R.array.thumb_resolution_entries)[thumbResolution.value])
@@ -306,7 +308,7 @@ fun EhScreen() {
             Preference(
                 title = stringResource(id = R.string.settings_eh_filter),
                 summary = stringResource(id = R.string.settings_eh_filter_summary),
-            ) { navController.navigate(FILTER_SCREEN) }
+            ) { navigator.navigate(FilterScreenDestination) }
             SwitchPreference(
                 title = stringResource(id = R.string.settings_eh_metered_network_warning),
                 value = Settings::meteredNetworkWarning,

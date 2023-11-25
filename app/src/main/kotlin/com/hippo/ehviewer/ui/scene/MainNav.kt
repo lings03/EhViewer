@@ -32,8 +32,8 @@ fun NavController.navWithUrl(url: String): Boolean {
         navAnimated(
             R.id.galleryListScene,
             bundleOf(
-                GalleryListScene.KEY_ACTION to GalleryListScene.ACTION_LIST_URL_BUILDER,
-                GalleryListScene.KEY_LIST_URL_BUILDER to it,
+                GalleryListFragment.KEY_ACTION to GalleryListFragment.ACTION_LIST_URL_BUILDER,
+                GalleryListFragment.KEY_LIST_URL_BUILDER to it,
             ),
         )
         return true
@@ -42,11 +42,7 @@ fun NavController.navWithUrl(url: String): Boolean {
     GalleryDetailUrlParser.parse(url)?.apply {
         navAnimated(
             R.id.galleryDetailScene,
-            bundleOf(
-                GalleryDetailScene.KEY_ACTION to GalleryDetailScene.ACTION_GID_TOKEN,
-                GalleryDetailScene.KEY_GID to gid,
-                GalleryDetailScene.KEY_TOKEN to token,
-            ),
+            bundleOf(GalleryDetailScene.KEY_ARGS to TokenArgs(gid, token)),
         )
         return true
     }
@@ -55,10 +51,9 @@ fun NavController.navWithUrl(url: String): Boolean {
         navAnimated(
             R.id.progressScene,
             bundleOf(
-                ProgressScene.KEY_ACTION to ProgressScene.ACTION_GALLERY_TOKEN,
-                ProgressScene.KEY_GID to gid,
-                ProgressScene.KEY_PTOKEN to pToken,
-                ProgressScene.KEY_PAGE to page,
+                ProgressFragment.KEY_GID to gid,
+                ProgressFragment.KEY_PTOKEN to pToken,
+                ProgressFragment.KEY_PAGE to page,
             ),
         )
         return true

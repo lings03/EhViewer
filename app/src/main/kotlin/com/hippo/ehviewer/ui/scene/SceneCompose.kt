@@ -1,15 +1,15 @@
 package com.hippo.ehviewer.ui.scene
 
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
+import com.hippo.ehviewer.ui.setMD3Content
 
-/**
- * compose view with fragment view lifecycle
- * use it after [Fragment.onCreateView]
- * also @see [Fragment.getViewLifecycleOwner]
- */
 @Suppress("FunctionName")
-fun Fragment.ComposeWithViewLifecycle() = ComposeView(requireContext()).apply {
+inline fun Fragment.ComposeWithMD3(crossinline content: @Composable () -> Unit) = ComposeView(requireContext()).apply {
+    consumeWindowInsets = false
     setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnLifecycleDestroyed(viewLifecycleOwner))
+    setMD3Content(content)
 }

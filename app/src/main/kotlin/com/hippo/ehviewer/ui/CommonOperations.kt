@@ -18,10 +18,12 @@ package com.hippo.ehviewer.ui
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -31,12 +33,16 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.HeartBroken
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.hippo.ehviewer.EhDB
 import com.hippo.ehviewer.R
@@ -52,136 +58,23 @@ import com.hippo.ehviewer.client.exception.EhException
 import com.hippo.ehviewer.dao.DownloadInfo
 import com.hippo.ehviewer.download.DownloadManager
 import com.hippo.ehviewer.download.DownloadService
+import com.hippo.ehviewer.download.downloadDir
 import com.hippo.ehviewer.download.downloadLocation
-import com.hippo.ehviewer.ui.legacy.ListCheckBoxDialogBuilder
 import com.hippo.ehviewer.ui.scene.BaseScene
 import com.hippo.ehviewer.ui.tools.DialogState
 import com.hippo.ehviewer.util.FavouriteStatusRouter
-import com.hippo.ehviewer.util.LongList
 import com.hippo.ehviewer.util.findActivity
+import com.hippo.ehviewer.util.isAtLeastT
+import com.hippo.ehviewer.util.mapToLongArray
 import com.hippo.ehviewer.util.requestPermission
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
-import eu.kanade.tachiyomi.util.lang.launchNow
 import eu.kanade.tachiyomi.util.lang.withIOContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import moe.tarsin.coroutines.runSuspendCatching
 import splitties.init.appCtx
-
-object CommonOperations {
-    fun startDownload(activity: MainActivity?, galleryInfo: BaseGalleryInfo, forceDefault: Boolean) {
-        startDownload(activity!!, listOf(galleryInfo), forceDefault)
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    fun startDownload(
-        activity: MainActivity,
-        galleryInfos: List<BaseGalleryInfo>,
-        forceDefault: Boolean,
-    ) {
-        launchNow {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                activity.requestPermission(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            doStartDownload(activity, galleryInfos, forceDefault)
-        }
-    }
-
-    private fun doStartDownload(
-        activity: MainActivity,
-        galleryInfos: List<BaseGalleryInfo>,
-        forceDefault: Boolean,
-    ) {
-        val toStart = LongList()
-        val toAdd: MutableList<BaseGalleryInfo> = ArrayList()
-        for (gi in galleryInfos) {
-            if (DownloadManager.containDownloadInfo(gi.gid)) {
-                toStart.add(gi.gid)
-            } else {
-                toAdd.add(gi)
-            }
-        }
-        if (!toStart.isEmpty()) {
-            val intent = Intent(activity, DownloadService::class.java)
-            intent.action = DownloadService.ACTION_START_RANGE
-            intent.putExtra(DownloadService.KEY_GID_LIST, toStart)
-            ContextCompat.startForegroundService(activity, intent)
-        }
-        if (toAdd.isEmpty()) {
-            activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
-            return
-        }
-        var justStart = forceDefault
-        var label: String? = null
-        // Get default download label
-        if (!justStart && Settings.hasDefaultDownloadLabel) {
-            label = Settings.defaultDownloadLabel
-            justStart = label == null || DownloadManager.containLabel(label)
-        }
-        // If there is no other label, just use null label
-        if (!justStart && DownloadManager.labelList.isEmpty()) {
-            justStart = true
-            label = null
-        }
-        if (justStart) {
-            // Got default label
-            for (gi in toAdd) {
-                val intent = Intent(activity, DownloadService::class.java)
-                intent.action = DownloadService.ACTION_START
-                intent.putExtra(DownloadService.KEY_LABEL, label)
-                intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi)
-                ContextCompat.startForegroundService(activity, intent)
-            }
-            // Notify
-            activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
-        } else {
-            // Let use chose label
-            val list = DownloadManager.labelList
-            val items = mutableListOf<String>()
-            items.add(activity.getString(R.string.default_download_label_name))
-            items.addAll(list.map { it.label })
-            ListCheckBoxDialogBuilder(
-                activity,
-                items,
-                { builder: ListCheckBoxDialogBuilder?, _: AlertDialog?, position: Int ->
-                    var label1: String?
-                    if (position == 0) {
-                        label1 = null
-                    } else {
-                        label1 = items[position]
-                        if (!DownloadManager.containLabel(label1)) {
-                            label1 = null
-                        }
-                    }
-                    // Start download
-                    for (gi in toAdd) {
-                        val intent = Intent(activity, DownloadService::class.java)
-                        intent.action = DownloadService.ACTION_START
-                        intent.putExtra(DownloadService.KEY_LABEL, label1)
-                        intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi)
-                        ContextCompat.startForegroundService(activity, intent)
-                    }
-                    // Save settings
-                    if (builder?.isChecked == true) {
-                        Settings.hasDefaultDownloadLabel = true
-                        Settings.defaultDownloadLabel = label1
-                    } else {
-                        Settings.hasDefaultDownloadLabel = false
-                    }
-                    // Notify
-                    activity.showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
-                },
-                activity.getString(R.string.remember_download_label),
-                false,
-            )
-                .setTitle(R.string.download)
-                .show()
-        }
-    }
-}
 
 private fun removeNoMediaFile(downloadDir: UniFile) {
     val noMedia = downloadDir.subFile(".nomedia") ?: return
@@ -206,6 +99,86 @@ suspend fun keepNoMediaFileStatus() {
 
 fun getFavoriteIcon(favorited: Boolean) =
     if (favorited) Icons.Default.Favorite else Icons.Default.FavoriteBorder
+
+suspend fun DialogState.startDownload(
+    context: Context,
+    forceDefault: Boolean,
+    vararg galleryInfos: BaseGalleryInfo,
+) = with(context) {
+    if (isAtLeastT) {
+        requestPermission(Manifest.permission.POST_NOTIFICATIONS)
+    }
+    val (toStart, toAdd) = galleryInfos.partition { DownloadManager.containDownloadInfo(it.gid) }
+    if (toStart.isNotEmpty()) {
+        val intent = Intent(context, DownloadService::class.java)
+        intent.action = DownloadService.ACTION_START_RANGE
+        val list = toStart.mapToLongArray(GalleryInfo::gid)
+        intent.putExtra(DownloadService.KEY_GID_LIST, list)
+        ContextCompat.startForegroundService(context, intent)
+    }
+    if (toAdd.isEmpty()) {
+        return with(findActivity<MainActivity>()) {
+            showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
+        }
+    }
+    var justStart = forceDefault
+    var label: String? = null
+    // Get default download label
+    if (!justStart && Settings.hasDefaultDownloadLabel) {
+        label = Settings.defaultDownloadLabel
+        justStart = label == null || DownloadManager.containLabel(label)
+    }
+    // If there is no other label, just use null label
+    if (!justStart && DownloadManager.labelList.isEmpty()) {
+        justStart = true
+        label = null
+    }
+    if (justStart) {
+        // Got default label
+        for (gi in toAdd) {
+            val intent = Intent(context, DownloadService::class.java)
+            intent.action = DownloadService.ACTION_START
+            intent.putExtra(DownloadService.KEY_LABEL, label)
+            intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi)
+            ContextCompat.startForegroundService(context, intent)
+        }
+        // Notify
+        with(findActivity<MainActivity>()) {
+            showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
+        }
+    } else {
+        // Let use chose label
+        val list = DownloadManager.labelList
+        val items = arrayOf(
+            getString(R.string.default_download_label_name),
+            *list.map { it.label }.toTypedArray(),
+        )
+        val (selected, checked) = showSelectItemWithCheckBox(
+            *items,
+            title = R.string.download,
+            checkBoxText = R.string.remember_download_label,
+        )
+        val label1 = if (selected == 0) null else items[selected].takeIf { DownloadManager.containLabel(it) }
+        // Start download
+        for (gi in toAdd) {
+            val intent = Intent(context, DownloadService::class.java)
+            intent.action = DownloadService.ACTION_START
+            intent.putExtra(DownloadService.KEY_LABEL, label1)
+            intent.putExtra(DownloadService.KEY_GALLERY_INFO, gi)
+            ContextCompat.startForegroundService(context, intent)
+        }
+        // Save settings
+        if (checked) {
+            Settings.hasDefaultDownloadLabel = true
+            Settings.defaultDownloadLabel = label1
+        } else {
+            Settings.hasDefaultDownloadLabel = false
+        }
+        with(context.findActivity<MainActivity>()) {
+            showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
+        }
+    }
+}
 
 suspend fun DialogState.modifyFavorites(galleryInfo: BaseGalleryInfo): Boolean {
     val localFavorited = EhDB.containLocalFavorites(galleryInfo.gid)
@@ -321,7 +294,7 @@ suspend fun DialogState.doGalleryInfoAction(info: BaseGalleryInfo, context: Cont
                 if (downloaded) {
                     confirmRemoveDownload(info)
                 } else {
-                    CommonOperations.startDownload(this@with, info, false)
+                    startDownload(context, false, info)
                 }
             }
 
@@ -352,14 +325,22 @@ private const val MAX_FAVNOTE_CHAR = 200
 suspend fun DialogState.confirmRemoveDownload(info: GalleryInfo, onDismiss: () -> Unit = {}) {
     var checked by mutableStateOf(Settings.removeImageFiles)
     awaitPermissionOrCancel(
-        confirmText = android.R.string.ok,
-        dismissText = android.R.string.cancel,
         title = R.string.download_remove_dialog_title,
         onDismiss = onDismiss,
         text = {
             Column {
-                Text(text = stringResource(id = R.string.download_remove_dialog_message, info.title.orEmpty()))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(id = R.string.download_remove_dialog_message, info.title.orEmpty()),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { checked = !checked },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Checkbox(checked = checked, onCheckedChange = { checked = it })
                     Text(text = stringResource(id = R.string.download_remove_dialog_check_text))
                 }
@@ -369,6 +350,46 @@ suspend fun DialogState.confirmRemoveDownload(info: GalleryInfo, onDismiss: () -
     Settings.removeImageFiles = checked
     withIOContext {
         DownloadManager.deleteDownload(info.gid, checked)
+    }
+}
+
+suspend fun DialogState.confirmRemoveDownloadRange(list: List<DownloadInfo>) {
+    var checked by mutableStateOf(Settings.removeImageFiles)
+    awaitPermissionOrCancel(
+        title = R.string.download_remove_dialog_title,
+        text = {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.download_remove_dialog_message_2, list.size),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { checked = !checked },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(checked = checked, onCheckedChange = { checked = it })
+                    Text(text = stringResource(id = R.string.download_remove_dialog_check_text))
+                }
+            }
+        },
+    )
+    Settings.removeImageFiles = checked
+    withIOContext {
+        // Delete
+        DownloadManager.deleteRangeDownload(list.mapToLongArray(DownloadInfo::gid))
+        // Delete image files
+        if (checked) {
+            list.forEach { info ->
+                // Delete file
+                info.downloadDir?.delete()
+                // Remove download path
+                EhDB.removeDownloadDirname(info.gid)
+            }
+        }
     }
 }
 

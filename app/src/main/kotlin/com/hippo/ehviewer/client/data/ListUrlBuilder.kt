@@ -35,6 +35,7 @@ data class ListUrlBuilder(
     var mode: Int = MODE_NORMAL,
     private var mPrev: String? = null,
     var mNext: String? = null,
+    // Reset to null after initial loading
     var mJumpTo: String? = null,
     var category: Int = EhUtils.NONE,
     private var mKeyword: String? = null,
@@ -134,9 +135,8 @@ data class ListUrlBuilder(
     /**
      * @param query xxx=yyy&mmm=nnn
      */
-    fun setQuery(query: String?) {
+    constructor(query: String?) : this() {
         // TODO page
-        reset()
         if (query.isNullOrEmpty()) {
             return
         }
@@ -374,9 +374,7 @@ data class ListUrlBuilder(
                 buildString {
                     append(EhUrl.HOST_E)
                     append("toplist.php?tl=")
-                    mKeyword.orEmpty().let {
-                        append(encodeUTF8(it))
-                    }
+                    append(mKeyword!!)
                     mJumpTo?.let {
                         append("&p=").append(it)
                     }

@@ -128,7 +128,6 @@
     <string name="star_5">5개</string>
 
     <!-- Gallery detail -->
-    <string name="error_cannot_find_gallery">갤러리를 찾을 수 없습니다.</string>
     <string name="download">다운로드</string>
     <string name="read">읽기</string>
     <plurals name="page_count">
@@ -185,7 +184,6 @@
 
     <!-- Gallery Comments -->
     <string name="gallery_comments">갤러리 코멘트</string>
-    <string name="no_one_comments_gallery">코멘트가 없습니다.</string>
     <string name="comment_successfully">코멘트를 남겼습니다.</string>
     <string name="comment_failed">코멘트를 남기지 못했습니다.</string>
     <string name="copy_comment_text">코멘트 텍스트 복사</string>

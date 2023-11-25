@@ -46,19 +46,20 @@ import com.hippo.ehviewer.client.EhFilter.trigger
 import com.hippo.ehviewer.dao.Filter
 import com.hippo.ehviewer.dao.FilterMode
 import com.hippo.ehviewer.databinding.DialogAddFilterBinding
-import com.hippo.ehviewer.ui.LocalNavController
 import com.hippo.ehviewer.ui.legacy.BaseDialogBuilder
 import com.hippo.ehviewer.ui.tools.Deferred
 import com.hippo.ehviewer.ui.tools.LocalDialogState
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import moe.tarsin.coroutines.groupByToObserved
 
+@Destination
 @Composable
-fun FilterScreen() {
-    val navController = LocalNavController.current
+fun FilterScreen(navigator: DestinationsNavigator) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -71,30 +72,17 @@ fun FilterScreen() {
             dialog.getButton(DialogInterface.BUTTON_POSITIVE)!!.setOnClickListener(this)
         }
         override fun onClick(v: View) {
-            val emptyError = context.getString(R.string.text_is_empty)
-            val text1: String?
-            binding.spinner.run {
-                text1 = editText?.text?.toString()
-                if (text1.isNullOrBlank()) {
-                    error = emptyError
+            binding.textInputLayout.run {
+                val text = editText!!.text.toString().trim()
+                if (text.isBlank()) {
+                    error = context.getString(R.string.text_is_empty)
                     return
                 } else {
                     error = null
                 }
-            }
-            val text: String?
-            binding.textInputLayout.run {
-                text = editText?.text?.toString()?.trim()
-                if (text.isNullOrBlank()) {
-                    error = emptyError
-                    return
-                } else {
-                    error = null
-                }
-            }
-            binding.textInputLayout.run {
-                val mode = FilterMode.entries[mArray.indexOf(text1)]
-                val filter = Filter(mode, text!!)
+                val modeText = binding.spinner.editText!!.text.toString()
+                val mode = FilterMode.entries[mArray.indexOf(modeText)]
+                val filter = Filter(mode, text)
                 filter.remember {
                     if (it) {
                         post { dialog.dismiss() }
@@ -112,7 +100,7 @@ fun FilterScreen() {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.filter)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navigator.popBackStack() }) {
                         Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
                     }
                 },
@@ -168,10 +156,7 @@ fun FilterScreen() {
                                 IconButton(
                                     onClick = {
                                         scope.launch {
-                                            dialogState.awaitPermissionOrCancel(
-                                                confirmText = R.string.delete,
-                                                dismissText = android.R.string.cancel,
-                                            ) {
+                                            dialogState.awaitPermissionOrCancel(confirmText = R.string.delete) {
                                                 Text(text = stringResource(id = R.string.delete_filter, filter.text))
                                             }
                                             filter.forget {

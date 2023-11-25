@@ -39,7 +39,7 @@ object FavouriteStatusRouter {
     private val _globalFlow = MutableSharedFlow<Pair<Long, Int>>(extraBufferCapacity = 1).apply {
         listenerScope.launch {
             collect { (gid, slot) ->
-                EhDB.modifyHistoryInfoFavslotNonRefresh(gid, slot)
+                EhDB.updateFavoriteSlot(gid, slot)
             }
         }
     }
@@ -47,7 +47,7 @@ object FavouriteStatusRouter {
     val globalFlow = _globalFlow.asSharedFlow()
 
     @Composable
-    inline fun <R> collectAsState(initial: GalleryInfo, crossinline transform: @DisallowComposableCalls (Int) -> R) = remember(initial) {
+    inline fun <R> collectAsState(initial: GalleryInfo, crossinline transform: @DisallowComposableCalls (Int) -> R) = remember {
         globalFlow.transform { (gid, slot) -> if (initial.gid == gid) emit(slot) }
             .map { transform(it) }
         // We cannot use .map(transform) otherwise we will get a strange NPE

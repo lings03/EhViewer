@@ -1,6 +1,7 @@
 package com.hippo.ehviewer.client.parser
 
 import android.os.Parcelable
+import androidx.annotation.Keep
 import com.hippo.ehviewer.client.exception.InsufficientFundsException
 import com.hippo.ehviewer.client.exception.ParseException
 import java.nio.ByteBuffer
@@ -35,6 +36,6 @@ object HomeParser {
 }
 
 @Parcelize
-data class Limits(val current: Int, val maximum: Int, val resetCost: Int) : Parcelable
+data class Limits @Keep constructor(val current: Int, val maximum: Int, val resetCost: Int) : Parcelable
 
 private external fun parseLimit(body: ByteBuffer, limit: Int = body.limit()): Limits

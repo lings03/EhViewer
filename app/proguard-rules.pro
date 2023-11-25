@@ -1,30 +1,20 @@
--keepclassmembers class * implements android.os.Parcelable {
-    public static final ** CREATOR;
-}
-
 -keepclasseswithmembernames,includedescriptorclasses class * {
     native <methods>;
 }
 
-# https://issuetracker.google.com/issues/190382641
--keepclassmembers class kotlin.SafePublicationLazyImpl {
-    java.lang.Object _value;
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
 }
 
--keep class androidx.viewpager.widget.ViewPager$LayoutParams { int position; }
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}
 
--keep class com.hippo.ehviewer.client.parser.Torrent { *; }
--keep class com.hippo.ehviewer.client.parser.GalleryListResult { *; }
--keep class com.hippo.ehviewer.client.parser.Limits { *; }
--keep class com.hippo.ehviewer.client.data.BaseGalleryInfo { *; }
--keep class com.hippo.ehviewer.ui.scene.SearchBarScene { getBinding(); }
+# https://issuetracker.google.com/issues/307323842
+-keepclassmembers class androidx.compose.ui.platform.WindowInfoImpl {
+    setWindowFocused(boolean);
+}
 
-# Ktor logger
--dontwarn org.slf4j.impl.StaticLoggerBinder
-
--keepattributes LineNumberTable,SourceFile
--renamesourcefileattribute SourceFile
-
--repackageclasses
 -allowaccessmodification
--overloadaggressively
+-repackageclasses

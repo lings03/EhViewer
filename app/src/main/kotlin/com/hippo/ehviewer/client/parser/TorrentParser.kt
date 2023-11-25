@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.client.parser
 
+import androidx.annotation.Keep
 import com.hippo.ehviewer.client.exception.ParseException
 import java.nio.ByteBuffer
 
@@ -9,7 +10,7 @@ object TorrentParser {
     }.getOrElse { throw ParseException("Can't parse torrent list", it) }
 }
 
-class Torrent(
+class Torrent @Keep constructor(
     val posted: String,
     val size: String,
     val seeds: Int,
@@ -21,6 +22,6 @@ class Torrent(
 
 fun Torrent.format() = "[$posted] $name [$size] [↑$seeds ↓$peers ✓$downloads]"
 
-typealias TorrentResult = ArrayList<Torrent>
+typealias TorrentResult = List<Torrent>
 
 private external fun parseTorrent(body: ByteBuffer, size: Int = body.limit()): ArrayList<Torrent>

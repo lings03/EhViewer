@@ -135,7 +135,6 @@
     <string name="star_5">5 étoiles</string>
 
     <!-- Gallery detail -->
-    <string name="error_cannot_find_gallery">La galerie introuvable</string>
     <string name="download">Télécharger</string>
     <string name="read">Lire</string>
     <plurals name="page_count">
@@ -211,7 +210,6 @@
 
     <!-- Gallery Comments -->
     <string name="gallery_comments">Commentaires de la galerie</string>
-    <string name="no_one_comments_gallery">Personne n\'a commenté sur la galerie</string>
     <string name="comment_successfully">Commentaire posté</string>
     <string name="comment_failed">Impossible de commenter</string>
     <string name="copy_comment_text">Copier le texte du commentaire</string>

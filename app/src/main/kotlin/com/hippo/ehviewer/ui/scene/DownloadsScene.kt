@@ -34,7 +34,19 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
+import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
@@ -48,11 +60,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -60,16 +74,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.viewbinding.ViewBinding
 import arrow.core.partially1
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.hippo.ehviewer.EhApplication.Companion.imageCache
 import com.hippo.ehviewer.EhDB
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.Settings.detailSize
-import com.hippo.ehviewer.Settings.listThumbSize
 import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.client.data.GalleryInfo
 import com.hippo.ehviewer.coil.read
@@ -79,20 +92,16 @@ import com.hippo.ehviewer.databinding.ItemDownloadBinding
 import com.hippo.ehviewer.databinding.ItemDrawerListBinding
 import com.hippo.ehviewer.databinding.SceneDownloadBinding
 import com.hippo.ehviewer.download.DownloadManager
-import com.hippo.ehviewer.download.DownloadManager as downloadManager
 import com.hippo.ehviewer.download.DownloadService
 import com.hippo.ehviewer.download.DownloadService.Companion.clear
 import com.hippo.ehviewer.download.downloadDir
 import com.hippo.ehviewer.ktbuilder.imageRequest
 import com.hippo.ehviewer.ui.confirmRemoveDownload
+import com.hippo.ehviewer.ui.confirmRemoveDownloadRange
 import com.hippo.ehviewer.ui.legacy.AutoStaggeredGridLayoutManager
 import com.hippo.ehviewer.ui.legacy.BaseDialogBuilder
-import com.hippo.ehviewer.ui.legacy.CheckBoxDialogBuilder
 import com.hippo.ehviewer.ui.legacy.EditTextDialogBuilder
-import com.hippo.ehviewer.ui.legacy.FabLayout
-import com.hippo.ehviewer.ui.legacy.FabLayout.OnClickFabListener
 import com.hippo.ehviewer.ui.legacy.HandlerDrawable
-import com.hippo.ehviewer.ui.legacy.STRATEGY_MIN_SIZE
 import com.hippo.ehviewer.ui.legacy.ViewTransition
 import com.hippo.ehviewer.ui.main.DEFAULT_ASPECT
 import com.hippo.ehviewer.ui.main.requestOf
@@ -101,24 +110,22 @@ import com.hippo.ehviewer.ui.setMD3Content
 import com.hippo.ehviewer.ui.tools.CropDefaults
 import com.hippo.ehviewer.ui.tools.DialogState
 import com.hippo.ehviewer.util.FileUtils
-import com.hippo.ehviewer.util.LongList
 import com.hippo.ehviewer.util.containsIgnoreCase
+import com.hippo.ehviewer.util.mapToLongArray
 import com.hippo.ehviewer.util.sendTo
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.util.lang.launchIO
-import eu.kanade.tachiyomi.util.lang.launchNonCancellable
 import eu.kanade.tachiyomi.util.lang.launchUI
+import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
-import eu.kanade.tachiyomi.util.system.pxToDp
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import rikka.core.res.resolveColor
 
 @SuppressLint("RtlHardcoded")
-class DownloadsScene :
-    SearchBarScene(),
-    OnClickFabListener {
+class DownloadsScene : SearchBarScene() {
     /*---------------
      Whole life cycle
      ---------------*/
@@ -145,11 +152,10 @@ class DownloadsScene :
     override val fabLayout get() = binding.fabLayout
     override val fastScroller get() = binding.fastScroller
     override val recyclerView get() = binding.recyclerView
-    override val contentView get() = binding.content
 
     private fun initLabels() {
         context ?: return
-        val listLabel = downloadManager.labelList
+        val listLabel = DownloadManager.labelList
         // Add "All" and "Default" label names
         mLabels = arrayListOf(
             getString(R.string.download_all),
@@ -226,8 +232,8 @@ class DownloadsScene :
 
     private fun updateTitle() {
         val title = getString(R.string.scene_download_title, mLabel ?: getString(R.string.download_all))
-        setSearchBarHint(title)
-        setEditTextHint(getString(R.string.search_bar_hint, title))
+        setTitle(title)
+        setSearchBarHint(getString(R.string.search_bar_hint, title))
     }
 
     private fun onInit() {
@@ -248,13 +254,11 @@ class DownloadsScene :
 
     override fun onCreateViewWithToolbar(
         inflater: LayoutInflater,
-        container: ViewGroup?,
+        container: ViewGroup,
         savedInstanceState: Bundle?,
-    ): View {
-        _binding = SceneDownloadBinding.inflate(inflater, container!!)
-        container.addView(ComposeView(inflater.context).apply { setMD3Content { dialogState.Intercept() } })
+    ): ViewBinding {
+        _binding = SceneDownloadBinding.inflate(inflater, container)
         binding.run {
-            setLiftOnScrollTargetView(recyclerView)
             mViewTransition = ViewTransition(content, tip)
             val drawable = ContextCompat.getDrawable(requireContext(), R.drawable.big_download)
             drawable!!.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
@@ -269,10 +273,12 @@ class DownloadsScene :
                 { (this as DownloadHolder).itemId },
             ).apply {
                 addCustomChoiceListener({
-                    binding.fabLayout.isExpanded = true
+                    binding.fabLayout.show()
+                    binding.fabLayout.expanded = true
                     lockDrawer()
                 }) {
-                    binding.fabLayout.isExpanded = false
+                    binding.fabLayout.expanded = false
+                    binding.fabLayout.hide()
                     unlockDrawer()
                 }
                 restoreSelection(savedInstanceState)
@@ -280,18 +286,14 @@ class DownloadsScene :
             val layoutManager = AutoStaggeredGridLayoutManager(0, StaggeredGridLayoutManager.VERTICAL)
             layoutManager.setColumnSize(
                 resources.getDimensionPixelOffset(
-                    when (detailSize) {
+                    when (detailSize.value) {
                         0 -> R.dimen.gallery_list_column_width_long
                         1 -> R.dimen.gallery_list_column_width_short
-                        else -> throw IllegalStateException("Unexpected value: $detailSize")
+                        else -> throw IllegalStateException("Unexpected value: ${detailSize.value}")
                     },
                 ),
             )
-            layoutManager.setStrategy(STRATEGY_MIN_SIZE)
-            layoutManager.supportsPredictiveItemAnimations = false
             recyclerView.layoutManager = layoutManager
-            recyclerView.clipToPadding = false
-            recyclerView.clipChildren = false
             val interval = resources.getDimensionPixelOffset(R.dimen.gallery_list_interval)
             val decoration = object : RecyclerView.ItemDecoration() {
                 override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
@@ -342,11 +344,47 @@ class DownloadsScene :
             val handlerDrawable = HandlerDrawable()
             handlerDrawable.setColor(theme.resolveColor(com.google.android.material.R.attr.colorPrimary))
             fastScroller.setHandlerDrawable(handlerDrawable)
-            fabLayout.setExpanded(expanded = false, animation = false)
-            fabLayout.addOnExpandListener { if (!it && tracker.isInCustomChoice) tracker.clearSelection() }
-            fabLayout.setHidePrimaryFab(true)
-            fabLayout.setAutoCancel(false)
-            fabLayout.setOnClickFabListener(this@DownloadsScene)
+            with(fabLayout) {
+                autoCancel = false
+                hidePrimaryFab()
+                addOnExpandStateListener { if (!it && tracker.isInCustomChoice) tracker.clearSelection() }
+                secondaryFab = listOf(
+                    Icons.Default.DoneAll to {
+                        tracker.selectAll()
+                        throw CancellationException()
+                    },
+                    Icons.Default.PlayArrow to {
+                        val gidList = tracker.getAndClearSelection().mapToLongArray(DownloadInfo::gid)
+                        val intent = Intent(activity, DownloadService::class.java)
+                        intent.action = DownloadService.ACTION_START_RANGE
+                        intent.putExtra(DownloadService.KEY_GID_LIST, gidList)
+                        ContextCompat.startForegroundService(context, intent)
+                    },
+                    Icons.Default.Pause to {
+                        val gidList = tracker.getAndClearSelection().mapToLongArray(DownloadInfo::gid)
+                        DownloadManager.stopRangeDownload(gidList)
+                    },
+                    Icons.Default.Delete to {
+                        val downloadInfoList = tracker.getAndClearSelection()
+                        dialogState.confirmRemoveDownloadRange(downloadInfoList)
+                    },
+                    Icons.AutoMirrored.Default.DriveFileMove to {
+                        val downloadInfoList = tracker.getAndClearSelection()
+                        val labelRawList = DownloadManager.labelList
+                        val labelList: MutableList<String> = ArrayList(labelRawList.size + 1)
+                        labelList.add(getString(R.string.default_download_label_name))
+                        labelRawList.forEach {
+                            labelList.add(it.label)
+                        }
+                        val labels = labelList.toTypedArray()
+                        val helper = MoveDialogHelper(labels, downloadInfoList)
+                        BaseDialogBuilder(context)
+                            .setTitle(R.string.download_move_dialog_title)
+                            .setItems(labels, helper)
+                            .apply { withUIContext { show() } }
+                    },
+                )
+            }
             updateForLabel()
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -358,16 +396,16 @@ class DownloadsScene :
             mKeyword = it.takeUnless { it.isEmpty() }
             updateInfoList()
         }
-        return binding.root
+        return binding
     }
 
     override fun onSearchViewExpanded() {
-        hideActionFab(true)
+        binding.fabLayout.hide()
         super.onSearchViewExpanded()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+    override fun onRelease() {
+        super.onRelease()
         binding.recyclerView.stopScroll()
         mViewTransition = null
         mAdapter = null
@@ -376,78 +414,80 @@ class DownloadsScene :
         _binding = null
     }
 
-    override fun onNavigationClick() {
-        openDrawer()
-    }
-
-    override fun getMenuResId(): Int {
-        return R.menu.scene_download
-    }
-
-    override fun onMenuItemClick(item: MenuItem): Boolean {
-        // Skip when in choice mode
-        val activity: Activity? = mainActivity
-        if (null == activity || tracker.isInCustomChoice) {
-            return false
+    @Composable
+    override fun TrailingIcon() {
+        dialogState.Intercept()
+        var expanded by remember { mutableStateOf(false) }
+        IconButton(onClick = { openSideSheet() }) {
+            Icon(imageVector = Icons.AutoMirrored.Outlined.Label, contentDescription = stringResource(id = R.string.download_labels))
         }
-        when (item.itemId) {
-            R.id.action_filter -> {
-                BaseDialogBuilder(requireActivity())
-                    .setSingleChoiceItems(
-                        R.array.download_state,
-                        mType + 1,
-                    ) { dialog: DialogInterface, which: Int ->
-                        mType = which - 1
-                        updateInfoList()
-                        dialog.dismiss()
+        IconButton(onClick = { expanded = !expanded }) {
+            Icon(imageVector = Icons.Default.MoreVert, contentDescription = null)
+        }
+        val states = stringArrayResource(id = R.array.download_state)
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.download_filter)) },
+                onClick = {
+                    expanded = false
+                    lifecycleScope.launch {
+                        val type = dialogState.showSingleChoice(states, mType)
+                        if (type != mType) {
+                            updateInfoList()
+                        }
                     }
-                    .show()
-                return true
-            }
-
-            R.id.action_start_all -> {
-                val intent = Intent(activity, DownloadService::class.java)
-                intent.action = DownloadService.ACTION_START_ALL
-                ContextCompat.startForegroundService(activity, intent)
-                return true
-            }
-
-            R.id.action_stop_all -> {
-                lifecycleScope.launchIO {
-                    DownloadManager.stopAllDownload()
-                }
-                return true
-            }
-
-            R.id.action_reset_reading_progress -> {
-                BaseDialogBuilder(requireContext())
-                    .setMessage(R.string.reset_reading_progress_message)
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .setPositiveButton(android.R.string.ok) { _: DialogInterface?, _: Int ->
-                        lifecycleScope.launchNonCancellable {
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.download_start_all)) },
+                onClick = {
+                    expanded = false
+                    val activity = requireActivity()
+                    val intent = Intent(activity, DownloadService::class.java)
+                    intent.action = DownloadService.ACTION_START_ALL
+                    ContextCompat.startForegroundService(activity, intent)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.download_stop_all)) },
+                onClick = {
+                    expanded = false
+                    lifecycleScope.launchIO {
+                        DownloadManager.stopAllDownload()
+                    }
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.download_reset_reading_progress)) },
+                onClick = {
+                    expanded = false
+                    lifecycleScope.launchIO {
+                        dialogState.awaitPermissionOrCancel(
+                            confirmText = android.R.string.ok,
+                            dismissText = android.R.string.cancel,
+                        ) {
+                            Text(text = stringResource(id = R.string.reset_reading_progress_message))
+                        }
+                        withNonCancellableContext {
                             DownloadManager.resetAllReadingProgress()
                         }
-                    }.show()
-                return true
-            }
-
-            R.id.action_start_all_reversed -> {
-                val list = mList ?: return true
-                val gidList = LongList()
-                for (i in list.size - 1 downTo 0) {
-                    val info = list[i]
-                    if (info.state != DownloadInfo.STATE_FINISH) {
-                        gidList.add(info.gid)
                     }
-                }
-                val intent = Intent(activity, DownloadService::class.java)
-                intent.action = DownloadService.ACTION_START_RANGE
-                intent.putExtra(DownloadService.KEY_GID_LIST, gidList)
-                ContextCompat.startForegroundService(activity, intent)
-                return true
-            }
-
-            else -> return super.onMenuItemClick(item)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.download_start_all_reversed)) },
+                onClick = {
+                    expanded = false
+                    val list = mList ?: return@DropdownMenuItem
+                    val activity = requireActivity()
+                    val gidList = list.filter { it.state != DownloadInfo.STATE_FINISH }
+                        .asReversed().mapToLongArray(DownloadInfo::gid)
+                    val intent = Intent(activity, DownloadService::class.java)
+                    intent.action = DownloadService.ACTION_START_RANGE
+                    intent.putExtra(DownloadService.KEY_GID_LIST, gidList)
+                    ContextCompat.startForegroundService(activity, intent)
+                },
+            )
         }
     }
 
@@ -523,80 +563,6 @@ class DownloadsScene :
         }
         context.navToReader(list[position].galleryInfo)
         return true
-    }
-
-    override fun onClickPrimaryFab(view: FabLayout, fab: FloatingActionButton) {
-        if (tracker.isInCustomChoice) {
-            tracker.clearSelection()
-        }
-    }
-
-    override fun onClickSecondaryFab(view: FabLayout, fab: FloatingActionButton, position: Int) {
-        val context = context
-        val activity: Activity? = mainActivity
-        if (null == context || null == activity) {
-            return
-        }
-        if (0 == position) {
-            tracker.selectAll()
-        } else {
-            val downloadInfoList = tracker.getAndClearSelection()
-            val gidList = if (position in 1..3) {
-                LongList(downloadInfoList.map(DownloadInfo::gid).toMutableList())
-            } else {
-                null
-            }
-            when (position) {
-                1 -> {
-                    // Start
-                    val intent = Intent(activity, DownloadService::class.java)
-                    intent.action = DownloadService.ACTION_START_RANGE
-                    intent.putExtra(DownloadService.KEY_GID_LIST, gidList)
-                    ContextCompat.startForegroundService(activity, intent)
-                }
-
-                2 -> {
-                    // Stop
-                    lifecycleScope.launchIO {
-                        DownloadManager.stopRangeDownload(gidList!!)
-                    }
-                }
-
-                3 -> {
-                    // Delete
-                    val builder = CheckBoxDialogBuilder(
-                        context,
-                        getString(R.string.download_remove_dialog_message_2, gidList!!.size),
-                        getString(R.string.download_remove_dialog_check_text),
-                        Settings.removeImageFiles,
-                    )
-                    val helper = DeleteRangeDialogHelper(
-                        downloadInfoList,
-                        gidList,
-                        builder,
-                    )
-                    builder.setTitle(R.string.download_remove_dialog_title)
-                        .setPositiveButton(android.R.string.ok, helper)
-                        .show()
-                }
-
-                4 -> {
-                    // Move
-                    val labelRawList = downloadManager.labelList
-                    val labelList: MutableList<String> = ArrayList(labelRawList.size + 1)
-                    labelList.add(getString(R.string.default_download_label_name))
-                    labelRawList.forEach {
-                        labelList.add(it.label)
-                    }
-                    val labels = labelList.toTypedArray()
-                    val helper = MoveDialogHelper(labels, downloadInfoList)
-                    BaseDialogBuilder(context)
-                        .setTitle(R.string.download_move_dialog_title)
-                        .setItems(labels, helper)
-                        .show()
-                }
-            }
-        }
     }
 
     private class DownloadLabelHolder(val binding: ItemDrawerListBinding) :
@@ -677,34 +643,6 @@ class DownloadsScene :
         }
     }
 
-    private inner class DeleteRangeDialogHelper(
-        private val mDownloadInfoList: List<DownloadInfo>,
-        private val mGidList: LongList,
-        private val mBuilder: CheckBoxDialogBuilder,
-    ) : DialogInterface.OnClickListener {
-        override fun onClick(dialog: DialogInterface, which: Int) {
-            if (which != DialogInterface.BUTTON_POSITIVE) {
-                return
-            }
-
-            lifecycleScope.launchIO {
-                // Delete
-                DownloadManager.deleteRangeDownload(mGidList)
-                // Delete image files
-                val checked = mBuilder.isChecked
-                Settings.removeImageFiles = checked
-                if (checked) {
-                    mDownloadInfoList.forEach { info ->
-                        // Delete file
-                        info.downloadDir?.delete()
-                        // Remove download path
-                        EhDB.removeDownloadDirname(info.gid)
-                    }
-                }
-            }
-        }
-    }
-
     private inner class MoveDialogHelper(
         private val mLabels: Array<String>,
         private val mDownloadInfoList: List<DownloadInfo>,
@@ -718,7 +656,7 @@ class DownloadsScene :
                 mLabels[which]
             }
             lifecycleScope.launchIO {
-                downloadManager.changeLabel(mDownloadInfoList, label)
+                DownloadManager.changeLabel(mDownloadInfoList, label)
                 withUIContext {
                     if (mLabelAdapter != null) {
                         mLabelAdapter!!.notifyDataSetChanged()
@@ -738,6 +676,7 @@ class DownloadsScene :
             binding.start.setOnClickListener(this)
             binding.stop.setOnClickListener(this)
             binding.thumb.setMD3Content {
+                val height by collectListThumbSizeAsState()
                 Spacer(modifier = Modifier.height(height).fillMaxWidth())
             }
             binding.handle.setOnTouchListener { _, event ->
@@ -763,13 +702,10 @@ class DownloadsScene :
             }
             when (v) {
                 binding.thumb -> {
-                    val args = Bundle()
-                    args.putString(
-                        GalleryDetailScene.KEY_ACTION,
-                        GalleryDetailScene.ACTION_GALLERY_INFO,
+                    navAnimated(
+                        R.id.galleryDetailScene,
+                        bundleOf(GalleryDetailScene.KEY_ARGS to GalleryInfoArgs(list[index].galleryInfo)),
                     )
-                    args.putParcelable(GalleryDetailScene.KEY_GALLERY_INFO, list[index].galleryInfo)
-                    navAnimated(R.id.galleryDetailScene, args)
                 }
 
                 binding.start -> {
@@ -787,11 +723,10 @@ class DownloadsScene :
             }
         }
 
-        private val height = (3 * listThumbSize * 3).pxToDp.dp
-
         fun bind(info: DownloadInfo, isChecked: Boolean) {
             binding.root.isChecked = isChecked
             binding.thumb.setMD3Content {
+                val height by collectListThumbSizeAsState()
                 Card(onClick = ::onClick.partially1(binding.thumb)) {
                     CompanionAsyncThumb(
                         info = info,
@@ -964,13 +899,13 @@ class DownloadsScene :
                 mBuilder.setError(getString(R.string.label_text_is_empty))
             } else if (getString(R.string.default_download_label_name) == text) {
                 mBuilder.setError(getString(R.string.label_text_is_invalid))
-            } else if (downloadManager.containLabel(text)) {
+            } else if (DownloadManager.containLabel(text)) {
                 mBuilder.setError(getString(R.string.label_text_exist))
             } else {
                 mBuilder.setError(null)
                 mDialog.dismiss()
                 lifecycleScope.launchIO {
-                    downloadManager.renameLabel(mOriginalLabel!!, text)
+                    DownloadManager.renameLabel(mOriginalLabel!!, text)
                     if (mLabelAdapter != null) {
                         withUIContext {
                             initLabels()
@@ -1002,13 +937,13 @@ class DownloadsScene :
                 mBuilder.setError(getString(R.string.label_text_is_empty))
             } else if (getString(R.string.default_download_label_name) == text) {
                 mBuilder.setError(getString(R.string.label_text_is_invalid))
-            } else if (downloadManager.containLabel(text)) {
+            } else if (DownloadManager.containLabel(text)) {
                 mBuilder.setError(getString(R.string.label_text_exist))
             } else {
                 mBuilder.setError(null)
                 mDialog.dismiss()
                 lifecycleScope.launchIO {
-                    downloadManager.addLabel(text)
+                    DownloadManager.addLabel(text)
                     initLabels()
                     withUIContext {
                         mLabelAdapter?.notifyItemInserted(mLabels.size)
@@ -1046,7 +981,7 @@ class DownloadsScene :
                 return false
             }
             lifecycleScope.launchIO {
-                downloadManager.moveLabel(fromPosition - LABEL_OFFSET, toPosition - LABEL_OFFSET)
+                DownloadManager.moveLabel(fromPosition - LABEL_OFFSET, toPosition - LABEL_OFFSET)
             }
             val item = mLabels.removeAt(fromPosition)
             mLabels.add(toPosition, item)

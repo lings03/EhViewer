@@ -141,7 +141,6 @@
     <string name="star_5">5 星</string>
 
     <!-- Gallery detail -->
-    <string name="error_cannot_find_gallery">找不到畫廊</string>
     <string name="download">下載</string>
     <string name="read">閲讀</string>
     <plurals name="page_count">
@@ -216,7 +215,6 @@
 
     <!-- Gallery Comments -->
     <string name="gallery_comments">畫廊評論</string>
-    <string name="no_one_comments_gallery">暫時沒有評論</string>
     <string name="comment_successfully">評論成功</string>
     <string name="comment_failed">評論失敗</string>
     <string name="copy_comment_text">複製評論文字</string>

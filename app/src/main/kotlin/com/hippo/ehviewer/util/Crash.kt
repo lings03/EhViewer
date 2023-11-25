@@ -5,6 +5,7 @@ import android.os.Debug
 import com.hippo.ehviewer.BuildConfig
 import java.io.File
 import java.io.FileWriter
+import java.io.OutputStreamWriter
 import java.io.PrintWriter
 
 private fun joinIfStringArray(any: Any?): String {
@@ -12,38 +13,36 @@ private fun joinIfStringArray(any: Any?): String {
 }
 
 private fun collectClassStaticInfo(clazz: Class<*>): String {
-    return clazz.declaredFields.joinToString("\n") {
+    return clazz.fields.joinToString("\n") {
         "${it.name}=${joinIfStringArray(it.get(null))}"
     }
 }
 
 object Crash {
-    private fun collectInfo(fw: FileWriter) {
-        fw.write("======== PackageInfo ========\n")
-        fw.write("PackageName=${BuildConfig.APPLICATION_ID}\n")
-        fw.write("VersionName=${BuildConfig.VERSION_NAME}\n")
-        fw.write("VersionCode=${BuildConfig.VERSION_CODE}\n")
-        fw.write("CommitSha=${BuildConfig.COMMIT_SHA}\n")
-        fw.write("BuildTime=${BuildConfig.BUILD_TIME}\n")
-        fw.write("\n")
+    fun collectInfo(writer: OutputStreamWriter) {
+        writer.write("======== PackageInfo ========\n")
+        writer.write("${collectClassStaticInfo(BuildConfig::class.java)}\n")
+        writer.write("\n")
 
         // Device info
-        fw.write("======== DeviceInfo ========\n")
-        fw.write("${collectClassStaticInfo(Build::class.java)}\n")
-        fw.write("${collectClassStaticInfo(Build.VERSION::class.java)}\n")
-        fw.write("MEMORY=")
-        fw.write(FileUtils.humanReadableByteCount(OSUtils.appAllocatedMemory, false))
-        fw.write("\n")
-        fw.write("MEMORY_NATIVE=")
-        fw.write(FileUtils.humanReadableByteCount(Debug.getNativeHeapAllocatedSize(), false))
-        fw.write("\n")
-        fw.write("MEMORY_MAX=")
-        fw.write(FileUtils.humanReadableByteCount(OSUtils.appMaxMemory, false))
-        fw.write("\n")
-        fw.write("MEMORY_TOTAL=")
-        fw.write(FileUtils.humanReadableByteCount(OSUtils.totalMemory, false))
-        fw.write("\n")
-        fw.write("\n")
+        writer.write("======== DeviceInfo ========\n")
+        writer.write("${collectClassStaticInfo(Build::class.java)}\n")
+        writer.write("${collectClassStaticInfo(Build.VERSION::class.java)}\n")
+        writer.write("MEMORY=")
+        writer.write(FileUtils.humanReadableByteCount(OSUtils.appAllocatedMemory, false))
+        writer.write("\n")
+        writer.write("MEMORY_NATIVE=")
+        writer.write(FileUtils.humanReadableByteCount(Debug.getNativeHeapAllocatedSize(), false))
+        writer.write("\n")
+        writer.write("MEMORY_MAX=")
+        writer.write(FileUtils.humanReadableByteCount(OSUtils.appMaxMemory, false))
+        writer.write("\n")
+        writer.write("MEMORY_TOTAL=")
+        writer.write(FileUtils.humanReadableByteCount(OSUtils.totalMemory, false))
+        writer.write("\n")
+        writer.write("\n")
+
+        writer.flush()
     }
 
     private fun getThrowableInfo(t: Throwable, fw: FileWriter) {

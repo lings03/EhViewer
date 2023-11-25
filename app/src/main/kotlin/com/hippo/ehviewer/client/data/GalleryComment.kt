@@ -19,19 +19,18 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-class GalleryComment(
-    // 0 for uploader comment. can't vote
-    var id: Long = 0,
-    var score: Int = 0,
-    var editable: Boolean = false,
-    var voteUpAble: Boolean = false,
-    var voteUpEd: Boolean = false,
-    var voteDownAble: Boolean = false,
-    var voteDownEd: Boolean = false,
-    var uploader: Boolean = false,
-    var voteState: String? = null,
-    var time: Long = 0,
-    var user: String? = null,
-    var comment: String? = null,
-    var lastEdited: Long = 0,
+data class GalleryComment(
+    val id: Long,
+    val score: Int,
+    val editable: Boolean,
+    val voteUpAble: Boolean,
+    val voteUpEd: Boolean,
+    val voteDownAble: Boolean,
+    val voteDownEd: Boolean,
+    val uploader: Boolean,
+    val voteState: String?,
+    val time: Long,
+    val user: String?,
+    val comment: String,
+    val lastEdited: Long,
 ) : Parcelable
