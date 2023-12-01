@@ -15,10 +15,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +48,6 @@ import com.hippo.ehviewer.ui.destinations.SignInScreenDestination
 import com.hippo.ehviewer.ui.destinations.UConfigScreenDestination
 import com.hippo.ehviewer.ui.legacy.BaseDialogBuilder
 import com.hippo.ehviewer.ui.tools.LocalDialogState
-import com.hippo.ehviewer.ui.tools.TimePickerDialog
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.ui.tools.rememberedAccessor
 import com.hippo.ehviewer.util.copyTextToClipboard
@@ -253,11 +250,10 @@ fun EhScreen(navigator: DestinationsNavigator) {
                 value = Settings.detailSize.asMutableState(),
             )
             IntSliderPreference(
-                maxValue = 400,
-                minValue = 80,
-                step = 7,
-                title = stringResource(id = R.string.settings_eh_thumb_size),
-                value = Settings.thumbSizeDp::value,
+                maxValue = 10,
+                minValue = 1,
+                title = stringResource(id = R.string.settings_eh_thumb_columns),
+                value = Settings.thumbColumns::value,
             )
             val thumbResolution = Settings::thumbResolution.observed
             val summary2 = stringResource(id = R.string.settings_eh_thumb_resolution_summary, stringArrayResource(id = R.array.thumb_resolution_entries)[thumbResolution.value])
@@ -311,7 +307,7 @@ fun EhScreen(navigator: DestinationsNavigator) {
             ) { navigator.navigate(FilterScreenDestination) }
             SwitchPreference(
                 title = stringResource(id = R.string.settings_eh_metered_network_warning),
-                value = Settings::meteredNetworkWarning,
+                value = Settings.meteredNetworkWarning::value,
             )
             if (signin) {
                 SwitchPreference(
@@ -326,24 +322,13 @@ fun EhScreen(navigator: DestinationsNavigator) {
                 )
                 AnimatedVisibility(visible = reqNews.value) {
                     val pickerTitle = stringResource(id = R.string.settings_eh_request_news_timepicker)
-                    var showPicker by rememberSaveable { mutableStateOf(false) }
-                    val state = rememberTimePickerState(schedHour, schedMinute)
-                    if (showPicker) {
-                        TimePickerDialog(
-                            title = pickerTitle,
-                            onCancel = { showPicker = false },
-                            onConfirm = {
-                                showPicker = false
-                                Settings.requestNewsTimerHour = state.hour
-                                Settings.requestNewsTimerMinute = state.minute
-                                updateDailyCheckWork(context)
-                            },
-                        ) {
-                            TimePicker(state = state)
-                        }
-                    }
                     Preference(title = pickerTitle) {
-                        showPicker = true
+                        coroutineScope.launch {
+                            val (hour, minute) = dialogState.showTimePicker(pickerTitle, schedHour, schedMinute)
+                            Settings.requestNewsTimerHour = hour
+                            Settings.requestNewsTimerMinute = minute
+                            updateDailyCheckWork(context)
+                        }
                     }
                 }
                 AnimatedVisibility(visible = reqNews.value) {

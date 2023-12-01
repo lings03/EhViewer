@@ -86,8 +86,8 @@
     <string name="search_specify_tag">指定标签</string>
     <string name="search_enable_advance">启用高级选项</string>
     <string name="search_tip">一般搜索：就是搜索。\n\n订阅搜素：在订阅中搜索。\n\n指定上传者：列出该上传者上传的画廊。其他选项会被忽略。\n\n指定标签：列出含有该标签的画廊。其他选项会被忽略。</string>
-    <string name="search_sh">仅显示被删除的画廊</string>
-    <string name="search_sto">仅显示有种子的画廊</string>
+    <string name="search_sh">仅被删除的画廊</string>
+    <string name="search_sto">仅有种子的画廊</string>
     <string name="search_sr">最低评分：</string>
     <string name="search_sp">页数：</string>
     <string name="search_sp_to">到</string>
@@ -321,7 +321,7 @@
     <string name="settings_eh_detail_size">详情宽度</string>
     <string name="settings_eh_detail_size_long">长</string>
     <string name="settings_eh_detail_size_short">短</string>
-    <string name="settings_eh_thumb_size">缩略图大小</string>
+    <string name="settings_eh_thumb_columns">缩略图列数</string>
     <string name="settings_eh_thumb_resolution">缩略图分辨率</string>
     <string name="settings_eh_thumb_resolution_summary">%s，指定分辨率可能使获取缩略图失败</string>
     <string name="settings_eh_thumb_resolution_auto">自动</string>
@@ -524,6 +524,7 @@
     <string name="list_tile_thumb_size">详情模式下缩略图大小</string>
     <string name="account_name">账户</string>
     <string name="preload_thumb_aggressively">激进地预载缩略图</string>
+    <string name="predictive_nav_anim">启用预见式返回导航动画</string>
     <string name="auto_updates">自动检查更新</string>
     <string name="update_frequency_never">从不</string>
     <string name="update_frequency_daily">每天</string>

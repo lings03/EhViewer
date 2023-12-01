@@ -105,8 +105,10 @@ object Settings : DataStorePreferences(null) {
 
     val listMode = intPref("list_mode_2", 0)
     val detailSize = intPref("detail_size_2", 0)
-    val thumbSizeDp = intPref("thumb_size_", 120)
+    val thumbColumns = intPref("thumb_columns", 3)
     val listThumbSize = intPref("list_tile_size", 40)
+    val meteredNetworkWarning = boolPref("cellular_network_warning", false)
+    val predictiveNavAnim = boolPref("predictive_nav_anim", true)
 
     val needSignInFlow: Flow<Boolean>
     var downloadScheme by stringOrNullPref("image_scheme", null)
@@ -132,7 +134,6 @@ object Settings : DataStorePreferences(null) {
     var showJpnTitle by boolPref("show_jpn_title", false)
     var showGalleryPages by boolPref("show_gallery_pages", true)
     var showTagTranslations by boolPref(KEY_SHOW_TAG_TRANSLATIONS, false).observed { updateWhenTagTranslationChanges() }
-    var meteredNetworkWarning by boolPref("cellular_network_warning", false)
     var appLinkVerifyTip by boolPref("app_link_verify_tip", false)
     var enabledSecurity by boolPref("enable_secure", false)
     var useCIUpdateChannel by boolPref("ci_update_channel", false)

@@ -1,13 +1,18 @@
 package com.hippo.ehviewer.ui.tools
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +26,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -29,12 +37,16 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -53,6 +65,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.jamal.composeprefs3.ui.ifNotNullThen
 import com.jamal.composeprefs3.ui.ifTrueThen
@@ -120,6 +133,7 @@ class DialogState {
         title: String? = null,
         hint: String? = null,
         isNumber: Boolean = false,
+        @StringRes confirmText: Int = android.R.string.ok,
         invalidator: (suspend (String) -> String?)? = null,
     ): String {
         return dialog { cont ->
@@ -139,7 +153,7 @@ class DialogState {
                             }
                         }
                     }) {
-                        Text(text = stringResource(id = android.R.string.ok))
+                        Text(text = stringResource(id = confirmText))
                     }
                 },
                 title = title.ifNotNullThen { Text(text = title!!) },
@@ -220,16 +234,12 @@ class DialogState {
                             isError = error != null,
                             keyboardOptions = if (isNumber) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
                         )
-                        Row(
-                            modifier = Modifier.clickable { checkedState = !checkedState }.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(
-                                checked = checkedState,
-                                onCheckedChange = { checkedState = !checkedState },
-                            )
-                            Text(text = stringResource(checkBoxText))
-                        }
+                        LabeledCheckbox(
+                            modifier = Modifier.fillMaxWidth(),
+                            checked = checkedState,
+                            onCheckedChange = { checkedState = !checkedState },
+                            label = stringResource(checkBoxText),
+                        )
                     }
                 },
             )
@@ -269,6 +279,50 @@ class DialogState {
         }
     }
 
+    suspend fun showDatePicker(
+        @StringRes title: Int,
+        initialSelectedDateMillis: Long? = null,
+        initialDisplayedMonthMillis: Long? = initialSelectedDateMillis,
+        yearRange: IntRange = DatePickerDefaults.YearRange,
+        initialDisplayMode: DisplayMode = DisplayMode.Picker,
+        selectableDates: SelectableDates = DatePickerDefaults.AllDates,
+        showModeToggle: Boolean = true,
+    ): Long? {
+        return dialog { cont ->
+            val state = rememberDatePickerState(
+                initialSelectedDateMillis,
+                initialDisplayedMonthMillis,
+                yearRange,
+                initialDisplayMode,
+                selectableDates,
+            )
+            DatePickerDialog(
+                onDismissRequest = { cont.cancel() },
+                confirmButton = {
+                    TextButton(onClick = { cont.resume(state.selectedDateMillis) }) {
+                        Text(text = stringResource(id = android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { cont.cancel() }) {
+                        Text(text = stringResource(id = android.R.string.cancel))
+                    }
+                },
+            ) {
+                DatePicker(
+                    state = state,
+                    title = {
+                        Text(
+                            text = stringResource(id = title),
+                            modifier = Modifier.padding(DatePickerTitlePadding),
+                        )
+                    },
+                    showModeToggle = showModeToggle,
+                )
+            }
+        }
+    }
+
     suspend fun <R> showNoButton(respectDefaultWidth: Boolean = true, block: @Composable DismissDialogScope<R>.() -> Unit): R {
         return dialog { cont ->
             val impl = remember(cont) {
@@ -289,6 +343,48 @@ class DialogState {
                     )
                 },
             )
+        }
+    }
+
+    suspend fun showTimePicker(
+        title: String,
+        initialHour: Int,
+        initialMinute: Int,
+    ) = dialog { cont ->
+        val state = rememberTimePickerState(initialHour, initialMinute)
+        Dialog(
+            onDismissRequest = { cont.cancel() },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 6.dp,
+                modifier = Modifier.width(IntrinsicSize.Min).height(IntrinsicSize.Min).background(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.surface,
+                ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                        text = title,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    TimePicker(state = state)
+                    Row(modifier = Modifier.height(40.dp).fillMaxWidth()) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        TextButton(onClick = { cont.cancel() }) {
+                            Text(stringResource(id = android.R.string.cancel))
+                        }
+                        TextButton(onClick = { cont.resume(state.hour to state.minute) }) {
+                            Text(stringResource(id = android.R.string.ok))
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -323,9 +419,9 @@ class DialogState {
         @StringRes title: Int? = null,
     ): R = showNoButton {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
-            title.ifNotNullThen {
+            if (title != null) {
                 Text(
-                    text = stringResource(id = title!!),
+                    text = stringResource(id = title),
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.headlineSmall,
                 )
@@ -387,16 +483,12 @@ class DialogState {
                     }
                 }
             }
-            Row(
-                modifier = Modifier.clickable { checked = !checked }.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(
-                    checked = checked,
-                    onCheckedChange = { checked = !checked },
-                )
-                Text(text = stringResource(checkBoxText))
-            }
+            LabeledCheckbox(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                checked = checked,
+                onCheckedChange = { checked = !checked },
+                label = stringResource(checkBoxText),
+            )
         }
     }
 
@@ -482,5 +574,6 @@ class DialogState {
 }
 
 private val IconWithTextCorner = RoundedCornerShape(8.dp)
+private val DatePickerTitlePadding = PaddingValues(start = 24.dp, end = 12.dp, top = 16.dp)
 
 val LocalDialogState = compositionLocalOf<DialogState> { error("CompositionLocal LocalDialogState not present!") }

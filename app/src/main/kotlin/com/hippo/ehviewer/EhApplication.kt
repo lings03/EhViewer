@@ -20,6 +20,7 @@ import android.app.Application
 import android.content.ComponentCallbacks2
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.collection.LruCache
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.coroutineScope
 import coil.ImageLoaderFactory
@@ -61,6 +62,8 @@ import com.hippo.ehviewer.util.isCronetSupported
 import eu.kanade.tachiyomi.network.interceptor.CloudflareInterceptor
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
+import eu.kanade.tachiyomi.util.lang.withUIContext
+import eu.kanade.tachiyomi.util.system.logcat
 import kotlinx.coroutines.launch
 import moe.tarsin.kt.unreachable
 import okhttp3.AsyncDns
@@ -78,7 +81,9 @@ class EhApplication : Application(), ImageLoaderFactory {
         lifecycleScope.launchIO {
             val mode = Settings.theme
             if (!isAtLeastS) {
-                AppCompatDelegate.setDefaultNightMode(mode)
+                withUIContext {
+                    AppCompatDelegate.setDefaultNightMode(mode)
+                }
             }
         }
         lifecycle.addObserver(lockObserver)
@@ -121,6 +126,11 @@ class EhApplication : Application(), ImageLoaderFactory {
             }
         }
         cleanObsoleteCache(this)
+        if (BuildConfig.DEBUG) {
+            Snapshot.registerApplyObserver { anies, _ ->
+                logcat { anies.toString() }
+            }
+        }
     }
 
     private suspend fun cleanupDownload() {

@@ -18,11 +18,9 @@ package com.hippo.ehviewer.ui
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DriveFileMove
@@ -32,14 +30,12 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.HeartBroken
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -60,19 +56,27 @@ import com.hippo.ehviewer.download.DownloadManager
 import com.hippo.ehviewer.download.DownloadService
 import com.hippo.ehviewer.download.downloadDir
 import com.hippo.ehviewer.download.downloadLocation
-import com.hippo.ehviewer.ui.scene.BaseScene
 import com.hippo.ehviewer.ui.tools.DialogState
+import com.hippo.ehviewer.ui.tools.LabeledCheckbox
 import com.hippo.ehviewer.util.FavouriteStatusRouter
 import com.hippo.ehviewer.util.findActivity
 import com.hippo.ehviewer.util.isAtLeastT
 import com.hippo.ehviewer.util.mapToLongArray
 import com.hippo.ehviewer.util.requestPermission
+import com.hippo.ehviewer.util.toEpochMillis
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.ui.reader.ReaderActivity
 import eu.kanade.tachiyomi.util.lang.withIOContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
 import moe.tarsin.coroutines.runSuspendCatching
 import splitties.init.appCtx
 
@@ -118,7 +122,7 @@ suspend fun DialogState.startDownload(
     }
     if (toAdd.isEmpty()) {
         return with(findActivity<MainActivity>()) {
-            showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
+            showTip(R.string.added_to_download_list)
         }
     }
     var justStart = forceDefault
@@ -144,7 +148,7 @@ suspend fun DialogState.startDownload(
         }
         // Notify
         with(findActivity<MainActivity>()) {
-            showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
+            showTip(R.string.added_to_download_list)
         }
     } else {
         // Let use chose label
@@ -175,7 +179,7 @@ suspend fun DialogState.startDownload(
             Settings.hasDefaultDownloadLabel = false
         }
         with(context.findActivity<MainActivity>()) {
-            showTip(R.string.added_to_download_list, BaseScene.LENGTH_SHORT)
+            showTip(R.string.added_to_download_list)
         }
     }
 }
@@ -258,7 +262,10 @@ private suspend fun doModifyFavorites(
     return add
 }
 
-suspend fun removeFromFavorites(galleryInfo: BaseGalleryInfo) = doModifyFavorites(galleryInfo)
+suspend fun removeFromFavorites(galleryInfo: BaseGalleryInfo) = doModifyFavorites(
+    galleryInfo = galleryInfo,
+    localFavorited = EhDB.containLocalFavorites(galleryInfo.gid),
+)
 
 fun Context.navToReader(info: BaseGalleryInfo, page: Int = -1) {
     val intent = Intent(this, ReaderActivity::class.java)
@@ -301,16 +308,16 @@ suspend fun DialogState.doGalleryInfoAction(info: BaseGalleryInfo, context: Cont
             2 -> if (favourite) {
                 runSuspendCatching {
                     removeFromFavorites(info)
-                    showTip(R.string.remove_from_favorite_success, BaseScene.LENGTH_SHORT)
+                    showTip(R.string.remove_from_favorite_success)
                 }.onFailure {
-                    showTip(R.string.remove_from_favorite_failure, BaseScene.LENGTH_LONG)
+                    showTip(R.string.remove_from_favorite_failure)
                 }
             } else {
                 runSuspendCatching {
                     modifyFavorites(info)
-                    showTip(R.string.add_to_favorite_success, BaseScene.LENGTH_SHORT)
+                    showTip(R.string.add_to_favorite_success)
                 }.onFailure {
-                    showTip(R.string.add_to_favorite_failure, BaseScene.LENGTH_LONG)
+                    showTip(R.string.add_to_favorite_failure)
                 }
             }
 
@@ -334,16 +341,13 @@ suspend fun DialogState.confirmRemoveDownload(info: GalleryInfo, onDismiss: () -
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { checked = !checked },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Checkbox(checked = checked, onCheckedChange = { checked = it })
-                    Text(text = stringResource(id = R.string.download_remove_dialog_check_text))
-                }
+                LabeledCheckbox(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = checked,
+                    onCheckedChange = { checked = it },
+                    label = stringResource(id = R.string.download_remove_dialog_check_text),
+                    indication = null,
+                )
             }
         },
     )
@@ -353,7 +357,7 @@ suspend fun DialogState.confirmRemoveDownload(info: GalleryInfo, onDismiss: () -
     }
 }
 
-suspend fun DialogState.confirmRemoveDownloadRange(list: List<DownloadInfo>) {
+suspend fun DialogState.confirmRemoveDownloadRange(list: Collection<DownloadInfo>) {
     var checked by mutableStateOf(Settings.removeImageFiles)
     awaitPermissionOrCancel(
         title = R.string.download_remove_dialog_title,
@@ -364,16 +368,13 @@ suspend fun DialogState.confirmRemoveDownloadRange(list: List<DownloadInfo>) {
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { checked = !checked },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Checkbox(checked = checked, onCheckedChange = { checked = it })
-                    Text(text = stringResource(id = R.string.download_remove_dialog_check_text))
-                }
+                LabeledCheckbox(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = checked,
+                    onCheckedChange = { checked = it },
+                    label = stringResource(id = R.string.download_remove_dialog_check_text),
+                    indication = null,
+                )
             }
         },
     )
@@ -400,4 +401,34 @@ suspend fun DialogState.showMoveDownloadLabel(info: GalleryInfo) {
     val downloadInfo = DownloadManager.getDownloadInfo(info.gid) ?: return
     val label = if (selected == 0) null else labels[selected - 1]
     withUIContext { DownloadManager.changeLabel(listOf(downloadInfo), label) }
+}
+
+suspend fun DialogState.showMoveDownloadLabelList(list: Collection<DownloadInfo>): String? {
+    val defaultLabel = appCtx.getString(R.string.default_download_label_name)
+    val labels = DownloadManager.labelList.map { it.label }.toTypedArray()
+    val selected = showSelectItem(defaultLabel, *labels, title = R.string.download_move_dialog_title)
+    val label = if (selected == 0) null else labels[selected - 1]
+    withUIContext { DownloadManager.changeLabel(list, label) }
+    return label
+}
+
+suspend fun DialogState.showDatePicker(): String? {
+    val initial = LocalDate(2007, 3, 21)
+    val yesterday = Clock.System.todayIn(TimeZone.UTC).minus(1, DateTimeUnit.DAY)
+    val initialMillis = initial.toEpochMillis()
+    val yesterdayMillis = yesterday.toEpochMillis()
+    val dateRange = initialMillis..yesterdayMillis
+    val dateMillis = showDatePicker(
+        title = R.string.go_to,
+        yearRange = initial.year..yesterday.year,
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                return utcTimeMillis in dateRange
+            }
+        },
+    )
+    val date = dateMillis?.let {
+        kotlinx.datetime.Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.UTC).date.toString()
+    }
+    return date
 }

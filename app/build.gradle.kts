@@ -65,7 +65,7 @@ android {
         minSdk = 28
         targetSdk = 34
         versionCode = 180047
-        versionName = "1.8.11.1"
+        versionName = "1.9.0"
         versionNameSuffix = "-cc"
         resourceConfigurations.addAll(
             listOf(
@@ -211,10 +211,10 @@ dependencies {
 
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.androidx.coordinatorlayout)
-    implementation(libs.androidx.fragment)
     // https://developer.android.com/jetpack/androidx/releases/lifecycle
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.lifecycle.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     // https://developer.android.com/jetpack/androidx/releases/navigation
     implementation(libs.bundles.androidx.navigation)
@@ -222,13 +222,12 @@ dependencies {
     // https://developer.android.com/jetpack/androidx/releases/paging
     implementation(libs.bundles.androidx.paging)
 
-    implementation(libs.bundles.androidx.recyclerview)
+    implementation(libs.androidx.recyclerview)
 
     // https://developer.android.com/jetpack/androidx/releases/room
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.paging)
 
-    implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.work.runtime)
     implementation(libs.photoview) // Dead Dependency
     implementation(libs.directionalviewpager) // Dead Dependency
@@ -270,6 +269,7 @@ dependencies {
     implementation(libs.bundles.kotlinx.serialization)
 
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.datetime)
     implementation(libs.jsoup)
 
     debugImplementation(libs.chucker)
