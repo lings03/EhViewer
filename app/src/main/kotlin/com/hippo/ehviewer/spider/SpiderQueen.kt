@@ -29,21 +29,22 @@ import com.hippo.ehviewer.client.EhUrl.getGalleryDetailUrl
 import com.hippo.ehviewer.client.EhUrl.getGalleryMultiPageViewerUrl
 import com.hippo.ehviewer.client.EhUrl.referer
 import com.hippo.ehviewer.client.data.GalleryInfo
-import com.hippo.ehviewer.client.ehRequest
 import com.hippo.ehviewer.client.exception.QuotaExceededException
-import com.hippo.ehviewer.client.execute
+import com.hippo.ehviewer.client.parseString
 import com.hippo.ehviewer.client.parser.GalleryDetailParser.parsePages
 import com.hippo.ehviewer.client.parser.GalleryDetailParser.parsePreviewList
 import com.hippo.ehviewer.client.parser.GalleryDetailParser.parsePreviewPages
 import com.hippo.ehviewer.client.parser.GalleryMultiPageViewerPTokenParser
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser
+import com.hippo.ehviewer.client.statement
 import com.hippo.ehviewer.image.Image
 import com.hippo.ehviewer.util.ExceptionUtils
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.util.lang.launchIO
-import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -363,15 +364,13 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
 
     private suspend fun readSpiderInfoFromInternet(): SpiderInfo? {
         return runSuspendCatching {
-            ehRequest(
+            statement(
                 getGalleryDetailUrl(galleryInfo.gid, galleryInfo.token, 0, false),
                 referer,
-            ).execute {
-                val bodyStr = body.string()
-                val pages = parsePages(bodyStr)
-                val spiderInfo = SpiderInfo(galleryInfo.gid, pages)
-                spiderInfo.token = galleryInfo.token
-                readPreviews(bodyStr, 0, spiderInfo)
+            ).parseString {
+                val pages = parsePages(this)
+                val spiderInfo = SpiderInfo(galleryInfo.gid, pages, token = galleryInfo.token)
+                readPreviews(this, 0, spiderInfo)
                 spiderInfo
             }
         }.onFailure {
@@ -386,9 +385,8 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
             galleryInfo.token!!,
         )
         return try {
-            ehRequest(url, referer).execute {
-                val bodyStr = body.string()
-                GalleryMultiPageViewerPTokenParser.parse(bodyStr).forEachIndexed { index, s ->
+            statement(url, referer).parseString {
+                GalleryMultiPageViewerPTokenParser.parse(this).forEachIndexed { index, s ->
                     spiderInfo.pTokenMap[index] = s
                 }
                 spiderInfo.pTokenMap[index]
@@ -419,8 +417,8 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
             false,
         )
         return try {
-            ehRequest(url, referer).execute {
-                readPreviews(body.string(), previewIndex, spiderInfo)
+            statement(url, referer).parseString {
+                readPreviews(this, previewIndex, spiderInfo)
                 spiderInfo.pTokenMap[index]
             }
         } catch (e: Throwable) {
@@ -521,10 +519,10 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
         private val pTokenLock = Mutex()
         private var showKey: String? = null
         private val showKeyLock = Mutex()
-        private val mDownloadDelay = Settings.downloadDelay.toLong()
+        private val mDownloadDelay = Settings.downloadDelay.milliseconds
         private val downloadTimeout = Settings.downloadTimeout.seconds
         private val delayLock = Mutex()
-        private var delayedTime = 0L
+        private var delayedTime = TimeSource.Monotonic.markNow()
         private var isDownloadMode = false
 
         fun cancelDecode(index: Int) {
@@ -610,9 +608,14 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
             }
 
             delayLock.withLock {
-                val curTime = Instant.now().toEpochMilli()
-                delayedTime = (delayedTime + mDownloadDelay).coerceAtLeast(curTime)
-                delay(delayedTime - curTime)
+                val new = delayedTime + mDownloadDelay
+                val duration = new.elapsedNow()
+                if (duration.isNegative()) {
+                    delayedTime = new
+                    delay(-duration)
+                } else {
+                    delayedTime = TimeSource.Monotonic.markNow()
+                }
             }
 
             var skipHathKey: String? = null

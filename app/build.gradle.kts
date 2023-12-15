@@ -272,9 +272,6 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.jsoup)
 
-    debugImplementation(libs.chucker)
-    releaseImplementation(libs.chucker.nop)
-
     coreLibraryDesugaring(libs.desugar)
 
     "gmsImplementation"(libs.bundles.cronet)
