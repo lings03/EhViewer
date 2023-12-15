@@ -58,12 +58,13 @@ import com.hippo.ehviewer.util.ReadableTime
 import com.hippo.ehviewer.util.isAtLeastP
 import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
-import com.hippo.ehviewer.util.isCronetSupported
+import com.hippo.ehviewer.util.isCronetAvailable
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
 import kotlinx.coroutines.launch
@@ -182,7 +183,7 @@ class EhApplication : Application(), ImageLoaderFactory {
 
     companion object {
         val ktorClient by lazy {
-            if (isCronetSupported) {
+            if (Settings.enableQuic && isCronetAvailable) {
                 HttpClient(CronetEngine) {
                     install(HttpCookies) {
                         storage = EhCookieStore
@@ -190,13 +191,19 @@ class EhApplication : Application(), ImageLoaderFactory {
                 }
             } else {
                 HttpClient(OkHttp) {
+                    install(HttpCookies) {
+                                storage = EhCookieStore
+                            }
                     engine {
                         preconfigured = nonCacheOkHttpClient
                     }
-                    install(HttpCookies) {
-                        storage = EhCookieStore
-                    }
                 }
+                // Not using Apache5 for preversing domain fronting
+                // HttpClient(Apache5) {
+                //    install(HttpCookies) {
+                //        storage = EhCookieStore
+                //    }
+                //}
             }
         }
 
@@ -222,9 +229,10 @@ class EhApplication : Application(), ImageLoaderFactory {
         val nonCacheOkHttpClient by lazy {
             httpClient(baseOkHttpClient) {
                 // TODO: Rewrite CronetInterceptor to use android.net.http.HttpEngine and make it Android 14 only when released
-                if (isCronetSupported) {
-                    cronet(cronetHttpClient)
-                } else if (Settings.dF) {
+                // if (isCronetAvailable) {
+                //    cronet(cronetHttpClient)
+                //} else if (Settings.dF) {
+                if (Settings.dF) {
                     dns(EhDns)
                     install(EhSSLSocketFactory)
                 }
@@ -234,7 +242,7 @@ class EhApplication : Application(), ImageLoaderFactory {
         val noRedirectOkHttpClient by lazy {
             httpClient(baseOkHttpClient) {
                 followRedirects(false)
-                if (isCronetSupported) {
+                if (isCronetAvailable) {
                     cronet(cronetHttpClient) {
                         setRedirectStrategy(withoutRedirects())
                     }
