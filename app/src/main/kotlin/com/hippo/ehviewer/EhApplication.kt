@@ -26,12 +26,12 @@ import androidx.collection.LruCache
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.coroutineScope
-import com.google.net.cronet.okhttptransport.RedirectStrategy.withoutRedirects
 import coil3.SingletonImageLoader
 import coil3.asCoilImage
 import coil3.decode.ImageDecoderDecoder
 import coil3.request.crossfade
 import coil3.util.DebugLogger
+import com.google.net.cronet.okhttptransport.RedirectStrategy.withoutRedirects
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhDns
 import com.hippo.ehviewer.client.EhSSLSocketFactory
@@ -39,8 +39,8 @@ import com.hippo.ehviewer.client.EhTagDatabase
 import com.hippo.ehviewer.client.data.GalleryDetail
 import com.hippo.ehviewer.client.install
 import com.hippo.ehviewer.coil.MergeInterceptor
-import com.hippo.ehviewer.cronet.cronetHttpClient
 import com.hippo.ehviewer.coil.installKtorHttpUriFetcher
+import com.hippo.ehviewer.cronet.cronetHttpClient
 import com.hippo.ehviewer.dailycheck.checkDawn
 import com.hippo.ehviewer.dao.SearchDatabase
 import com.hippo.ehviewer.download.DownloadManager
@@ -67,7 +67,6 @@ import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
 import kotlinx.coroutines.launch
@@ -193,8 +192,8 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
             } else {
                 HttpClient(OkHttp) {
                     install(HttpCookies) {
-                                storage = EhCookieStore
-                            }
+                        storage = EhCookieStore
+                    }
                     engine {
                         preconfigured = nonCacheOkHttpClient
                     }
@@ -204,7 +203,7 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
                 //    install(HttpCookies) {
                 //        storage = EhCookieStore
                 //    }
-                //}
+                // }
             }
         }
 
@@ -232,7 +231,7 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
                 // TODO: Rewrite CronetInterceptor to use android.net.http.HttpEngine and make it Android 14 only when released
                 // if (isCronetAvailable) {
                 //    cronet(cronetHttpClient)
-                //} else if (Settings.dF) {
+                // } else if (Settings.dF) {
                 if (Settings.dF) {
                     dns(EhDns)
                     install(EhSSLSocketFactory)
@@ -260,13 +259,14 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
                 )
             }
         }
+
         // Use KtorClient directly when coil 3.0 released
         private val coilClient by lazy {
             httpClient(nonCacheOkHttpClient) {
                 addInterceptor {
                     val req = it.request()
                     val newReq = req.newBuilder().apply {
-                        //addHeader(HttpHeaders.Cookie, EhCookieStore.getCookieHeader(req.url.toString()))
+                        // addHeader(HttpHeaders.Cookie, EhCookieStore.getCookieHeader(req.url.toString()))
                     }.build()
                     it.proceed(newReq)
                 }
