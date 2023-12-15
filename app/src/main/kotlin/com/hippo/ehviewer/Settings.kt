@@ -12,6 +12,8 @@ import androidx.compose.runtime.remember
 import com.hippo.ehviewer.client.CHROME_USER_AGENT
 import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
+import eu.kanade.tachiyomi.ui.reader.setting.OrientationType
+import eu.kanade.tachiyomi.ui.reader.setting.ReadingModeType
 import java.util.Locale
 import kotlin.reflect.KProperty
 import kotlinx.coroutines.flow.Flow
@@ -110,6 +112,7 @@ object Settings : DataStorePreferences(null) {
     val languageFilter = intPref("language_filter", -1)
     val meteredNetworkWarning = boolPref("cellular_network_warning", false)
     val predictiveNavAnim = boolPref("predictive_nav_anim", true)
+    val blackDarkTheme = boolPref("black_dark_theme", false)
 
     val needSignInFlow: Flow<Boolean>
     var downloadScheme by stringOrNullPref("image_scheme", null)
@@ -147,7 +150,6 @@ object Settings : DataStorePreferences(null) {
     var builtInHosts by boolPref(KEY_BUILT_IN_HOSTS, true)
     var removeImageFiles by boolPref("include_pic", true)
     var needSignIn by boolPref("need_sign_in", true).also { needSignInFlow = it.valueFlow() }
-    var blackDarkTheme by boolPref("black_dark_theme", false).observed { updateWhenAmoledModeChanges() }
     var harmonizeCategoryColor by boolPref("harmonize_category_color", true)
     var preloadThumbAggressively by boolPref("preload_thumb_aggressively", false)
     var dF by boolPref(KEY_DOMAIN_FRONTING, false)
@@ -180,6 +182,16 @@ object Settings : DataStorePreferences(null) {
 
     // TODO: Remove this after swipe gestures are correctly handled in compose
     var touchSlopFactor by intPref("touch_slop", 3)
+
+    // Tachiyomi Reader
+    val colorFilter = boolPref("pref_color_filter_key", false)
+    val colorFilterValue = intPref("color_filter_value", 0)
+    val colorFilterMode = intPref("color_filter_mode", 0)
+    val customBrightness = boolPref("pref_custom_brightness_key", false)
+    val customBrightnessValue = intPref("custom_brightness_value", 0)
+    val readingMode = intPref("pref_default_reading_mode_key", ReadingModeType.LEFT_TO_RIGHT.flagValue)
+    val orientationMode = intPref("pref_default_orientation_type_key", OrientationType.FREE.flagValue)
+    val showReaderSeekbar = boolPref("pref_show_reader_seekbar", true)
 
     init {
         if ("CN" == Locale.getDefault().country) {

@@ -52,7 +52,6 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ModalBottomSheetFix
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -80,7 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.text.parseAsHtml
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import arrow.core.partially1
-import coil.imageLoader
+import coil3.imageLoader
 import com.hippo.ehviewer.EhApplication.Companion.galleryDetailCache
 import com.hippo.ehviewer.EhApplication.Companion.imageCache
 import com.hippo.ehviewer.EhDB
@@ -146,7 +145,6 @@ import com.hippo.ehviewer.ui.tools.CrystalCard
 import com.hippo.ehviewer.ui.tools.FilledTertiaryIconButton
 import com.hippo.ehviewer.ui.tools.FilledTertiaryIconToggleButton
 import com.hippo.ehviewer.ui.tools.GalleryDetailRating
-import com.hippo.ehviewer.ui.tools.IconFix
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.rememberLambda
 import com.hippo.ehviewer.util.AppHelper
@@ -595,7 +593,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                         }
                     },
                 ) {
-                    IconFix(
+                    Icon(
                         imageVector = getFavoriteIcon(favSlot != NOT_FAVORITED),
                         contentDescription = null,
                     )
@@ -1219,23 +1217,21 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
             )
         },
     ) {
-        Surface {
-            val gi = galleryInfo
-            if (gi != null) {
-                GalleryDetailContent(
-                    galleryInfo = gi,
-                    contentPadding = it,
-                    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                )
-            } else if (getDetailError.isNotBlank()) {
-                GalleryDetailErrorTip(error = getDetailError, onClick = { getDetailError = "" })
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
+        val gi = galleryInfo
+        if (gi != null) {
+            GalleryDetailContent(
+                galleryInfo = gi,
+                contentPadding = it,
+                modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            )
+        } else if (getDetailError.isNotBlank()) {
+            GalleryDetailErrorTip(error = getDetailError, onClick = { getDetailError = "" })
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
             }
         }
     }

@@ -120,7 +120,6 @@ import com.hippo.ehviewer.ui.screen.TokenArgs
 import com.hippo.ehviewer.ui.screen.navWithUrl
 import com.hippo.ehviewer.ui.screen.navigate
 import com.hippo.ehviewer.ui.settings.showNewVersion
-import com.hippo.ehviewer.ui.tools.IconFix
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.LocalTouchSlopProvider
 import com.hippo.ehviewer.updater.AppUpdater
@@ -372,7 +371,7 @@ class MainActivity : EhActivity() {
                                                 },
                                                 modifier = Modifier.padding(horizontal = 12.dp),
                                                 icon = {
-                                                    IconFix(imageVector = icon, contentDescription = null)
+                                                    Icon(imageVector = icon, contentDescription = null)
                                                 },
                                             )
                                         }

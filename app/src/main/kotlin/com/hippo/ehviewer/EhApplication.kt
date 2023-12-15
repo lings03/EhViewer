@@ -21,14 +21,17 @@ import android.content.ComponentCallbacks2
 import android.os.StrictMode
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.collection.LruCache
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.coroutineScope
-import coil.ImageLoaderFactory
-import coil.decode.ImageDecoderDecoder
-import coil.util.DebugLogger
 import com.google.net.cronet.okhttptransport.RedirectStrategy.withoutRedirects
+import coil3.SingletonImageLoader
+import coil3.asCoilImage
+import coil3.decode.ImageDecoderDecoder
+import coil3.request.crossfade
+import coil3.util.DebugLogger
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhDns
 import com.hippo.ehviewer.client.EhSSLSocketFactory
@@ -68,7 +71,6 @@ import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
 import kotlinx.coroutines.launch
-import moe.tarsin.kt.unreachable
 import okhttp3.AsyncDns
 import okhttp3.android.AndroidAsyncDns
 import okio.Path.Companion.toOkioPath
@@ -78,7 +80,7 @@ import splitties.init.appCtx
 private val lifecycle = ProcessLifecycleOwner.get().lifecycle
 private val lifecycleScope = lifecycle.coroutineScope
 
-class EhApplication : Application(), ImageLoaderFactory {
+class EhApplication : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         // Initialize Settings on first access
         lifecycleScope.launchIO {
@@ -167,7 +169,6 @@ class EhApplication : Application(), ImageLoaderFactory {
 
     override fun newImageLoader() = imageLoader {
         components {
-            callFactory { unreachable() }
             installKtorHttpUriFetcher()
             if (isAtLeastP) {
                 add { result, options, _ -> ImageDecoderDecoder(result.source, options, false) }
@@ -176,9 +177,9 @@ class EhApplication : Application(), ImageLoaderFactory {
         }
         diskCache(imageCache)
         crossfade(300)
-        error(R.drawable.image_failed)
+        val drawable = AppCompatResources.getDrawable(appCtx, R.drawable.image_failed)
+        if (drawable != null) error(drawable.asCoilImage(true))
         if (BuildConfig.DEBUG) logger(DebugLogger())
-        respectCacheHeaders(false)
     }
 
     companion object {

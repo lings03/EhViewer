@@ -11,11 +11,6 @@
     public static final ** CREATOR;
 }
 
-# https://issuetracker.google.com/issues/307323842
--keepclassmembers class androidx.compose.ui.platform.WindowInfoImpl {
-    setWindowFocused(boolean);
-}
-
 # Ktor logger
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 
@@ -26,6 +21,8 @@
 -dontwarn org.ietf.jgss.GSSManager
 -dontwarn org.ietf.jgss.GSSName
 -dontwarn org.ietf.jgss.Oid
+
+-dontwarn org.conscrypt.Conscrypt
 
 -allowaccessmodification
 -repackageclasses
