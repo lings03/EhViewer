@@ -114,7 +114,7 @@ photoview = "com.github.chrisbanes:PhotoView:2.3.0"
 
 r8 = { module = "com.android.tools:r8", version.ref = "android-tools-r8" }
 
-reorderable = "sh.calvin.reorderable:reorderable:1.0.1"
+reorderable = "sh.calvin.reorderable:reorderable:1.1.0"
 
 splitties-appctx = { module = "com.louiscad.splitties:splitties-appctx", version.ref = "splitties" }
 splitties-arch-room = { module = "com.louiscad.splitties:splitties-arch-room", version.ref = "splitties" }
@@ -142,4 +142,4 @@ kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref =
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 rustAndroidPlugin = { id = "org.mozilla.rust-android-gradle.rust-android", version = "0.9.3" }
-spotless = { id = "com.diffplug.spotless", version = "6.23.2" }
+spotless = { id = "com.diffplug.spotless", version = "6.23.3" }

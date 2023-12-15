@@ -18,6 +18,8 @@ package com.hippo.ehviewer
 
 import android.app.Application
 import android.content.ComponentCallbacks2
+import android.os.StrictMode
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.collection.LruCache
 import androidx.compose.runtime.snapshots.Snapshot
@@ -34,8 +36,8 @@ import com.hippo.ehviewer.client.EhTagDatabase
 import com.hippo.ehviewer.client.data.GalleryDetail
 import com.hippo.ehviewer.client.install
 import com.hippo.ehviewer.coil.MergeInterceptor
-import com.hippo.ehviewer.coil.installCronetHttpUriFetcher
 import com.hippo.ehviewer.cronet.cronetHttpClient
+import com.hippo.ehviewer.coil.installKtorHttpUriFetcher
 import com.hippo.ehviewer.dailycheck.checkDawn
 import com.hippo.ehviewer.dao.SearchDatabase
 import com.hippo.ehviewer.download.DownloadManager
@@ -57,7 +59,6 @@ import com.hippo.ehviewer.util.isAtLeastP
 import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
 import com.hippo.ehviewer.util.isCronetSupported
-import eu.kanade.tachiyomi.network.interceptor.CloudflareInterceptor
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withUIContext
@@ -65,7 +66,6 @@ import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
-import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.launch
 import moe.tarsin.kt.unreachable
 import okhttp3.AsyncDns
@@ -126,8 +126,9 @@ class EhApplication : Application(), ImageLoaderFactory {
         }
         cleanObsoleteCache(this)
         if (BuildConfig.DEBUG) {
+            StrictMode.enableDefaults()
             Snapshot.registerApplyObserver { anies, _ ->
-                logcat { anies.toString() }
+                logcat(Log.VERBOSE) { anies.toString() }
             }
         }
     }
@@ -165,12 +166,8 @@ class EhApplication : Application(), ImageLoaderFactory {
 
     override fun newImageLoader() = imageLoader {
         components {
-            if (isCronetSupported) {
-                callFactory { unreachable() }
-                installCronetHttpUriFetcher()
-            } else {
-                callFactory(coilClient)
-            }
+            callFactory { unreachable() }
+            installKtorHttpUriFetcher()
             if (isAtLeastP) {
                 add { result, options, _ -> ImageDecoderDecoder(result.source, options, false) }
             }
@@ -206,6 +203,9 @@ class EhApplication : Application(), ImageLoaderFactory {
         val noRedirectKtorClient by lazy {
             HttpClient(ktorClient.engine) {
                 followRedirects = false
+                install(HttpCookies) {
+                    storage = EhCookieStore
+                }
             }
         }
 
@@ -216,7 +216,6 @@ class EhApplication : Application(), ImageLoaderFactory {
                     dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
                 }
                 addInterceptor(UncaughtExceptionInterceptor())
-                addInterceptor(CloudflareInterceptor(appCtx))
             }
         }
 
@@ -258,7 +257,7 @@ class EhApplication : Application(), ImageLoaderFactory {
                 addInterceptor {
                     val req = it.request()
                     val newReq = req.newBuilder().apply {
-                        addHeader(HttpHeaders.Cookie, EhCookieStore.getCookieHeader(req.url.toString()))
+                        //addHeader(HttpHeaders.Cookie, EhCookieStore.getCookieHeader(req.url.toString()))
                     }.build()
                     it.proceed(newReq)
                 }

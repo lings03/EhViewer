@@ -136,10 +136,13 @@ import com.ramcosta.composedestinations.utils.currentDestinationAsState
 import eu.kanade.tachiyomi.util.lang.withIOContext
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import moe.tarsin.coroutines.runSuspendCatching
 import splitties.systemservices.clipboardManager
@@ -199,11 +202,12 @@ class MainActivity : EhActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intentFlow.tryEmit(intent)
+        intentChannel.trySend(intent)
     }
 
     private val tipFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    private val intentFlow = MutableSharedFlow<Intent>(extraBufferCapacity = 4)
+    private val intentChannel = Channel<Intent>(capacity = 4, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val intentFlow = intentChannel.receiveAsFlow()
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -225,8 +229,8 @@ class MainActivity : EhActivity() {
             }
 
             LaunchedEffect(Unit) {
-                intentFlow.collect {
-                    when (intent?.action) {
+                intentFlow.collect { intent ->
+                    when (intent.action) {
                         Intent.ACTION_VIEW -> {
                             val url = intent.data?.toString()
                             if (url != null && !navController.navWithUrl(url)) {
@@ -335,6 +339,7 @@ class MainActivity : EhActivity() {
                 LocalNavDrawerState provides navDrawerState,
                 LocalSideSheetState provides sideSheetState,
                 LocalDrawerLockHandle provides lockDrawerHandle,
+                LocalSnackbarHostState provides snackbarState,
             ) {
                 Scaffold(snackbarHost = { SnackbarHost(snackbarState) }) {
                     LocalTouchSlopProvider(Settings.touchSlopFactor.toFloat()) {
@@ -544,6 +549,7 @@ class MainActivity : EhActivity() {
 val LocalNavDrawerState = compositionLocalOf<DrawerState2> { error("CompositionLocal LocalNavDrawerState not present!") }
 val LocalSideSheetState = compositionLocalOf<DrawerState2> { error("CompositionLocal LocalSideSheetState not present!") }
 val LocalDrawerLockHandle = compositionLocalOf<SnapshotStateList<Int>> { error("CompositionLocal LocalSideSheetState not present!") }
+val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> { error("CompositionLocal LocalSnackbarHostState not present!") }
 
 @Composable
 fun LockDrawer(value: Boolean) {

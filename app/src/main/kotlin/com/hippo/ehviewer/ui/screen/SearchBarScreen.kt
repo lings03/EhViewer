@@ -109,6 +109,7 @@ fun SearchBarScreen(
     suggestionProvider: SuggestionProvider? = null,
     searchBarOffsetY: () -> Int,
     trailingIcon: @Composable () -> Unit,
+    filter: @Composable (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     var mSuggestionList by remember { mutableStateOf(emptyList<Suggestion>()) }
@@ -314,8 +315,12 @@ fun SearchBarScreen(
                 }
             },
         ) {
-            LazyColumn(contentPadding = WindowInsets.navigationBars.union(WindowInsets.ime).asPaddingValues()) {
-                items(mSuggestionList) {
+            filter?.invoke()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = WindowInsets.navigationBars.union(WindowInsets.ime).asPaddingValues(),
+            ) {
+                items(mSuggestionList, key = { it.keyword }) {
                     ListItem(
                         headlineContent = { Text(text = it.keyword) },
                         supportingContent = it.hint.ifNotNullThen { Text(text = it.hint!!) },
@@ -334,7 +339,7 @@ fun SearchBarScreen(
                             }
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable { it.onClick() },
+                        modifier = Modifier.clickable { it.onClick() }.animateItemPlacement(),
                     )
                 }
             }
