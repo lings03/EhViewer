@@ -154,7 +154,7 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
             var enableDf by Settings::dF.observed
             Preference(
                 title = stringResource(id = R.string.settings_advanced_http_engine),
-                summary = if (enableCronet) "Cronet" else "OKHttp",
+                summary = if (enableCronet) "Cronet" else "OkHttp",
             ) {
                 coroutineScope.launch {
                     dialogState.awaitPermissionOrCancel(
