@@ -156,7 +156,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/**"
-            excludes += "/okhttp3/**"
             excludes += "/kotlin/**"
             excludes += "**.txt"
             excludes += "**.bin"
