@@ -111,6 +111,7 @@ object Settings : DataStorePreferences(null) {
     val listThumbSize = intPref("list_tile_size", 40)
     val languageFilter = intPref("language_filter", -1)
     val meteredNetworkWarning = boolPref("cellular_network_warning", false)
+    val predictiveNavAnim = boolPref("predictive_nav_anim_2", false)
     val blackDarkTheme = boolPref("black_dark_theme", false)
 
     var downloadScheme by stringOrNullPref("image_scheme", null)
@@ -153,15 +154,15 @@ object Settings : DataStorePreferences(null) {
     var dF by boolPref(KEY_DOMAIN_FRONTING, true)
     var downloadOriginImage by boolPref("download_origin_image", false)
     var bypassVpn by boolPref("bypass_vpn", true)
-    var enableQuic by boolPref("enable_quic", false)
+    var enableQuic by boolPref("enable_quic", false).observed { updateWhenEnableCronetChanges() }
     var recentFavCat by intPref("recent_fav_cat", FavListUrlBuilder.FAV_CAT_LOCAL)
     var defaultFavSlot by intPref("default_favorite_slot", -2)
     var securityDelay by intPref("require_unlock_delay", 0)
     var clipboardTextHashCode by intPref("clipboard_text_hash_code", 0)
     var searchCategory by intPref("search_pref", EhUtils.ALL_CATEGORY)
-    var requestNewsTimerHour by intPref("request_news_timer_hour", -1)
-    var requestNewsTimerMinute by intPref("request_news_timer_minute", -1)
+    var requestNewsTime by intPref("request_news_time", 0).observed { updateWhenRequestNewsChanges() }
     var updateIntervalDays by intPref("update_interval_days", 7)
+    var lastDawnDays by intPref("last_dawn_days", 0)
     var recentToplist by stringPref("recent_toplist", "11")
     var userAgent by stringPref("user_agent", CHROME_USER_AGENT)
     var recentDownloadLabel by stringOrNullPref("recent_download_label", null)
@@ -170,11 +171,8 @@ object Settings : DataStorePreferences(null) {
     var avatar by stringOrNullPref("avatar", null)
     var dohUrl by stringPref("doh_url", "https://77.88.8.8/dns-query")
     var language by stringPref("app_language", "system").observed { updateWhenLocaleChanges() }
-    var lastDawnDay by longPref("last_dawn_day", 0)
-    var lastUpdateDay by longPref("last_update_day", 0)
     var cloudflareIp by stringOrNullPref("cloudflare_ip", "cdn.sstatic.net")
     var cloudflareIpOverride by boolPref("cloudflare_ip_override", false)
-    var lastDawnTime by longPref("last_dawn_time", 0)
     var lastUpdateTime by longPref("last_update_time", 0)
     var favDialogTheta by floatPref("fav_select_dialog_delta", 0F)
 
