@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,6 +68,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import arrow.core.Either
+import arrow.core.right
 import com.jamal.composeprefs3.ui.ifNotNullThen
 import com.jamal.composeprefs3.ui.ifTrueThen
 import kotlin.coroutines.resume
@@ -404,7 +405,7 @@ class DialogState {
     }
 
     suspend fun showSingleChoice(
-        vararg items: String,
+        items: List<String>,
         selected: Int,
     ): Int = showNoButton {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(vertical = 8.dp)) {
@@ -422,31 +423,30 @@ class DialogState {
     }
 
     suspend fun showSelectItem(
-        vararg items: String?,
-        @StringRes title: Int,
-    ) = showSelectItem(
-        *items.filterNotNull().mapIndexed { a, b -> b to a }.toTypedArray(),
-        title = title,
-    )
-
-    suspend fun <R> showSelectItem(
-        vararg items: Pair<String, R>,
+        items: List<String>,
         @StringRes title: Int? = null,
-    ): R = showNoButton {
+        respectDefaultWidth: Boolean = true,
+    ) = showSelectItem(items, title?.right(), respectDefaultWidth)
+
+    suspend fun showSelectItem(
+        items: List<String>,
+        title: Either<String, Int>?,
+        respectDefaultWidth: Boolean = true,
+    ): Int = showNoButton(respectDefaultWidth) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
             if (title != null) {
                 Text(
-                    text = stringResource(id = title),
+                    text = title.fold({ it }, { stringResource(id = it) }),
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }
             LazyColumn {
-                items(items) { (text, item) ->
+                itemsIndexed(items) { index, text ->
                     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.tertiary) {
                         Text(
                             text = text,
-                            modifier = Modifier.clickable { dismissWith(item) }.fillMaxWidth()
+                            modifier = Modifier.clickable { dismissWith(index) }.fillMaxWidth()
                                 .padding(horizontal = 24.dp, vertical = 16.dp),
                             style = MaterialTheme.typography.titleMedium,
                         )
@@ -459,26 +459,17 @@ class DialogState {
     suspend inline fun showSelectActions(
         @StringRes title: Int? = null,
         builder: ActionScope.() -> Unit,
-    ) = showSelectItem(
-        *buildList { builder(ActionScope { action, that -> add(action to that) }) }.toTypedArray(),
-        title = title,
-    ).invoke()
+    ) {
+        val (items, actions) = buildList { builder(ActionScope { action, that -> add(action to that) }) }.unzip()
+        val selected = showSelectItem(items, title)
+        actions[selected].invoke()
+    }
 
     suspend fun showSelectItemWithCheckBox(
-        vararg items: String?,
+        items: List<String>,
         @StringRes title: Int,
         @StringRes checkBoxText: Int,
-    ) = showSelectItemWithCheckBox(
-        *items.filterNotNull().mapIndexed { a, b -> b to a }.toTypedArray(),
-        title = title,
-        checkBoxText = checkBoxText,
-    )
-
-    private suspend fun <R> showSelectItemWithCheckBox(
-        vararg items: Pair<String, R>,
-        @StringRes title: Int,
-        @StringRes checkBoxText: Int,
-    ): Pair<R, Boolean> = showNoButton {
+    ): Pair<Int, Boolean> = showNoButton {
         var checked by remember { mutableStateOf(false) }
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
             Text(
@@ -487,11 +478,11 @@ class DialogState {
                 style = MaterialTheme.typography.headlineSmall,
             )
             LazyColumn {
-                items(items) { (text, item) ->
+                itemsIndexed(items) { index, text ->
                     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.tertiary) {
                         Text(
                             text = text,
-                            modifier = Modifier.clickable { dismissWith(item to checked) }.fillMaxWidth()
+                            modifier = Modifier.clickable { dismissWith(index to checked) }.fillMaxWidth()
                                 .padding(horizontal = 24.dp, vertical = 16.dp),
                             style = MaterialTheme.typography.titleMedium,
                         )
@@ -508,7 +499,7 @@ class DialogState {
     }
 
     suspend fun showSelectItemWithIcon(
-        vararg items: Pair<ImageVector, Int>,
+        items: List<Pair<ImageVector, Int>>,
         title: String,
     ): Int = showNoButton {
         LazyColumn {
@@ -530,7 +521,7 @@ class DialogState {
     }
 
     suspend fun showSelectItemWithIconAndTextField(
-        vararg items: Pair<ImageVector, String>,
+        items: List<Pair<ImageVector, String>>,
         @StringRes title: Int,
         @StringRes hint: Int,
         maxChar: Int,

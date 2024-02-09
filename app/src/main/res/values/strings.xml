@@ -86,7 +86,6 @@
     <string name="error_509">509</string>
     <string name="error_invalid_url">Invalid URL</string>
     <string name="error_get_ptoken_error">Get pToken error</string>
-    <string name="error_cant_create_temp_file">Couldn\'t create temp file</string>
     <string name="error_cant_save_image">Can\'t save image</string>
     <string name="error_invalid_number">Invalid number</string>
     <string name="app_waring">The content of this application is from the Internet. Some of it may do physical or mental harm to you. You have learnt the risks above and would like to undertake them. By continuing to use it, you agree to the above terms.</string>
@@ -401,7 +400,7 @@
     <string name="settings_advanced_app_language_title">App language</string>
     <string name="settings_advanced_enable_quic">QUIC support</string>
     <string name="settings_advanced_enable_quic_summary">Enable QUIC protocol support (App restart required)</string>
-    <string name="settings_advanced_http_engine">Http Engine</string>
+    <string name="settings_advanced_http_engine">Http Engine (Restart required)</string>
     <string name="settings_advanced_touch_slop">[Experimental] Touch slop factor</string>
     <string name="settings_advanced_touch_slop_summary">Increasing this will reduce swipe gesture sensitivity</string>
     <string name="settings_advanced_export_data">Export data</string>
@@ -575,6 +574,10 @@
     <string name="new_version_available">New version available!</string>
     <string name="already_latest_version">Already the latest version</string>
     <string name="permission_denied">Permission denied</string>
+    <string name="download_gallery_first">Please download the gallery first!</string>
+    <string name="export_as_archive">Export as archive</string>
+    <string name="export_as_archive_success">Export succeed</string>
+    <string name="export_as_archive_failed">Export failed</string>
     <!-- Tachiyomi Reader Start-->
     <string name="pref_crop_borders">Crop borders</string>
     <string name="action_settings">Settings</string>

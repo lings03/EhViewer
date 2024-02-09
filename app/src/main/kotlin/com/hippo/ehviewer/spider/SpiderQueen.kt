@@ -41,7 +41,6 @@ import com.hippo.ehviewer.image.Image
 import com.hippo.ehviewer.util.ExceptionUtils
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.util.lang.launchIO
-import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -227,7 +226,7 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
     private val prepareJob = launchIO { doPrepare() }
 
     private suspend fun doPrepare() {
-        mSpiderDen.downloadDir = getGalleryDownloadDir(galleryInfo.gid)?.takeIf { it.isDirectory }
+        mSpiderDen.initDownloadDirIfExist()
         mSpiderInfo = readSpiderInfoFromLocal() ?: readSpiderInfoFromInternet() ?: return
         mPageStateArray = IntArray(mSpiderInfo.pages)
         notifyGetPages(mSpiderInfo.pages)
@@ -236,12 +235,6 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
     suspend fun awaitReady(): Boolean {
         prepareJob.join()
         return isReady
-    }
-
-    suspend fun awaitStartPage(): Int {
-        prepareJob.join()
-        if (!isReady) return 0
-        return mSpiderInfo.startPage
     }
 
     private fun stop() {
@@ -309,12 +302,6 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
         }
     }
 
-    fun save(index: Int, dir: UniFile, filename: String): UniFile? {
-        val state = getPageState(index)
-        if (STATE_FINISHED != state) return null
-        return (dir / filename).takeIf { mSpiderDen.saveToUniFile(index, it) }
-    }
-
     fun getExtension(index: Int): String? {
         val state = getPageState(index)
         return if (STATE_FINISHED != state) {
@@ -322,13 +309,6 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
         } else {
             mSpiderDen.getExtension(index)
         }
-    }
-
-    val startPage: Int
-        get() = mSpiderInfo.startPage
-
-    fun putStartPage(page: Int) {
-        mSpiderInfo.startPage = page
     }
 
     private fun readSpiderInfoFromLocal(): SpiderInfo? {
@@ -367,7 +347,7 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                 referer,
             ).fetchUsingAsText {
                 val pages = parsePages(this)
-                val spiderInfo = SpiderInfo(galleryInfo.gid, pages, token = galleryInfo.token)
+                val spiderInfo = SpiderInfo(galleryInfo.gid, galleryInfo.token!!, pages)
                 readPreviews(this, 0, spiderInfo)
                 spiderInfo
             }
@@ -430,21 +410,6 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
         if (!isReady) return
         mSpiderDen.downloadDir?.run { createFile(SPIDER_INFO_FILENAME)?.also { mSpiderInfo.write(it) } }
         mSpiderInfo.saveToCache()
-    }
-
-    private suspend fun writeComicInfo() {
-        mSpiderDen.downloadDir?.run {
-            createFile(COMIC_INFO_FILE)?.also {
-                runCatching {
-                    withNonCancellableContext {
-                        EhEngine.fillGalleryListByApi(listOf(galleryInfo))
-                    }
-                    galleryInfo.getComicInfo().write(it)
-                }.onFailure {
-                    it.printStackTrace()
-                }
-            }
-        }
     }
 
     private fun isStateDone(state: Int): Boolean {
@@ -513,7 +478,7 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                     // Will create download dir if not exists
                     updateMode()
                     if (mode == MODE_DOWNLOAD) {
-                        writeComicInfo()
+                        mSpiderDen.writeComicInfo()
                     }
                 }
             }
@@ -654,12 +619,12 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                     showKeyLock.withLock {
                         localShowKey = showKey
                         if (localShowKey == null || forceHtml) {
-                            var pageUrl = EhUrl.getPageUrl(mSpiderInfo.gid, index, pToken)
+                            var pageUrl = EhUrl.getPageUrl(galleryInfo.gid, index, pToken)
                             // Skipping H@H costs 50 points, only use it as last resort
                             if (skipHathKey != null) {
                                 pageUrl += "?nl=$skipHathKey"
                             }
-                            EhEngine.getGalleryPage(pageUrl, mSpiderInfo.gid, mSpiderInfo.token)
+                            EhEngine.getGalleryPage(pageUrl, galleryInfo.gid, galleryInfo.token)
                                 .let { result ->
                                     check509(result.imageUrl)
                                     imageUrl = result.imageUrl

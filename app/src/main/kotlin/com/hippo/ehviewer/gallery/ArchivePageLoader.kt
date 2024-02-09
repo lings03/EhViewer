@@ -23,19 +23,17 @@ import com.hippo.ehviewer.image.Image
 import com.hippo.ehviewer.jni.closeArchive
 import com.hippo.ehviewer.jni.extractToByteBuffer
 import com.hippo.ehviewer.jni.extractToFd
-import com.hippo.ehviewer.jni.getFilename
+import com.hippo.ehviewer.jni.getExtension
 import com.hippo.ehviewer.jni.needPassword
 import com.hippo.ehviewer.jni.openArchive
 import com.hippo.ehviewer.jni.providePassword
 import com.hippo.ehviewer.jni.releaseByteBuffer
 import com.hippo.ehviewer.util.FileUtils
 import com.hippo.unifile.UniFile
+import com.hippo.unifile.displayPath
 import java.nio.ByteBuffer
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -47,11 +45,15 @@ import moe.tarsin.coroutines.withLock
 typealias PasswdInvalidator = (String) -> Boolean
 typealias PasswdProvider = suspend (PasswdInvalidator) -> String
 
-class ArchivePageLoader(private val file: UniFile, passwdProvider: PasswdProvider? = null) : PageLoader2(), CoroutineScope {
-    override val coroutineContext = Dispatchers.IO + Job()
+class ArchivePageLoader(
+    private val file: UniFile,
+    gid: Long = 0,
+    startPage: Int = 0,
+    passwdProvider: PasswdProvider? = null,
+) : PageLoader2(gid, startPage) {
     private lateinit var pfd: ParcelFileDescriptor
     private val hostJob = launch(start = CoroutineStart.LAZY) {
-        Log.d(DEBUG_TAG, "Open archive ${file.uri}")
+        Log.d(DEBUG_TAG, "Open archive ${file.uri.displayPath}")
         pfd = file.openFileDescriptor("r")
         size = openArchive(pfd.fd, pfd.statSize)
         if (size == 0) {
@@ -71,15 +73,15 @@ class ArchivePageLoader(private val file: UniFile, passwdProvider: PasswdProvide
         private set
 
     override fun start() {
+        super.start()
         hostJob.start()
     }
 
     override fun stop() {
-        cancel()
+        super.stop()
         closeArchive()
         pfd.close()
-        Log.d(DEBUG_TAG, "Close archive ${file.uri} successfully!")
-        super.stop()
+        Log.d(DEBUG_TAG, "Close archive ${file.uri.displayPath} successfully!")
     }
 
     private val mJobMap = hashMapOf<Int, Job>()
@@ -134,7 +136,7 @@ class ArchivePageLoader(private val file: UniFile, passwdProvider: PasswdProvide
 
     override suspend fun awaitReady(): Boolean {
         hostJob.join()
-        return size != 0
+        return super.awaitReady() && size != 0
     }
 
     override val isReady: Boolean
@@ -144,27 +146,24 @@ class ArchivePageLoader(private val file: UniFile, passwdProvider: PasswdProvide
         mJobMap[index]?.cancel()
     }
 
-    override fun getImageFilename(index: Int): String {
-        return FileUtils.getNameFromFilename(getImageFilenameWithExtension(index))!!
+    override val title by lazy {
+        FileUtils.getNameFromFilename(file.name)!!
     }
 
-    override fun getImageFilenameWithExtension(index: Int): String {
-        return FileUtils.sanitizeFilename(getFilename(index))
+    override fun getImageExtension(index: Int): String {
+        return getExtension(index)
     }
 
     override fun save(index: Int, file: UniFile): Boolean {
-        runCatching {
+        return runCatching {
             file.openFileDescriptor("w").use {
                 extractToFd(index, it.fd)
             }
-        }.onFailure {
+        }.getOrElse {
             it.printStackTrace()
-            return false
+            false
         }
-        return true
     }
-
-    override fun save(index: Int, dir: UniFile, filename: String) = (dir / filename).apply { save(index, this) }
 
     override fun preloadPages(pages: List<Int>, pair: Pair<Int, Int>) {}
 }

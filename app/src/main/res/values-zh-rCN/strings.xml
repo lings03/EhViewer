@@ -48,7 +48,6 @@
     <string name="error_509">509</string>
     <string name="error_invalid_url">无效链接</string>
     <string name="error_get_ptoken_error">获取 pToken 错误</string>
-    <string name="error_cant_create_temp_file">无法创建临时文件</string>
     <string name="error_cant_save_image">无法保存图片</string>
     <string name="error_invalid_number">非法数字</string>
     <string name="app_waring">本应用中内容来自互联网，部分内容可能对您的生理及心理造成难以恢复的伤害。本应用作者不会对由本应用造成的任何后果负责。未成年人应在监护人指导下使用本应用。请遵守所在地的法律法规。</string>
@@ -357,7 +356,7 @@
     <string name="settings_advanced_app_language_title">App 界面语言</string>
     <string name="settings_advanced_enable_quic">QUIC 支持</string>
     <string name="settings_advanced_enable_quic_summary">启用 QUIC 协议支持（需要重启应用）</string>
-    <string name="settings_advanced_http_engine">Http 引擎</string>
+    <string name="settings_advanced_http_engine">Http 引擎（重启生效)</string>
     <string name="settings_advanced_touch_slop">[实验性] 触摸溢出系数</string>
     <string name="settings_advanced_touch_slop_summary">增大此项将降低滑动手势敏感度</string>
     <string name="settings_advanced_export_data">导出数据</string>
@@ -511,6 +510,10 @@
     <string name="new_version_available">有新版本！</string>
     <string name="already_latest_version">已是最新版本</string>
     <string name="permission_denied">权限被拒</string>
+    <string name="download_gallery_first">请先下载画廊！</string>
+    <string name="export_as_archive">导出为归档文件</string>
+    <string name="export_as_archive_success">导出成功</string>
+    <string name="export_as_archive_failed">导出失败</string>
     <!-- Tachiyomi Reader Start-->
     <string name="action_settings">设置</string>
     <string name="action_retry">重试</string>

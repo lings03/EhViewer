@@ -62,12 +62,10 @@ import com.hippo.ehviewer.util.Crash
 import com.hippo.ehviewer.util.FavouriteStatusRouter
 import com.hippo.ehviewer.util.FileUtils
 import com.hippo.ehviewer.util.ReadableTime
-import com.hippo.ehviewer.util.delegateLazy
 import com.hippo.ehviewer.util.isAtLeastP
 import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
 import com.hippo.ehviewer.util.isCronetAvailable
-import com.hippo.ehviewer.util.resettableLazy
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withUIContext
@@ -193,7 +191,7 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: Context) = context.imageLoader {
         components {
             serviceLoaderEnabled(false)
-            add(KtorNetworkFetcherFactory(delegateLazy { ktorClient }))
+            add(KtorNetworkFetcherFactory { ktorClient })
             add(MergeInterceptor)
             add(DownloadThumbInterceptor)
             if (isAtLeastP) {
@@ -210,7 +208,7 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
     }
 
     companion object {
-        var ktorClient by resettableLazy {
+        val ktorClient by lazy {
             if (Settings.enableQuic && isCronetAvailable) {
                 HttpClient(CronetEngine) {
                     install(HttpCookies) {
@@ -235,7 +233,7 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
             }
         }
 
-        var noRedirectKtorClient by resettableLazy {
+        val noRedirectKtorClient by lazy {
             HttpClient(ktorClient.engine) {
                 followRedirects = false
                 install(HttpCookies) {
