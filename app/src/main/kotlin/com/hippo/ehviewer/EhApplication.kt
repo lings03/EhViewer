@@ -30,7 +30,8 @@ import androidx.lifecycle.coroutineScope
 import coil3.SingletonImageLoader
 import coil3.asCoilImage
 import coil3.gif.AnimatedImageDecoder
-import coil3.network.NetworkFetcher
+import coil3.gif.GifDecoder
+import coil3.network.ktor.KtorNetworkFetcherFactory
 import coil3.request.crossfade
 import coil3.serviceLoaderEnabled
 import coil3.util.DebugLogger
@@ -192,14 +193,16 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: Context) = context.imageLoader {
         components {
             serviceLoaderEnabled(false)
-            add(NetworkFetcher.Factory(delegateLazy { ktorClient }))
+            add(KtorNetworkFetcherFactory(delegateLazy { ktorClient }))
             add(MergeInterceptor)
             add(DownloadThumbInterceptor)
             if (isAtLeastP) {
                 add(AnimatedImageDecoder.Factory(false))
+            } else {
+                add(GifDecoder.Factory())
             }
         }
-        diskCache(imageCache)
+        diskCache { imageCache }
         crossfade(300)
         val drawable = AppCompatResources.getDrawable(appCtx, R.drawable.image_failed)
         if (drawable != null) error(drawable.asCoilImage(true))

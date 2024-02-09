@@ -91,12 +91,14 @@ private fun ensureNoMediaFile(downloadDir: UniFile) {
 
 private val lck = Mutex()
 
-suspend fun keepNoMediaFileStatus() {
-    lck.withLock {
-        if (Settings.mediaScan) {
-            removeNoMediaFile(downloadLocation)
-        } else {
-            ensureNoMediaFile(downloadLocation)
+suspend fun keepNoMediaFileStatus(downloadDir: UniFile = downloadLocation) {
+    if (downloadDir.isDirectory) {
+        lck.withLock {
+            if (Settings.mediaScan) {
+                removeNoMediaFile(downloadDir)
+            } else {
+                ensureNoMediaFile(downloadDir)
+            }
         }
     }
 }
@@ -329,11 +331,10 @@ suspend fun DialogState.doGalleryInfoAction(info: BaseGalleryInfo, context: Cont
 
 private const val MAX_FAVNOTE_CHAR = 200
 
-suspend fun DialogState.confirmRemoveDownload(info: GalleryInfo, onDismiss: () -> Unit = {}) {
+suspend fun DialogState.confirmRemoveDownload(info: GalleryInfo) {
     var checked by mutableStateOf(Settings.removeImageFiles)
     awaitPermissionOrCancel(
         title = R.string.download_remove_dialog_title,
-        onDismiss = onDismiss,
         text = {
             Column {
                 Text(
