@@ -22,7 +22,6 @@ import android.app.assist.AssistContent
 import android.content.ClipData
 import android.content.ContentValues
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
@@ -42,12 +41,17 @@ import androidx.activity.viewModels
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,15 +61,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.shape.MaterialShapeDrawable
 import com.hippo.ehviewer.BuildConfig
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
@@ -78,8 +83,8 @@ import com.hippo.ehviewer.download.archiveFile
 import com.hippo.ehviewer.gallery.ArchivePageLoader
 import com.hippo.ehviewer.gallery.EhPageLoader
 import com.hippo.ehviewer.gallery.PageLoader2
-import com.hippo.ehviewer.image.Image
 import com.hippo.ehviewer.ui.EhActivity
+import com.hippo.ehviewer.ui.reader.SettingsPager
 import com.hippo.ehviewer.ui.setMD3Content
 import com.hippo.ehviewer.ui.tools.DialogState
 import com.hippo.ehviewer.util.AppConfig
@@ -88,7 +93,6 @@ import com.hippo.ehviewer.util.awaitActivityResult
 import com.hippo.ehviewer.util.getParcelableCompat
 import com.hippo.ehviewer.util.getParcelableExtraCompat
 import com.hippo.ehviewer.util.getValue
-import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastP
 import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.lazyMut
@@ -100,7 +104,6 @@ import dev.chrisbanes.insetter.applyInsetter
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader.setting.OrientationType
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
-import eu.kanade.tachiyomi.ui.reader.setting.ReaderSettingsSheet
 import eu.kanade.tachiyomi.ui.reader.setting.ReadingModeType
 import eu.kanade.tachiyomi.ui.reader.viewer.BaseViewer
 import eu.kanade.tachiyomi.ui.reader.viewer.pager.R2LPagerViewer
@@ -109,6 +112,7 @@ import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.isNightMode
 import eu.kanade.tachiyomi.util.system.logcat
 import java.io.File
+import kotlin.coroutines.resume
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -252,13 +256,6 @@ class ReaderActivity : EhActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (isAtLeastO) {
-            window.colorMode = if (Image.isWideColorGamut && ReaderPreferences.wideColorGamut().get()) {
-                ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT
-            } else {
-                ActivityInfo.COLOR_MODE_DEFAULT
-            }
-        }
         if (savedInstanceState == null) {
             onInit()
         } else {
@@ -266,6 +263,14 @@ class ReaderActivity : EhActivity() {
         }
         binding = ReaderActivityBinding.inflate(layoutInflater)
         binding.dialogStub.setMD3Content {
+            val surfaceElevation = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+            val alpha = if (isSystemInDarkTheme()) 230 else 242 // 90% dark 95% light
+            LaunchedEffect(surfaceElevation, alpha) {
+                val toolbarColor = surfaceElevation.copy(alpha = alpha / 255f).toArgb()
+                window.statusBarColor = toolbarColor
+                window.navigationBarColor = toolbarColor
+            }
+
             val brightness by Settings.customBrightness.collectAsState()
             val brightnessValue by Settings.customBrightnessValue.collectAsState()
             val colorOverlayEnabled by Settings.colorFilter.collectAsState()
@@ -300,7 +305,31 @@ class ReaderActivity : EhActivity() {
                     sliderValueFlow.value = it
                     currentPage = it + 1
                 },
-                onClickSettings = { readerSettingSheetDialog?.show() },
+                onClickSettings = {
+                    lifecycleScope.launch {
+                        dialogState.dialog { cont ->
+                            fun dispose() = cont.resume(Unit)
+                            var isColorFilter by remember { mutableStateOf(false) }
+                            val scrim by animateColorAsState(
+                                targetValue = if (isColorFilter) Color.Transparent else BottomSheetDefaults.ScrimColor,
+                                label = "ScrimColor",
+                            )
+                            ModalBottomSheet(
+                                onDismissRequest = { dispose() },
+                                dragHandle = null,
+                                // Yeah, I know color state should not be read here, but we have to do it...
+                                scrimColor = scrim,
+                                windowInsets = WindowInsets(0),
+                            ) {
+                                SettingsPager(modifier = Modifier.fillMaxSize()) { page ->
+                                    isColorFilter = page == 2
+                                    setMenuVisibility(!isColorFilter)
+                                }
+                                Spacer(modifier = Modifier.navigationBarsPadding())
+                            }
+                        }
+                    }
+                },
             )
 
             ReaderContentOverlay(
@@ -358,8 +387,6 @@ class ReaderActivity : EhActivity() {
         config = null
         viewer?.destroy()
         viewer = null
-        readerSettingSheetDialog?.dismiss()
-        readerSettingSheetDialog = null
     }
 
     private suspend fun makeToast(text: String) = withUIContext {
@@ -521,8 +548,6 @@ class ReaderActivity : EhActivity() {
         )
     }
 
-    private var readerSettingSheetDialog: ReaderSettingsSheet? = null
-
     /**
      * Sets the visibility of the menu according to [visible] and with an optional parameter to
      * [animate] the views.
@@ -573,21 +598,6 @@ class ReaderActivity : EhActivity() {
                 )
             }
         }
-
-        readerSettingSheetDialog = ReaderSettingsSheet(this@ReaderActivity)
-
-        val toolbarBackground = MaterialShapeDrawable.createWithElevationOverlay(this).apply {
-            elevation = resources.getDimension(com.google.android.material.R.dimen.m3_sys_elevation_level2)
-            alpha = if (isNightMode()) 230 else 242 // 90% dark 95% light
-        }
-
-        val toolbarColor = ColorUtils.setAlphaComponent(
-            toolbarBackground.resolvedTintColor,
-            toolbarBackground.alpha,
-        )
-
-        window.statusBarColor = toolbarColor
-        window.navigationBarColor = toolbarColor
 
         // Set initial visibility
         setMenuVisibility(menuVisible)
@@ -758,7 +768,6 @@ class ReaderActivity : EhActivity() {
                 ReaderPreferences.cutoutShort().changes()
                     .drop(1)
                     .onEach {
-                        readerSettingSheetDialog?.hide()
                         setCutoutShort(it)
                         recreate()
                     }

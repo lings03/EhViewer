@@ -587,11 +587,12 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                     )
                 },
             )
-            val torrentText = stringResource(R.string.torrent_count, galleryDetail.torrentCount)
+            val torrentText = stringResource(R.string.torrents)
             val permissionDenied = stringResource(R.string.permission_denied)
             val downloadTorrentFailed = stringResource(R.string.download_torrent_failure)
             val downloadTorrentStarted = stringResource(R.string.download_torrent_started)
             val noTorrents = stringResource(R.string.no_torrents)
+            val noCurrentTorrents = stringResource(R.string.no_current_torrents)
             var mTorrentList by remember { mutableStateOf<TorrentResult?>(null) }
             suspend fun showTorrentDialog() {
                 if (mTorrentList == null) {
@@ -601,18 +602,23 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                         }
                     }
                 }
-                val items = mTorrentList!!.map { it.format() }
-                val selected = showSelectItem(items, R.string.torrents, false)
-                val url = mTorrentList!![selected].url
-                val name = "${mTorrentList!![selected].name}.torrent"
-                val r = DownloadManager.Request(Uri.parse(url))
-                r.setDestinationInExternalPublicDir(
-                    Environment.DIRECTORY_DOWNLOADS,
-                    AppConfig.APP_DIRNAME + "/" + FileUtils.sanitizeFilename(name),
-                )
-                r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                r.addRequestHeader("Cookie", EhCookieStore.getCookieHeader(url))
-                downloadManager.enqueue(r)
+                if (mTorrentList!!.isEmpty()) {
+                    showSnackbar(noCurrentTorrents)
+                } else {
+                    val items = mTorrentList!!.map { it.format() }
+                    val selected = showSelectItem(items, R.string.torrents, false)
+                    val url = mTorrentList!![selected].url
+                    val name = "${mTorrentList!![selected].name}.torrent"
+                    val r = DownloadManager.Request(Uri.parse(url))
+                    r.setDestinationInExternalPublicDir(
+                        Environment.DIRECTORY_DOWNLOADS,
+                        AppConfig.APP_DIRNAME + "/" + FileUtils.sanitizeFilename(name),
+                    )
+                    r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    r.addRequestHeader("Cookie", EhCookieStore.getCookieHeader(url))
+                    downloadManager.enqueue(r)
+                    showSnackbar(downloadTorrentStarted)
+                }
             }
             EhIconButton(
                 icon = Icons.Default.SwapVerticalCircle,
@@ -624,8 +630,6 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                             if (granted) {
                                 runSuspendCatching {
                                     showTorrentDialog()
-                                }.onSuccess {
-                                    showSnackbar(downloadTorrentStarted)
                                 }.onFailure {
                                     logcat(it)
                                     showSnackbar(downloadTorrentFailed)

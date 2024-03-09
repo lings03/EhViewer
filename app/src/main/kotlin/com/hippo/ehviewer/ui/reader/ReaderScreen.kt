@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.ui.reader
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -82,14 +84,20 @@ fun ReaderScreen(info: BaseGalleryInfo, page: Int = -1, navigator: DestinationsN
     }
     val showSeekbar by Settings.showReaderSeekbar.collectAsState()
     val readingMode by Settings.readingMode.collectAsState { ReadingModeType.fromPreference(it) }
+    val volumeKeysEnabled by Settings.readWithVolumeKeys.collectAsState()
     Deferred({ pageLoader.awaitReady() }) {
         val lazyListState = rememberLazyListState()
         val pagerState = rememberPagerState { pageLoader.size }
         val syncState = rememberSliderPagerDoubleSyncState(lazyListState, pagerState, pageLoader)
-        syncState.Sync()
+        syncState.Sync(ReadingModeType.isWebtoon(readingMode))
         Box {
             var appbarVisible by remember { mutableStateOf(false) }
             val bgColor by collectBackgroundColorAsState()
+            VolumeKeysHandler(
+                enabled = { volumeKeysEnabled && !appbarVisible },
+                movePrevious = { syncState.sliderScrollTo(syncState.sliderValue - 1) },
+                moveNext = { syncState.sliderScrollTo(syncState.sliderValue + 1) },
+            )
             GalleryPager(
                 type = readingMode,
                 pagerState = pagerState,
@@ -165,12 +173,21 @@ fun ReaderScreen(info: BaseGalleryInfo, page: Int = -1, navigator: DestinationsN
                     launch {
                         dialog { cont ->
                             fun dispose() = cont.resume(Unit)
+                            var isColorFilter by remember { mutableStateOf(false) }
+                            val scrim by animateColorAsState(
+                                targetValue = if (isColorFilter) Color.Transparent else BottomSheetDefaults.ScrimColor,
+                                label = "ScrimColor",
+                            )
                             ModalBottomSheet(
                                 onDismissRequest = { dispose() },
+                                // Yeah, I know color state should not be read here, but we have to do it...
+                                scrimColor = scrim,
                                 dragHandle = null,
                                 windowInsets = WindowInsets(0),
                             ) {
-                                SettingsPager(modifier = Modifier.fillMaxSize())
+                                SettingsPager(modifier = Modifier.fillMaxSize()) { page ->
+                                    isColorFilter = page == 2
+                                }
                                 Spacer(modifier = Modifier.navigationBarsPadding())
                             }
                         }

@@ -29,6 +29,7 @@ import arrow.fx.coroutines.parMapNotNull
 import com.hippo.ehviewer.EhDB
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.data.BaseGalleryInfo
+import com.hippo.ehviewer.client.data.GalleryInfo
 import com.hippo.ehviewer.dao.DownloadInfo
 import com.hippo.ehviewer.dao.DownloadLabel
 import com.hippo.ehviewer.image.Image
@@ -39,6 +40,7 @@ import com.hippo.ehviewer.spider.SpiderQueen.OnSpiderListener
 import com.hippo.ehviewer.spider.putToDownloadDir
 import com.hippo.ehviewer.spider.readComicInfo
 import com.hippo.ehviewer.spider.readCompatFromUniFile
+import com.hippo.ehviewer.spider.toSimpleTags
 import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.insertWith
 import com.hippo.ehviewer.util.mapNotNull
@@ -367,6 +369,7 @@ object DownloadManager : OnSpiderListener, CoroutineScope {
 
             if (deleteFiles) {
                 info.downloadDir?.delete()
+                info.tempDownloadDir?.delete()
                 EhDB.removeDownloadDirname(info.gid)
             }
         }
@@ -529,17 +532,23 @@ object DownloadManager : OnSpiderListener, CoroutineScope {
         }
     }
 
-    suspend fun readPagesFromLocal() {
-        val list = allInfoList.filter { it.pages == 0 }.parMapNotNull(concurrency = 5) { info ->
+    suspend fun readMetadataFromLocal() {
+        val list = allInfoList.filter { it.pages == 0 || it.simpleTags == null }.parMapNotNull(concurrency = 5) { info ->
             info.downloadDir?.run {
-                val pages = findFile(SPIDER_INFO_FILENAME)?.let {
-                    readCompatFromUniFile(it)?.pages
-                } ?: findFile(COMIC_INFO_FILE)?.let {
-                    readComicInfo(it)?.pageCount
-                }
-                pages?.let {
-                    info.pages = it
+                val comicInfo = findFile(COMIC_INFO_FILE)?.let { readComicInfo(it) }
+                if (comicInfo != null) {
+                    info.pages = comicInfo.pageCount
+                    info.simpleTags = comicInfo.toSimpleTags()
                     info.galleryInfo
+                } else if (info.pages == 0) {
+                    findFile(SPIDER_INFO_FILENAME)?.let {
+                        readCompatFromUniFile(it)?.run {
+                            info.pages = pages
+                            info.galleryInfo
+                        }
+                    }
+                } else {
+                    null
                 }
             }
         }
@@ -781,3 +790,4 @@ var downloadLocation: UniFile
 
 val DownloadInfo.downloadDir get() = dirname?.let { downloadLocation / it }
 val DownloadInfo.archiveFile get() = downloadDir?.findFile("$gid.cbz")
+val GalleryInfo.tempDownloadDir get() = AppConfig.getTempDir("$gid")
