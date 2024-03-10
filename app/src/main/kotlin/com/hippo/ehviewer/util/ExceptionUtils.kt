@@ -63,4 +63,13 @@ object ExceptionUtils {
             }
         }
     }
+    fun getReadableString(e: Throwable): String {
+        logcat(e)
+        val cause = e.cause
+        return if (e is IOException && cause != null) {
+            getReadableStringInternal(cause)
+        } else {
+            getReadableStringInternal(e)
+        }
+    }
 }
