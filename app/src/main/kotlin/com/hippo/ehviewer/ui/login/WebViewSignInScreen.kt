@@ -15,6 +15,7 @@ import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.StartDestination
+import com.hippo.ehviewer.ui.destinations.SelectSiteScreenDestination
 import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.util.setDefaultSettings
 import com.ramcosta.composedestinations.annotation.Destination
@@ -50,8 +51,8 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
                 if (getId && getHash) {
                     present = true
                     coroutineScope.launchIO {
-                        withNonCancellableContext { postLogin() }
-                        withUIContext { navigator.popNavigate(StartDestination) }
+                        val canEx = withNonCancellableContext { postLogin() }
+                        withUIContext { navigator.popNavigate(if (canEx) SelectSiteScreenDestination else StartDestination) }
                     }
                 }
             }

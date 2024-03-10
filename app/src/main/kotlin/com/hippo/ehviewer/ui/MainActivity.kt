@@ -101,6 +101,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
+import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.data.ListUrlBuilder
 import com.hippo.ehviewer.client.parser.GalleryDetailUrlParser
 import com.hippo.ehviewer.client.parser.GalleryPageUrlParser
@@ -115,6 +116,7 @@ import com.hippo.ehviewer.ui.destinations.FavouritesScreenDestination
 import com.hippo.ehviewer.ui.destinations.HistoryScreenDestination
 import com.hippo.ehviewer.ui.destinations.HomePageScreenDestination
 import com.hippo.ehviewer.ui.destinations.ProgressScreenDestination
+import com.hippo.ehviewer.ui.destinations.SelectSiteScreenDestination
 import com.hippo.ehviewer.ui.destinations.SettingsScreenDestination
 import com.hippo.ehviewer.ui.destinations.SignInScreenDestination
 import com.hippo.ehviewer.ui.destinations.SubscriptionScreenDestination
@@ -442,7 +444,7 @@ class MainActivity : EhActivity() {
                                     DestinationsNavHost(
                                         navGraph = NavGraphs.root,
                                         startRoute = if (Settings.needSignIn) {
-                                            SignInScreenDestination
+                                            if (EhCookieStore.hasSignedIn()) SelectSiteScreenDestination else SignInScreenDestination
                                         } else {
                                             StartDestination
                                         },
