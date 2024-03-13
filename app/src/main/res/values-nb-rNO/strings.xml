@@ -8,8 +8,6 @@
     <string name="error_unknown_host">Ukjent vert</string>
     <string name="error_redirection">For mange videresendinger</string>
     <string name="error_socket">Nettverksfeil</string>
-    <string name="password">Passord</string>
-    <string name="sign_in_via_webview">Logg inn via WebView</string>
     <string name="downloads">Nedlastninger</string>
     <string name="register">Registrering</string>
     <string name="error_invalid_number">Ugyldig nummer</string>
