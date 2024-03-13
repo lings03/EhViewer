@@ -39,7 +39,6 @@ import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.StartDestination
 import com.hippo.ehviewer.ui.destinations.CookieSignInSceneDestination
-import com.hippo.ehviewer.ui.destinations.SelectSiteScreenDestination
 import com.hippo.ehviewer.ui.destinations.WebViewSignInScreenDestination
 import com.hippo.ehviewer.ui.openBrowser
 import com.hippo.ehviewer.ui.screen.popNavigate
@@ -130,90 +129,56 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                         }
                     }
                 }
-
-                }
-                WindowWidthSizeClass.Expanded -> {
-                    Row(
-                        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).systemBarsPadding().padding(dimensionResource(id = R.dimen.keyline_margin)),
-                        verticalAlignment = Alignment.CenterVertically,
+            }
+            WindowWidthSizeClass.Expanded -> {
+                Row(
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).systemBarsPadding().padding(dimensionResource(id = R.dimen.keyline_margin)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier.width(dimensionResource(id = R.dimen.signinscreen_landscape_caption_frame_width)).padding(dimensionResource(id = R.dimen.keyline_margin)),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Column(
-                            modifier = Modifier.width(dimensionResource(id = R.dimen.signinscreen_landscape_caption_frame_width)).padding(dimensionResource(id = R.dimen.keyline_margin)),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                                contentDescription = null,
-                                alignment = Alignment.Center,
-                                modifier = Modifier.padding(dimensionResource(id = R.dimen.keyline_margin)),
-                            )
-                            Text(
-                                text = stringResource(id = R.string.app_waring),
-                                modifier = Modifier.widthIn(max = 360.dp),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                text = stringResource(id = R.string.app_waring_2),
-                                modifier = Modifier.widthIn(max = 360.dp),
-                                style = MaterialTheme.typography.headlineMedium,
-                            )
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            contentDescription = null,
+                            alignment = Alignment.Center,
+                            modifier = Modifier.padding(dimensionResource(id = R.dimen.keyline_margin)),
+                        )
+                        Text(
+                            text = stringResource(id = R.string.app_waring),
+                            modifier = Modifier.widthIn(max = 360.dp),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            text = stringResource(id = R.string.app_waring_2),
+                            modifier = Modifier.widthIn(max = 360.dp),
+                            style = MaterialTheme.typography.headlineMedium,
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Spacer(modifier = Modifier.height(48.dp))
+                        Row(horizontalArrangement = Arrangement.Center) {
+                            Button(
+                                onClick = { navigator.navigate(WebViewSignInScreenDestination) },
+                                modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
+                            ) {
+                                Text(text = stringResource(id = R.string.sign_in))
+                            }
+                            FilledTonalButton(
+                                onClick = { context.openBrowser(EhUrl.URL_REGISTER) },
+                                modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
+                            ) {
+                                Text(text = stringResource(id = R.string.register))
+                            }
                         }
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Spacer(modifier = Modifier.height(48.dp))
-                            Row(horizontalArrangement = Arrangement.Center) {
-                                Button(
-                                    onClick = { navigator.navigate(WebViewSignInScreenDestination) },
-                                    modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
-                                ) {
-                                    Text(text = stringResource(id = R.string.sign_in))
-                                }
-                                FilledTonalButton(
-                                    onClick = { context.openBrowser(EhUrl.URL_REGISTER) },
-                                    modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
-                                ) {
-                                    Text(text = stringResource(id = R.string.register))
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(horizontalArrangement = Arrangement.Center) {
-                                TextButton(
-                                    onClick = { navigator.navigate(CookieSignInSceneDestination) },
-                                    modifier = Modifier.padding(horizontal = 4.dp),
-                                ) {
-                                    Text(
-                                        text = buildAnnotatedString {
-                                            withStyle(
-                                                style = SpanStyle(textDecoration = TextDecoration.Underline),
-                                            ) {
-                                                append(stringResource(id = R.string.sign_in_via_cookies))
-                                            }
-                                        },
-                                    )
-                                }
-                                TextButton(
-                                    onClick = { navigator.navigate(WebViewSignInScreenDestination) },
-                                    modifier = Modifier.padding(horizontal = 4.dp),
-                                ) {
-                                    Text(
-                                        text = buildAnnotatedString {
-                                            withStyle(
-                                                style = SpanStyle(textDecoration = TextDecoration.Underline),
-                                            ) {
-                                                append(stringResource(id = R.string.sign_in_via_webview))
-                                            }
-                                        },
-                                    )
-                                }
-                            }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.Center) {
                             TextButton(
-                                onClick = {
-                                    Settings.needSignIn = false
-                                    Settings.gallerySite = EhUrl.SITE_E
-                                    navigator.popNavigate(StartDestination)
-                                },
+                                onClick = { navigator.navigate(CookieSignInSceneDestination) },
                                 modifier = Modifier.padding(horizontal = 4.dp),
                             ) {
                                 Text(
@@ -221,14 +186,47 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                                         withStyle(
                                             style = SpanStyle(textDecoration = TextDecoration.Underline),
                                         ) {
-                                            append(stringResource(id = R.string.guest_mode))
+                                            append(stringResource(id = R.string.sign_in_via_cookies))
                                         }
                                     },
                                 )
                             }
+                            TextButton(
+                                onClick = { navigator.navigate(WebViewSignInScreenDestination) },
+                                modifier = Modifier.padding(horizontal = 4.dp),
+                            ) {
+                                Text(
+                                    text = buildAnnotatedString {
+                                        withStyle(
+                                            style = SpanStyle(textDecoration = TextDecoration.Underline),
+                                        ) {
+                                            append(stringResource(id = R.string.sign_in_via_webview))
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                        TextButton(
+                            onClick = {
+                                Settings.needSignIn = false
+                                Settings.gallerySite = EhUrl.SITE_E
+                                navigator.popNavigate(StartDestination)
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        ) {
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(
+                                        style = SpanStyle(textDecoration = TextDecoration.Underline),
+                                    ) {
+                                        append(stringResource(id = R.string.guest_mode))
+                                    }
+                                },
+                            )
                         }
                     }
                 }
             }
         }
     }
+}
