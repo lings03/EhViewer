@@ -81,6 +81,7 @@ android {
                 "nb-rNO",
             ),
         )
+        buildConfigField("String", "RAW_VERSION_NAME", "\"$versionName$versionNameSuffix\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
         buildConfigField("String", "REPO_NAME", "\"$repoName\"")
         ndk {
@@ -88,24 +89,17 @@ android {
         }
     }
 
-    flavorDimensions += listOf("api", "oss")
+    flavorDimensions += "api"
 
     productFlavors {
-        create("default") {
-            dimension = "api"
-        }
+        create("default")
         create("marshmallow") {
-            dimension = "api"
             minSdk = 23
             applicationIdSuffix = ".m"
             versionNameSuffix = "-M"
             compileOptions {
                 isCoreLibraryDesugaringEnabled = true
             }
-        }
-        create("gms") {
-            dimension = "oss"
-            // versionNameSuffix = "-gms"
         }
     }
 
@@ -151,6 +145,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/**"
+            excludes += "/okhttp3/**"
             excludes += "/kotlin/**"
             excludes += "**.txt"
             excludes += "**.bin"
@@ -267,7 +262,7 @@ dependencies {
 
     coreLibraryDesugaring(libs.desugar)
 
-    "gmsImplementation"(libs.bundles.cronet)
+    implementation(libs.cronet.embedded)
 
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.compose.ui.tooling.preview)

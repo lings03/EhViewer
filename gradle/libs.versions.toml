@@ -125,7 +125,6 @@ telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "te
 [bundles]
 coil = ["coil-compose", "coil-gif", "coil-network"]
 compose = ["compose-foundation", "compose-material-icons-extended", "compose-material3", "compose-material3-windowsizeclass", "compose-ui-util"]
-cronet = ["cronet-embedded"]
 kotlinx-serialization = ["serialization-cbor", "serialization-json", "serialization-json-okio", "serialization-xml-core", "serialization-xml"]
 ktor = ["ktor-client-okhttp"]
 okhttp = ["okhttp-android", "okhttp-dnsoverhttps"]
