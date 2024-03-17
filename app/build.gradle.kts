@@ -60,10 +60,10 @@ android {
 
     defaultConfig {
         applicationId = "moe.tarsin.ehviewer"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 34
-        versionCode = 180051
-        versionName = "1.11.1"
+        versionCode = 180053
+        versionName = "1.11.2"
         versionNameSuffix = "-cc"
         resourceConfigurations.addAll(
             listOf(
@@ -81,10 +81,22 @@ android {
                 "nb-rNO",
             ),
         )
+        buildConfigField("String", "RAW_VERSION_NAME", "\"$versionName$versionNameSuffix\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
         buildConfigField("String", "REPO_NAME", "\"$repoName\"")
         ndk {
             debugSymbolLevel = "FULL"
+        }
+    }
+
+    flavorDimensions += "api"
+
+    productFlavors {
+        create("default")
+        create("marshmallow") {
+            minSdk = 23
+            applicationIdSuffix = ".m"
+            versionNameSuffix = "-M"
         }
     }
 
@@ -257,6 +269,13 @@ dependencies {
 
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.compose.ui.tooling.preview)
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Workaround for https://issuetracker.google.com/329489167
+        force("androidx.compose.foundation:foundation-android:1.7.0-alpha03")
+    }
 }
 
 kotlin {
