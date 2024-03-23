@@ -604,7 +604,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                     val selected = showSelectItem(items, R.string.torrents, false)
                     val url = mTorrentList!![selected].url
                     val name = "${mTorrentList!![selected].name}.torrent"
-                    val r = DownloadManager.Request(Uri.parse(url))
+                    val r = DownloadManager.Request(Uri.parse(url.replace("exhentai.org", "ehtracker.org")))
                     r.setDestinationInExternalPublicDir(
                         Environment.DIRECTORY_DOWNLOADS,
                         AppConfig.APP_DIRNAME + "/" + FileUtils.sanitizeFilename(name),
