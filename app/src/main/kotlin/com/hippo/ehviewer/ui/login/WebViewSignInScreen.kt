@@ -19,7 +19,6 @@ import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.CHROME_ACCEPT
 import com.hippo.ehviewer.client.EhCookieStore
-import com.hippo.ehviewer.client.EhCookieStore.manager
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.ui.LockDrawer
@@ -268,24 +267,17 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
                 val responseCookies = response.headers("Set-Cookie")
                 // Log.d("EhCookieStore", "Set-Cookie headers found: $responseCookies")
 
-                // 使用CookieManager来逐个存储Cookie
+                // 使用EhCookieStore来逐个存储Cookie
                 responseCookies.forEach { cookieHeader ->
-                    // 解析并设置到CookieManager中
+                    // 解析Cookie
                     val parsedCookie = parseSetCookieHeader(cookieHeader)
                     parsedCookie?.let { cookie ->
-                        val cookieNameValue = "${cookie.name}=${cookie.value}"
-                        val setCookieString = "$cookieNameValue; Path=${cookie.path}; Domain=${cookie.domain}"
-
-                        // 定义一个URL，它与Cookie的Domain对应
-                        val url = if ((cookie.domain ?: "") in EhUrl.DOMAIN_E) EhUrl.HOST_E else EhUrl.HOST_EX
-
-                        // 使用WebView的CookieManager设置Cookie
-                        manager.setCookie(url, setCookieString)
-                        // Log.d("EhCookieStore", "Setting cookie: $setCookieString for URL $url")
+                        // 使用EhCookieStore的addCookie方法添加Cookie
+                        EhCookieStore.addCookie(cookie.name, cookie.value, cookie.domain)
                     }
                 }
                 // 确保新的Cookie被写入
-                manager.flush()
+                EhCookieStore.flush()
             } catch (e: IOException) {
                 Log.e("handlePostRequest", "Request error: ${e.localizedMessage}")
             }

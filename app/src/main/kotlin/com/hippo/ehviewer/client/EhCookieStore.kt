@@ -12,7 +12,7 @@ import io.ktor.http.renderCookieHeader
 import io.ktor.http.renderSetCookieHeader
 
 object EhCookieStore : CookiesStorage {
-    val manager = CookieManager.getInstance()
+    private val manager = CookieManager.getInstance()
     fun signOut() = manager.removeAllCookies(null)
     fun contains(url: String, name: String) = load(Url(url)).fastAny { it.name == name }
 
