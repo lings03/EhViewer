@@ -79,7 +79,6 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
     val state = rememberWebViewState(url = EhUrl.URL_SIGN_IN)
     class OkHttpWebViewClient(
         private val jsCode: String,
-        private val coroutineScope: CoroutineScope,
         private val onLoginSuccess: () -> Unit,
         private val onLoginFailed: () -> Unit,
     ) : AccompanistWebViewClient() {
@@ -168,7 +167,6 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
     val okHttpWebViewClient = remember {
         OkHttpWebViewClient(
             jsCode = jsCode,
-            coroutineScope = coroutineScope,
             onLoginSuccess = {
                 navigator.popNavigate(SelectSiteScreenDestination)
             },
