@@ -58,13 +58,14 @@ import com.hippo.ehviewer.dao.FilterMode
 import com.hippo.ehviewer.ui.tools.Deferred
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlin.coroutines.resume
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import moe.tarsin.coroutines.groupByToObserved
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun FilterScreen(navigator: DestinationsNavigator) {
     val scope = rememberCoroutineScope()
@@ -226,7 +227,7 @@ fun FilterScreen(navigator: DestinationsNavigator) {
                         stickyHeader(key = filterMode) {
                             Text(
                                 text = stringResource(id = title),
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp).animateItemPlacement(),
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp).animateItem(),
                                 color = MaterialTheme.colorScheme.tertiary,
                                 style = MaterialTheme.typography.titleMedium,
                             )
@@ -234,7 +235,7 @@ fun FilterScreen(navigator: DestinationsNavigator) {
                         items(filters, key = { requireNotNull(it.id) }) { filter ->
                             val filterCheckBoxRecomposeScope = currentRecomposeScope
                             Row(
-                                modifier = Modifier.fillMaxWidth().animateItemPlacement().clickable { filter.trigger { filterCheckBoxRecomposeScope.invalidate() } },
+                                modifier = Modifier.fillMaxWidth().animateItem().clickable { filter.trigger { filterCheckBoxRecomposeScope.invalidate() } },
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Checkbox(

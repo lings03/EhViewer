@@ -54,27 +54,30 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerState2
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.ModalSideDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ShapeDefaults
-import androidx.compose.material3.SideDrawer
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberDrawerState2
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.currentCompositeKeyHash
 import androidx.compose.runtime.getValue
@@ -84,8 +87,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -95,6 +104,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavController
@@ -126,7 +136,7 @@ import com.hippo.ehviewer.ui.legacy.EditTextDialogBuilder
 import com.hippo.ehviewer.ui.screen.asDst
 import com.hippo.ehviewer.ui.screen.asDstWith
 import com.hippo.ehviewer.ui.screen.navWithUrl
-import com.hippo.ehviewer.ui.screen.navigate
+import com.hippo.ehviewer.ui.screen.navigateTo
 import com.hippo.ehviewer.ui.settings.showNewVersion
 import com.hippo.ehviewer.ui.tools.DialogState
 import com.hippo.ehviewer.ui.tools.LabeledCheckbox
@@ -135,6 +145,7 @@ import com.hippo.ehviewer.ui.tools.LocalTouchSlopProvider
 import com.hippo.ehviewer.ui.tools.LocalWindowSizeClass
 import com.hippo.ehviewer.updater.AppUpdater
 import com.hippo.ehviewer.util.addTextToClipboard
+import com.hippo.ehviewer.util.calculateFraction
 import com.hippo.ehviewer.util.displayString
 import com.hippo.ehviewer.util.getParcelableExtraCompat
 import com.hippo.ehviewer.util.getUrlFromClipboard
@@ -143,7 +154,7 @@ import com.hippo.ehviewer.util.isAtLeastS
 import com.hippo.unifile.asUniFile
 import com.hippo.unifile.sha1
 import com.ramcosta.composedestinations.DestinationsNavHost
-import com.ramcosta.composedestinations.rememberNavHostEngine
+import com.ramcosta.composedestinations.spec.DirectionDestinationSpec
 import com.ramcosta.composedestinations.utils.currentDestinationAsState
 import eu.kanade.tachiyomi.util.lang.withIOContext
 import kotlinx.coroutines.channels.BufferOverflow
@@ -158,7 +169,7 @@ import moe.tarsin.coroutines.runSuspendCatching
 import splitties.systemservices.clipboardManager
 import splitties.systemservices.connectivityManager
 
-private val navItems = arrayOf(
+private val navItems = arrayOf<Triple<DirectionDestinationSpec, Int, ImageVector>>(
     Triple(HomePageScreenDestination, R.string.homepage, Icons.Default.Home),
     Triple(SubscriptionScreenDestination, R.string.subscription, EhIcons.Default.Subscriptions),
     Triple(WhatshotScreenDestination, R.string.whats_hot, Icons.Default.Whatshot),
@@ -220,7 +231,7 @@ class MainActivity : EhActivity() {
             val configuration = LocalConfiguration.current
             val dialogState = LocalDialogState.current
             val navDrawerState = rememberDrawerState(DrawerValue.Closed)
-            val sideSheetState = rememberDrawerState(DrawerValue.Closed)
+            val sideSheetState = rememberDrawerState2(DrawerValue.Closed)
             val snackbarState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
             val navController = rememberNavController()
@@ -242,7 +253,7 @@ class MainActivity : EhActivity() {
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
-                    navController.navigate(DownloadScreenDestination)
+                    navController.navigateTo(DownloadScreenDestination)
                 }
             }
 
@@ -280,25 +291,24 @@ class MainActivity : EhActivity() {
                             if ("text/plain" == type) {
                                 val keyword = intent.getStringExtra(Intent.EXTRA_TEXT)
                                 if (keyword != null && !navController.navWithUrl(keyword)) {
-                                    navController.navigate(ListUrlBuilder(mKeyword = keyword).asDst())
+                                    navController.navigateTo(ListUrlBuilder(mKeyword = keyword).asDst())
                                 }
                             } else if (type != null && type.startsWith("image/")) {
                                 val uri = intent.getParcelableExtraCompat<Uri>(Intent.EXTRA_STREAM)
                                 if (null != uri) {
-                                    withIOContext { uri.asUniFile().sha1() }?.let {
-                                        navController.navigate(
-                                            ListUrlBuilder(
-                                                mode = ListUrlBuilder.MODE_IMAGE_SEARCH,
-                                                hash = it,
-                                            ).asDst(),
-                                        )
-                                    }
+                                    val hash = withIOContext { uri.asUniFile().sha1() }
+                                    navController.navigateTo(
+                                        ListUrlBuilder(
+                                            mode = ListUrlBuilder.MODE_IMAGE_SEARCH,
+                                            hash = hash,
+                                        ).asDst(),
+                                    )
                                 }
                             }
                         }
                         DownloadService.ACTION_START_DOWNLOADSCENE -> {
                             val args = intent.getBundleExtra(DownloadService.ACTION_START_DOWNLOADSCENE_ARGS)
-                            navController.navigate(DownloadsScreenDestination)
+                            navController.navigateTo(DownloadsScreenDestination)
                         }
                     }
                 }
@@ -329,7 +339,7 @@ class MainActivity : EhActivity() {
             }
             val snackMessage = stringResource(R.string.clipboard_gallery_url_snack_message)
             val snackAction = stringResource(R.string.clipboard_gallery_url_snack_action)
-            LifecycleResumeEffect {
+            LifecycleResumeEffect(scope) {
                 val job = scope.launch {
                     delay(300)
                     val text = clipboardManager.getUrlFromClipboard(applicationContext)
@@ -338,11 +348,11 @@ class MainActivity : EhActivity() {
                         val result1 = GalleryDetailUrlParser.parse(text, false)
                         var launch: (() -> Unit)? = null
                         if (result1 != null) {
-                            launch = { navController.navigate(result1.gid asDstWith result1.token) }
+                            launch = { navController.navigateTo(result1.gid asDstWith result1.token) }
                         }
                         val result2 = GalleryPageUrlParser.parse(text, false)
                         if (result2 != null) {
-                            launch = { navController.navigate(ProgressScreenDestination(result2.gid, result2.pToken, result2.page)) }
+                            launch = { navController.navigateTo(ProgressScreenDestination(result2.gid, result2.pToken, result2.page)) }
                         }
                         launch?.let {
                             val ret = snackbarState.showSnackbar(snackMessage, snackAction, true)
@@ -379,9 +389,11 @@ class MainActivity : EhActivity() {
                     },
                 ) {
                     LocalTouchSlopProvider(Settings.touchSlopFactor.toFloat()) {
+                        val minOffset = -with(density) { 360.dp.toPx() }
                         ModalNavigationDrawer(
                             drawerContent = {
                                 ModalDrawerSheet(
+                                    drawerState = navDrawerState,
                                     modifier = Modifier.widthIn(max = (configuration.screenWidthDp - 56).dp),
                                     windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Start),
                                 ) {
@@ -419,7 +431,13 @@ class MainActivity : EhActivity() {
                             gesturesEnabled = !drawerLocked || navDrawerState.isOpen,
                         ) {
                             val sheet = sideSheet.firstOrNull()
-                            SideDrawer(
+                            val radius by remember {
+                                snapshotFlow {
+                                    val step = calculateFraction(minOffset, 0f, navDrawerState.currentOffset)
+                                    with(density) { lerp(0, 10, step).dp.toPx() }
+                                }
+                            }.collectAsState(0f)
+                            ModalSideDrawer(
                                 drawerContent = {
                                     if (sheet != null) {
                                         ModalDrawerSheet(
@@ -431,6 +449,13 @@ class MainActivity : EhActivity() {
                                                 sheet(sideSheetState)
                                             }
                                         }
+                                    }
+                                },
+                                modifier = Modifier.graphicsLayer {
+                                    if (radius != 0f) {
+                                        renderEffect = BlurEffect(radius, radius, TileMode.Clamp)
+                                        shape = RectangleShape
+                                        clip = true
                                     }
                                 },
                                 drawerState = sideSheetState,
@@ -448,7 +473,7 @@ class MainActivity : EhActivity() {
                                         } else {
                                             StartDestination
                                         },
-                                        engine = rememberNavHostEngine(rootDefaultAnimations = rememberEhNavAnim()),
+                                        defaultTransitions = rememberEhNavAnim(),
                                         navController = navController,
                                     )
                                 }
@@ -563,7 +588,7 @@ class MainActivity : EhActivity() {
     }
 }
 
-val LocalNavDrawerState = compositionLocalOf<DrawerState2> { error("CompositionLocal LocalNavDrawerState not present!") }
+val LocalNavDrawerState = compositionLocalOf<DrawerState> { error("CompositionLocal LocalNavDrawerState not present!") }
 val LocalSideSheetState = compositionLocalOf<DrawerState2> { error("CompositionLocal LocalSideSheetState not present!") }
 val LocalDrawerLockHandle = compositionLocalOf<SnapshotStateList<Int>> { error("CompositionLocal LocalDrawerLockHandle not present!") }
 val LocalSnackBarHostState = compositionLocalOf<SnackbarHostState> { error("CompositionLocal LocalSnackBarHostState not present!") }

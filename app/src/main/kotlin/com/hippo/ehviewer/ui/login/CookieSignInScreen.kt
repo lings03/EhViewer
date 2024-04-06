@@ -62,6 +62,7 @@ import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.LocalWindowSizeClass
 import com.hippo.ehviewer.util.ExceptionUtils
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
@@ -70,7 +71,7 @@ import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun CookieSignInScene(navigator: DestinationsNavigator) {
     val windowSizeClass = LocalWindowSizeClass.current

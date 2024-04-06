@@ -60,7 +60,6 @@ import io.ktor.client.statement.bodyAsChannel
 import io.ktor.utils.io.pool.DirectByteBufferPool
 import io.ktor.utils.io.pool.useInstance
 import java.io.File
-import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import kotlin.math.ceil
 import kotlinx.coroutines.CancellationException
@@ -71,6 +70,8 @@ import kotlinx.serialization.json.addJsonArray
 import kotlinx.serialization.json.put
 import moe.tarsin.coroutines.removeAllSuspend
 import moe.tarsin.coroutines.runSuspendCatching
+import okio.buffer
+import okio.sink
 import org.jsoup.Jsoup
 import splitties.init.appCtx
 
@@ -84,11 +85,11 @@ private const val U_CONFIG_TEXT = "Selected Profile"
 fun Either<String, ByteBuffer>.saveParseError(e: Throwable) {
     val dir = AppConfig.externalParseErrorDir ?: return
     val file = File(dir, ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".txt")
-    RandomAccessFile(file, "rw").use { randomAccessFile ->
-        with(randomAccessFile) {
-            writeUTF(e.message + "\n")
-            onLeft { writeUTF(it) }
-            onRight { channel.write(it) }
+    file.sink().buffer().use { sink ->
+        with(sink) {
+            writeUtf8(e.message + "\n")
+            onLeft { writeUtf8(it) }
+            onRight { write(it) }
         }
     }
 }
@@ -100,7 +101,7 @@ fun rethrowExactly(code: Int, body: Either<String, ByteBuffer>, e: Throwable): N
     // Check sad panda (without panda)
     val empty = body.fold(
         { it.isEmpty() },
-        { it.limit() == 0 },
+        { !it.hasRemaining() },
     )
     if (empty) {
         if (EhUtils.isExHentai) {
@@ -143,7 +144,7 @@ fun rethrowExactly(code: Int, body: Either<String, ByteBuffer>, e: Throwable): N
 
 val httpContentPool = DirectByteBufferPool(8, 0x80000)
 
-suspend inline fun <T> HttpStatement.fetchUsingAsText(crossinline block: suspend String.() -> T) = execute { response ->
+suspend inline fun <T> HttpStatement.fetchUsingAsText(crossinline block: suspend String.() -> T) = executeSafely { response ->
     val body = response.bodyAsUtf8Text()
     runSuspendCatching {
         block(body)
@@ -152,20 +153,21 @@ suspend inline fun <T> HttpStatement.fetchUsingAsText(crossinline block: suspend
     }.getOrThrow()
 }
 
-suspend inline fun <T> HttpStatement.fetchUsingAsByteBuffer(crossinline block: suspend ByteBuffer.() -> T) = execute { response ->
+suspend inline fun <T> HttpStatement.fetchUsingAsByteBuffer(crossinline block: suspend ByteBuffer.() -> T) = executeSafely { response ->
     httpContentPool.useInstance { buffer ->
         with(response.bodyAsChannel()) { while (!isClosedForRead) readAvailable(buffer) }
         buffer.flip()
         runSuspendCatching {
             block(buffer)
         }.onFailure {
+            buffer.rewind()
             rethrowExactly(response.status.value, buffer.right(), it)
         }.getOrThrow()
     }
 }
 
 object EhEngine {
-    suspend fun getOriginalImageUrl(url: String, referer: String?) = noRedirectEhRequest(url, referer).execute { response ->
+    suspend fun getOriginalImageUrl(url: String, referer: String?) = noRedirectEhRequest(url, referer).executeSafely { response ->
         val location = response.headers["Location"] ?: throw InsufficientFundsException()
         location.takeIf { "bounce_login" !in it } ?: throw NotLoggedInException()
     }
@@ -241,7 +243,7 @@ object EhEngine {
                 append("edit_comment", id.toString())
             }
         }
-    }.execute { response ->
+    }.executeSafely { response ->
         // Ktor does not handle POST redirect, we need to do it manually
         // https://youtrack.jetbrains.com/issue/KTOR-478
         val location = response.headers["Location"] ?: url
@@ -270,7 +272,7 @@ object EhEngine {
                 append("apply", "Apply Changes")
                 append("update", "1")
             }
-        }.execute { }
+        }.executeSafely { }
     }
 
     suspend fun downloadArchive(gid: Long, token: String, or: String, res: String, isHAtH: Boolean): String? {

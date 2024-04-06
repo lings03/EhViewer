@@ -5,8 +5,38 @@
   ],
   "packageRules": [
     {
+      "groupName": "AGP",
+      "matchPackageNames": [
+        "com.android.application"
+      ],
+      "ignoreUnstable": false
+    },
+    {
+      "groupName": "AndroidX & Jetpack Compose",
+      "matchPackagePrefixes": [
+        "androidx."
+      ],
+      "matchPackageNames": [
+        "dev.chrisbanes.compose:compose-bom"
+      ],
+      "ignoreUnstable": false
+    },
+    {
+      "groupName": "Kotlin, KSP and Compose Compiler",
+      "matchPackagePrefixes": [
+        "org.jetbrains.kotlin."
+      ],
+      "matchPackageNames": [
+        "com.google.devtools.ksp",
+        "androidx.compose.compiler:compiler"
+      ],
+      "recreateWhen": "never"
+    },
+    {
       "description": "Disable updates for SNAPSHOTs",
-      "matchCategories": ["java"],
+      "matchCategories": [
+        "java"
+      ],
       "allowedVersions": "!/SNAPSHOT$/"
     }
   ]

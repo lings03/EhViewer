@@ -27,6 +27,7 @@ import com.hippo.ehviewer.ui.destinations.SelectSiteScreenDestination
 import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.util.setDefaultSettings
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
@@ -71,7 +72,7 @@ val jsCode = """
 })();
 """
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun WebViewSignInScreen(navigator: DestinationsNavigator) {
     LockDrawer(true)

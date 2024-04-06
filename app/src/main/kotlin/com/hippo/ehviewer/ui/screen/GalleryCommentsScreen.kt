@@ -7,13 +7,14 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.widget.TextView
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -64,6 +65,7 @@ import androidx.compose.ui.platform.LocalTextToolbar
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.parseAsHtml
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
@@ -90,7 +92,6 @@ import com.hippo.ehviewer.ui.tools.animateFloatMergePredictiveBackAsState
 import com.hippo.ehviewer.ui.tools.normalizeSpan
 import com.hippo.ehviewer.ui.tools.rememberBBCodeTextToolbar
 import com.hippo.ehviewer.ui.tools.snackBarPadding
-import com.hippo.ehviewer.ui.tools.toAnnotatedString
 import com.hippo.ehviewer.ui.tools.toBBCode
 import com.hippo.ehviewer.ui.tools.updateSpan
 import com.hippo.ehviewer.util.ReadableTime
@@ -98,6 +99,7 @@ import com.hippo.ehviewer.util.TextUrl
 import com.hippo.ehviewer.util.addTextToClipboard
 import com.hippo.ehviewer.util.displayString
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withIOContext
@@ -143,7 +145,7 @@ private fun Context.generateComment(
 
 private val MinimumContentPaddingEditText = 88.dp
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composing(navigator) {
     LockDrawer(true)
@@ -285,11 +287,7 @@ fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composi
             val additionalPadding = if (commenting) {
                 editTextMeasured
             } else {
-                if (!comments.hasMore) {
-                    MinimumContentPaddingEditText
-                } else {
-                    0.dp
-                }
+                0.dp
             }
             val voteUpSucceed = stringResource(R.string.vote_up_successfully)
             val cancelVoteUpSucceed = stringResource(R.string.cancel_vote_up_successfully)
@@ -335,7 +333,7 @@ fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composi
                         }
                         if (comment.editable) {
                             onSelect(editComment) {
-                                userComment = TextFieldValue(comment.comment.parseAsHtml().toAnnotatedString())
+                                userComment = TextFieldValue(comment.comment.parseAsHtml())
                                 commentId = comment.id
                                 commenting = true
                             }
@@ -358,7 +356,7 @@ fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composi
                     }
 
                     GalleryCommentCard(
-                        modifier = Modifier.animateItemPlacement(),
+                        modifier = Modifier.animateItem(),
                         comment = item,
                         onUserClick = {
                             navigate(
@@ -376,27 +374,35 @@ fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composi
                 }
                 if (comments.hasMore) {
                     item {
-                        AnimatedVisibility(refreshing) {
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.align(Alignment.Center).padding(keylineMargin),
-                                )
-                            }
-                        }
-                        AnimatedVisibility(!refreshing) {
-                            TextButton(
-                                onClick = {
-                                    launchIO {
-                                        refreshing = true
-                                        runSuspendCatching { refreshComment(true) }
-                                        refreshing = false
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth().padding(keylineMargin),
+                        Crossfade(targetState = refreshing, modifier = Modifier.padding(keylineMargin), label = "refreshing") {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().height(40.dp),
+                                contentAlignment = Alignment.Center,
                             ) {
-                                Text(text = stringResource(id = R.string.click_more_comments))
+                                if (it) {
+                                    CircularProgressIndicator()
+                                } else {
+                                    TextButton(
+                                        onClick = {
+                                            launchIO {
+                                                refreshing = true
+                                                runSuspendCatching { refreshComment(true) }
+                                                refreshing = false
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text(text = stringResource(id = R.string.click_more_comments))
+                                    }
+                                }
                             }
                         }
+                    }
+                } else {
+                    // Workaround for comment list lagging when reaching the bottom
+                    // https://github.com/FooIbar/EhViewer/issues/994
+                    item {
+                        Spacer(modifier = Modifier.height(MinimumContentPaddingEditText))
                     }
                 }
             }

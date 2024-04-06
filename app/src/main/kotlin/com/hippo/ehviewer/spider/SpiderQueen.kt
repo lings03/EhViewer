@@ -547,13 +547,20 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
 
         private fun doLaunchDownloadJob(index: Int, force: Boolean, orgImg: Boolean = false) {
             val state = mPageStateArray[index]
-            if (!force && state == STATE_FINISHED) return
+            if (!force) {
+                if (state == STATE_FINISHED) return
+                if (index in mSpiderDen) return updatePageState(index, STATE_FINISHED)
+            }
             val currentJob = mFetcherJobMap[index]
             val skipHath = force && !orgImg && currentJob?.isActive == true
             if (force) currentJob?.cancel(CancellationException(FORCE_RETRY))
             if (currentJob?.isActive != true) {
                 mFetcherJobMap[index] = launch {
                     runCatching {
+                        delayLock.withLock {
+                            delay(mDownloadDelay - lastRequestTime.elapsedNow())
+                            lastRequestTime = TimeSource.Monotonic.markNow()
+                        }
                         mSemaphore.withPermit {
                             doInJob(index, force, orgImg, skipHath)
                         }
@@ -591,29 +598,19 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                     ?: getPTokenFromMultiPageViewer(index)
             }
             updatePageState(index, STATE_DOWNLOADING)
-            if (!force && index in mSpiderDen) {
-                return updatePageState(index, STATE_FINISHED)
-            }
-            if (force) {
-                pTokenLock.withLock {
-                    val pToken = mSpiderInfo.pTokenMap[index]
-                    if (pToken == TOKEN_FAILED) mSpiderInfo.pTokenMap.remove(index)
-                }
-            }
             val previousPToken: String?
             val pToken: String
-
             pTokenLock.withLock {
+                if (force) {
+                    if (mSpiderInfo.pTokenMap[index] == TOKEN_FAILED) {
+                        mSpiderInfo.pTokenMap.remove(index)
+                    }
+                }
                 pToken = getPToken(index)
                     ?: return updatePageState(index, STATE_FAILED, PTOKEN_FAILED_MESSAGE).also {
                         mSpiderInfo.pTokenMap[index] = TOKEN_FAILED
                     }
                 previousPToken = getPToken(index - 1)
-            }
-
-            delayLock.withLock {
-                delay(mDownloadDelay - lastRequestTime.elapsedNow())
-                lastRequestTime = TimeSource.Monotonic.markNow()
             }
 
             var skipHathKey: String? = null
@@ -738,31 +735,37 @@ class SpiderQueen private constructor(val galleryInfo: GalleryInfo) : CoroutineS
                     val currentJob = mDecodeJobMap[index]
                     if (currentJob?.isActive != true) {
                         mDecodeJobMap[index] = launch {
-                            doInJob(index)
+                            runCatching {
+                                mSemaphore.withPermit {
+                                    mFetcherJobMap[index]?.join()
+                                    if (mPageStateArray[index] == STATE_FINISHED) {
+                                        doInJob(index)
+                                    }
+                                }
+                            }.onFailure {
+                                if (mPageStateArray[index] == STATE_FINISHED) {
+                                    notifyGetImageFailure(index, DECODE_ERROR)
+                                }
+                                if (it is CancellationException) {
+                                    throw it
+                                }
+                            }
                         }
                     }
                 }
             }
 
             private suspend fun doInJob(index: Int) {
-                mFetcherJobMap[index]?.takeIf { it.isActive }?.join()
+                val src = mSpiderDen.getImageSource(index) ?: return
+                val image = Image.decode(src)
+                checkNotNull(image)
                 runCatching {
-                    val src = mSpiderDen.getImageSource(index) ?: return
-                    val image = mSemaphore.withPermit { Image.decode(src) }
-                    checkNotNull(image)
-                    runCatching {
-                        currentCoroutineContext().ensureActive()
-                    }.onFailure {
-                        image.recycle()
-                        throw it
-                    }
-                    notifyGetImageSuccess(index, image)
+                    currentCoroutineContext().ensureActive()
                 }.onFailure {
-                    notifyGetImageFailure(index, DECODE_ERROR)
-                    if (it is CancellationException) {
-                        throw it
-                    }
+                    image.recycle()
+                    throw it
                 }
+                notifyGetImageSuccess(index, image)
             }
         }
     }

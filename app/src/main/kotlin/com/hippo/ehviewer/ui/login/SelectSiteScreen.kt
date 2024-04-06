@@ -29,9 +29,10 @@ import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.ui.StartDestination
 import com.hippo.ehviewer.ui.screen.popNavigate
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun SelectSiteScreen(navigator: DestinationsNavigator) {
     var siteEx by remember { mutableStateOf(true) }

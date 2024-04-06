@@ -62,8 +62,8 @@ android {
         applicationId = "moe.tarsin.ehviewer"
         minSdk = 26
         targetSdk = 34
-        versionCode = 180053
-        versionName = "1.11.2"
+        versionCode = 180054
+        versionName = "1.11.3"
         versionNameSuffix = "-cc"
         resourceConfigurations.addAll(
             listOf(
@@ -81,7 +81,7 @@ android {
                 "nb-rNO",
             ),
         )
-        buildConfigField("String", "RAW_VERSION_NAME", "\"$versionName$versionNameSuffix\"")
+        buildConfigField("String", "RAW_VERSION_NAME", "\"$versionName${versionNameSuffix.orEmpty()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
         buildConfigField("String", "REPO_NAME", "\"$repoName\"")
         ndk {
@@ -140,18 +140,12 @@ android {
 
     lint {
         disable += setOf("MissingTranslation", "MissingQuantity")
-        fatal += setOf("NewApi", "InlineApi")
+        fatal += setOf("NewApi", "InlinedApi")
     }
 
     packaging {
         dex {
             useLegacyPackaging = false
-        }
-        resources {
-            excludes += "/META-INF/**"
-            excludes += "/kotlin/**"
-            excludes += "**.txt"
-            excludes += "**.bin"
         }
     }
 
@@ -182,6 +176,17 @@ android {
     }
 
     namespace = "com.hippo.ehviewer"
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) {
+        it.packaging.resources.excludes.addAll(
+            "/META-INF/**",
+            "/kotlin/**",
+            "**.txt",
+            "**.bin",
+        )
+    }
 }
 
 dependencies {
@@ -271,13 +276,6 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
 }
 
-configurations.all {
-    resolutionStrategy {
-        // Workaround for https://issuetracker.google.com/329489167
-        force("androidx.compose.foundation:foundation-android:1.7.0-alpha03")
-    }
-}
-
 kotlin {
     jvmToolchain(21)
 }
@@ -285,6 +283,7 @@ kotlin {
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.generateKotlin", "true")
+    arg("compose-destinations.codeGenPackageName", "com.hippo.ehviewer.ui")
 }
 
 aboutLibraries {

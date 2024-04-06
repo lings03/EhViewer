@@ -30,8 +30,8 @@ import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ErrorResult
 import coil3.request.SuccessResult
+import coil3.size.Dimension
 import coil3.size.Precision
-import coil3.size.Scale
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.coil.BitmapImageWithRect
 import com.hippo.ehviewer.coil.maybeCropBorder
@@ -73,15 +73,13 @@ class Image private constructor(image: CoilImage, private val src: AutoCloseable
     }
 
     companion object {
-        private val targetWidth = appCtx.resources.displayMetrics.widthPixels * 2
-        private val targetHeight = appCtx.resources.displayMetrics.heightPixels * 2
+        private val targetWidth = appCtx.resources.displayMetrics.widthPixels * 3
 
         private suspend fun Either<ByteBufferSource, UniFileSource>.decodeCoil(): CoilImage {
             val req = appCtx.imageRequest {
                 onLeft { data(it.source) }
                 onRight { data(it.source.uri) }
-                size(targetWidth, targetHeight)
-                scale(Scale.FILL)
+                size(Dimension(targetWidth), Dimension.Undefined)
                 precision(Precision.INEXACT)
                 maybeCropBorder(Settings.cropBorder.value)
                 memoryCachePolicy(CachePolicy.DISABLED)
@@ -94,7 +92,7 @@ class Image private constructor(image: CoilImage, private val src: AutoCloseable
 
         suspend fun decode(src: ImageSource): Image? {
             return runCatching {
-                when (src) {
+                val image = when (src) {
                     is UniFileSource -> {
                         if (isAtLeastP && !isAtLeastU) {
                             src.source.openFileDescriptor("rw").use {
@@ -112,19 +110,18 @@ class Image private constructor(image: CoilImage, private val src: AutoCloseable
                                 }
                             }
                         }
-                        val image = src.right().decodeCoil()
-                        if (image is BitmapImage) src.close()
-                        Image(image, src)
+                        src.right().decodeCoil()
                     }
 
                     is ByteBufferSource -> {
                         if (isAtLeastP && !isAtLeastU) {
                             rewriteGifSource(src.source)
                         }
-                        val image = src.left().decodeCoil()
-                        if (image is BitmapImage) src.close()
-                        Image(image, src)
+                        src.left().decodeCoil()
                     }
+                }
+                Image(image, src).apply {
+                    if (innerImage is BitmapImage) src.close()
                 }
             }.onFailure {
                 src.close()

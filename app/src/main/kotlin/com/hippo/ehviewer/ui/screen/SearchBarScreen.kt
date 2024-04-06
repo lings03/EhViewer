@@ -1,7 +1,7 @@
 package com.hippo.ehviewer.ui.screen
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
@@ -20,15 +19,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
-import androidx.compose.foundation.text.input.forEachTextValue
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
-import androidx.compose.foundation.text.input.textAsFlow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -41,18 +39,20 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SearchBarHorizontalPadding
+import androidx.compose.material3.SearchBarInputField
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,7 +61,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import arrow.fx.coroutines.mapIndexed
 import com.hippo.ehviewer.EhApplication.Companion.searchDatabase
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
@@ -72,13 +71,14 @@ import com.hippo.ehviewer.dao.SearchDao
 import com.hippo.ehviewer.ui.LocalNavDrawerState
 import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.tools.LocalDialogState
+import com.hippo.ehviewer.ui.tools.rememberCompositionActiveState
 import com.jamal.composeprefs3.ui.ifNotNullThen
 import com.jamal.composeprefs3.ui.ifTrueThen
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.launchUI
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -117,7 +117,7 @@ fun SearchBarScreen(
 ) {
     var mSuggestionList by remember { mutableStateOf(emptyList<Suggestion>()) }
     val mSearchDatabase = searchDatabase.searchDao()
-    var active by rememberSaveable { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val context = LocalContext.current
     val dialogState = LocalDialogState.current
@@ -180,9 +180,9 @@ fun SearchBarScreen(
         onSearchHidden()
     }
 
-    if (active) {
+    if (expanded) {
         LaunchedEffect(Unit) {
-            searchFieldState.forEachTextValue {
+            snapshotFlow { searchFieldState.text }.collectLatest {
                 updateSuggestions()
             }
         }
@@ -190,7 +190,7 @@ fun SearchBarScreen(
 
     fun hideSearchView() {
         onSearchViewHidden()
-        active = false
+        expanded = false
     }
 
     fun onApplySearch() {
@@ -217,13 +217,13 @@ fun SearchBarScreen(
         }
     }
 
-    val scrollAwayModifier = if (!active) {
+    val scrollAwayModifier = if (!expanded) {
         Modifier.offset { IntOffset(0, searchBarOffsetY()) }
     } else {
         Modifier
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
                 // Placeholder, fill immutable SearchBar padding
@@ -242,56 +242,66 @@ fun SearchBarScreen(
                     .padding(top = 48.dp) then scrollAwayModifier,
             )
         }
+        val onExpandedChange = { v: Boolean ->
+            if (v) {
+                onSearchViewExpanded()
+            } else {
+                onSearchViewHidden()
+            }
+            expanded = v
+        }
+        val activeState = rememberCompositionActiveState()
         SearchBar(
-            modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter) then scrollAwayModifier
+            modifier = Modifier.align(Alignment.TopCenter) then scrollAwayModifier
                 .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal)),
-            state = searchFieldState,
-            onSearch = {
-                hideSearchView()
-                onApplySearch()
-            },
-            active = active,
-            onActiveChange = {
-                if (it) {
-                    onSearchViewExpanded()
-                } else {
-                    onSearchViewHidden()
-                }
-                active = it
-            },
-            title = title.ifNotNullThen { Text(title!!, overflow = TextOverflow.Ellipsis) },
-            placeholder = searchFieldHint.ifNotNullThen { Text(searchFieldHint!!) },
-            leadingIcon = {
-                if (active) {
-                    IconButton(onClick = { hideSearchView() }) {
-                        Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
-                    }
-                } else {
-                    val drawerState = LocalNavDrawerState.current
-                    IconButton(onClick = { scope.launchUI { drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = null)
-                    }
-                }
-            },
-            trailingIcon = {
-                if (active) {
-                    val hasText by searchFieldState.textAsFlow().mapIndexed { index, text ->
-                        // Workaround for https://github.com/FooIbar/EhViewer/issues/715
-                        if (index == 0) delay(700)
-                        text.isNotEmpty()
-                    }.collectAsState(false)
-                    if (hasText) {
-                        IconButton(onClick = { searchFieldState.clearText() }) {
-                            Icon(Icons.Default.Close, contentDescription = null)
+            inputField = {
+                SearchBarInputField(
+                    state = searchFieldState,
+                    onSearch = {
+                        hideSearchView()
+                        onApplySearch()
+                    },
+                    expanded = expanded,
+                    onExpandedChange = onExpandedChange,
+                    modifier = Modifier.widthIn(max = maxWidth - SearchBarHorizontalPadding * 2),
+                    label = title.ifNotNullThen {
+                        Text(title!!, overflow = TextOverflow.Ellipsis)
+                    }.takeUnless {
+                        val contentActive by activeState.state
+                        expanded || contentActive || searchFieldState.text.isNotEmpty()
+                    },
+                    placeholder = searchFieldHint.ifNotNullThen { Text(searchFieldHint!!) },
+                    leadingIcon = {
+                        if (expanded) {
+                            IconButton(onClick = { hideSearchView() }) {
+                                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
+                            }
+                        } else {
+                            val drawerState = LocalNavDrawerState.current
+                            IconButton(onClick = { scope.launchUI { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = null)
+                            }
                         }
-                    }
-                } else {
-                    Row {
-                        trailingIcon()
-                    }
-                }
+                    },
+                    trailingIcon = {
+                        if (expanded) {
+                            if (searchFieldState.text.isNotEmpty()) {
+                                IconButton(onClick = { searchFieldState.clearText() }) {
+                                    Icon(Icons.Default.Close, contentDescription = null)
+                                }
+                            }
+                        } else {
+                            Row {
+                                trailingIcon()
+                            }
+                        }
+                    },
+                )
             },
+            expanded = expanded,
+            onExpandedChange = onExpandedChange,
         ) {
+            activeState.Anchor()
             filter?.invoke()
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -319,7 +329,7 @@ fun SearchBarScreen(
                             }
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.clickable { it.onClick() }.animateItemPlacement(),
+                        modifier = Modifier.clickable { it.onClick() }.animateItem(),
                     )
                 }
             }

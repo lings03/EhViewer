@@ -114,6 +114,7 @@ import com.hippo.ehviewer.ui.tools.rememberInVM
 import com.hippo.ehviewer.util.findActivity
 import com.hippo.ehviewer.util.mapToLongArray
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
@@ -126,7 +127,7 @@ import moe.tarsin.coroutines.onEachLatest
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyColumnState
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun DownloadsScreen(navigator: DestinationsNavigator) = composing(navigator) {
     var gridView by Settings.gridView.asMutableState()
@@ -265,7 +266,7 @@ fun DownloadsScreen(navigator: DestinationsNavigator) = composing(navigator) {
                         },
                     )
                 }
-                itemsIndexed(labelList, key = { _, item -> item.id!! }) { index, (item) ->
+                itemsIndexed(labelList, key = { _, item -> item.id!! }) { index, (item, _, id) ->
                     // Not using rememberSwipeToDismissBoxState to prevent LazyColumn from reusing it
                     val dismissState = remember { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, density, positionalThreshold = positionalThreshold) }
                     LaunchedEffect(dismissState) {
@@ -287,7 +288,7 @@ fun DownloadsScreen(navigator: DestinationsNavigator) = composing(navigator) {
                             }
                         }
                     }
-                    ReorderableItem(reorderableLabelState, key = item) { isDragging ->
+                    ReorderableItem(reorderableLabelState, key = id!!) { isDragging ->
                         SwipeToDismissBox2(
                             state = dismissState,
                             backgroundContent = {},
@@ -493,7 +494,7 @@ fun DownloadsScreen(navigator: DestinationsNavigator) = composing(navigator) {
                 ) {
                     items(list, key = { it.gid }) { info ->
                         val checked = info.gid in checkedInfoMap
-                        CheckableItem(checked = checked, modifier = Modifier.animateItemPlacement()) { interactionSource ->
+                        CheckableItem(checked = checked, modifier = Modifier.animateItem()) { interactionSource ->
                             DownloadCard(
                                 onClick = {
                                     if (selectMode) {

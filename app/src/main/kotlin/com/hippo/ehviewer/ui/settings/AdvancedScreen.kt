@@ -56,6 +56,7 @@ import com.hippo.ehviewer.util.Crash
 import com.hippo.ehviewer.util.ReadableTime
 import com.hippo.ehviewer.util.isCronetAvailable
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.system.logcat
 import java.io.File
@@ -69,7 +70,7 @@ import moe.tarsin.coroutines.runSuspendCatching
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.dnsoverhttps.DnsOverHttps
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun AdvancedScreen(navigator: DestinationsNavigator) {
     val context = LocalContext.current

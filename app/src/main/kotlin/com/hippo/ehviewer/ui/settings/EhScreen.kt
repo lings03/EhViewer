@@ -37,7 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.core.text.parseAsHtml
+import androidx.compose.ui.text.parseAsHtml
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.asMutableState
@@ -54,12 +54,12 @@ import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.ui.tools.rememberedAccessor
-import com.hippo.ehviewer.ui.tools.toAnnotatedString
 import com.hippo.ehviewer.util.copyTextToClipboard
 import com.hippo.ehviewer.util.displayString
 import com.hippo.ehviewer.util.isAtLeastT
 import com.jamal.composeprefs3.ui.prefs.SwitchPref
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.withIOContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
@@ -68,7 +68,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
 import moe.tarsin.coroutines.runSuspendCatching
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun EhScreen(navigator: DestinationsNavigator) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -116,7 +116,7 @@ fun EhScreen(navigator: DestinationsNavigator) {
                             Column {
                                 val warning = stringResource(id = R.string.settings_eh_identity_cookies_signed)
                                 val str = cookies.joinToString("\n") { (k, v) -> "$k: $v" }
-                                Text(text = warning.parseAsHtml().toAnnotatedString())
+                                Text(text = warning.parseAsHtml())
                                 Spacer(modifier = Modifier.size(dimensionResource(id = R.dimen.keyline_margin)))
                                 OutlinedTextField(
                                     value = str,
