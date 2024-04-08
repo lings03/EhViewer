@@ -257,10 +257,7 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
 
                 if (response.isSuccessful) {
                     withContext(Dispatchers.Main) {
-                        // 如果成功，加载返回的URL
-                        val replyUrl = response.request.url.toString()
-                        webView.loadUrl(replyUrl)
-                        Log.d("handlePostRequest", "Response URL loaded: $replyUrl")
+                        webView.loadUrl("https://forums.e-hentai.org/index.php?")
                     }
                 } else {
                     Log.e("handlePostRequest", "Request failed: $response")
