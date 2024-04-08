@@ -29,3 +29,8 @@
 # A resource is loaded with a relative path so the package of this class must be preserved.
 -keeppackagenames okhttp3.internal.publicsuffix.*
 -adaptresourcefilenames okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz
+
+# Keep all classes that inherit from JavaScriptInterface from being obfuscated
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
