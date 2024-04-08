@@ -135,9 +135,13 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
                     try {
                         val canEx = withNonCancellableContext { postLogin() }
                         if (canEx) {
-                            onLoginSuccess()
+                            withContext(Dispatchers.Main) {
+                                onLoginSuccess()
+                            }
                         } else {
-                            onLoginFailed()
+                            withContext(Dispatchers.Main) {
+                                onLoginFailed()
+                            }
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
