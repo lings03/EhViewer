@@ -256,10 +256,8 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
                 // if (isCronetAvailable) {
                 //    cronet(cronetHttpClient)
                 // } else if (Settings.dF) {
-                if (Settings.dF) {
-                    dns(EhDns)
-                    install(EhSSLSocketFactory)
-                }
+                dns(EhDns)
+                install(EhSSLSocketFactory)
             }
         }
 
