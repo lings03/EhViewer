@@ -38,11 +38,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Cookie
 import okhttp3.FormBody
+import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONObject
 
-val okHttpClient = EhApplication.nonCacheOkHttpClient
+var okHttpClient = EhApplication.nonCacheOkHttpClient
 
 val jsCode = """
 (function() {
@@ -86,6 +88,20 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
 
         override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
+            val nonH2okHttpClient = okHttpClient.newBuilder().protocols(listOf(Protocol.HTTP_3, Protocol.HTTP_1_1)).build()
+            val h2okHttpClient = okHttpClient.newBuilder().build()
+            val h2Interceptor = object : Interceptor {
+                override fun intercept(chain: Interceptor.Chain): Response {
+                    val request = chain.request()
+                    val selectedClient = if (request.url.host == "forums.e-hentai.org") {
+                        nonH2okHttpClient
+                    } else {
+                        h2okHttpClient
+                    }
+                    return selectedClient.newCall(request).execute()
+                }
+            }
+            okHttpClient = okHttpClient.newBuilder().addInterceptor(h2Interceptor).build()
             val okHttpRequest = Request.Builder()
                 .url(url)
                 .addHeader("Referer", EhUrl.URL_SIGN_IN)
