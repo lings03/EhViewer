@@ -1,6 +1,5 @@
 package com.hippo.ehviewer.ui.login
 
-import android.content.Context
 import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceResponse
@@ -11,7 +10,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.web.AccompanistWebViewClient
 import com.google.accompanist.web.WebView
 import com.google.accompanist.web.rememberWebViewState
@@ -155,8 +153,6 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
     }
     class WebAppInterface(
         private val webView: WebView,
-        private val coroutineScope: CoroutineScope,
-        private val context: Context,
         private val handler: (WebView, String, String, CoroutineScope) -> Unit,
     ) {
         @JavascriptInterface
@@ -165,7 +161,6 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
             handler(webView, url, formData, coroutineScope)
         }
     }
-    val context = LocalContext.current
     SideEffect {
         EhUtils.signOut()
     }
@@ -290,7 +285,7 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
             webView.setDefaultSettings()
             webView.settings.javaScriptEnabled = true
             webView.addJavascriptInterface(
-                WebAppInterface(webView, coroutineScope, context, ::handlePostRequest),
+                WebAppInterface(webView, ::handlePostRequest),
                 "Android",
             )
         },
