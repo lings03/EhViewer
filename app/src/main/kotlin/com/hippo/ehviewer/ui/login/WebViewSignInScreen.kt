@@ -16,6 +16,7 @@ import com.google.accompanist.web.rememberWebViewState
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.CHROME_ACCEPT
+import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
@@ -37,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Cookie
 import okhttp3.FormBody
+import okhttp3.Protocol
 import okhttp3.Request
 import org.json.JSONObject
 
@@ -84,7 +86,14 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
 
         override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
-            val okHttpRequest = Request.Builder().url(url).build()
+            val okHttpRequest = Request.Builder()
+                .url(url)
+                .addHeader("Referer", EhUrl.URL_SIGN_IN)
+                .addHeader("Origin", EhUrl.URL_FORUMS)
+                .addHeader("User-Agent", Settings.userAgent)
+                .addHeader("Accept", CHROME_ACCEPT)
+                .addHeader("Accept-Language", CHROME_ACCEPT_LANGUAGE)
+                .build()
 
             return try {
                 val response = okHttpClient.newCall(okHttpRequest).execute()
@@ -185,11 +194,11 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
         val request = Request.Builder()
             .url(url)
             .post(formBody)
-            .addHeader("Referer", "https://forums.e-hentai.org/index.php?act=Login&CODE=00")
-            .addHeader("Origin", "https://forums.e-hentai.org")
+            .addHeader("Referer", EhUrl.URL_SIGN_IN)
+            .addHeader("Origin", EhUrl.URL_FORUMS)
             .addHeader("User-Agent", Settings.userAgent)
             .addHeader("Accept", CHROME_ACCEPT)
-            // .addHeader("AcceptLanguage", CHROME_ACCEPT_LANGUAGE)
+            .addHeader("Accept-Language", CHROME_ACCEPT_LANGUAGE)
             .build()
 
         fun parseSetCookieHeader(setCookie: String): Cookie? {
