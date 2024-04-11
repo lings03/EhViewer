@@ -108,11 +108,7 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
         private var present = false
         override fun onPageFinished(view: WebView, url: String?) {
             super.onPageFinished(view, url)
-
-            if (url == EhUrl.URL_SIGN_IN) {
-                view.evaluateJavascript(jsCode, null)
-            }
-
+            view.evaluateJavascript(jsCode, null)
             if (present) {
                 view.destroy()
                 return
