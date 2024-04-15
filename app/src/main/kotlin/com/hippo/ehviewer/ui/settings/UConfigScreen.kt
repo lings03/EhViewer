@@ -217,13 +217,13 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
             state = state,
             modifier = Modifier.padding(paddingValues).fillMaxSize(),
             onCreated = {
-                it.setDefaultSettings();
-                it.settings.javaScriptEnabled = true;
+                it.setDefaultSettings()
+                it.settings.javaScriptEnabled = true
                 it.addJavascriptInterface(
                     WebAppInterface(it, ::handlePostRequest),
-                    "Android"
+                    "Android",
                 )
-                        },
+            },
             factory = { WebView(it).apply { webview.set(this) } },
             client = okHttpWebViewClient,
         )
