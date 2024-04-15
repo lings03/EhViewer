@@ -88,6 +88,11 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
 
         override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
+            if (!request.url.scheme.equals("http", ignoreCase = true) &&
+                !request.url.scheme.equals("https", ignoreCase = true)
+            ) {
+                return null
+            }
             val h2okHttpClient = okHttpClient.newBuilder().build()
             val h2Interceptor = object : Interceptor {
                 override fun intercept(chain: Interceptor.Chain): Response {
@@ -272,7 +277,8 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
 
                 if (response.isSuccessful) {
                     withContext(Dispatchers.Main) {
-                        webView.loadUrl("https://forums.e-hentai.org/index.php?")
+                        val responseBody = response.body.string()
+                        webView.loadDataWithBaseURL(url, responseBody, "text/html", "UTF-8", null)
                     }
                 } else {
                     Log.e("handlePostRequest", "Request failed: $response")
