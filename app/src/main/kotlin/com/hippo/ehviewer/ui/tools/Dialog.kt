@@ -35,7 +35,7 @@ import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -50,7 +50,6 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -441,12 +440,14 @@ class DialogState {
     suspend fun showSelectItem(
         items: List<String>,
         @StringRes title: Int? = null,
+        selected: Int = -1,
         respectDefaultWidth: Boolean = true,
-    ) = showSelectItem(items, title?.right(), respectDefaultWidth)
+    ) = showSelectItem(items, title?.right(), selected, respectDefaultWidth)
 
     suspend fun showSelectItem(
         items: List<String>,
         title: Either<String, Int>?,
+        selected: Int = -1,
         respectDefaultWidth: Boolean = true,
     ): Int = showNoButton(respectDefaultWidth) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
@@ -459,14 +460,11 @@ class DialogState {
             }
             LazyColumn {
                 itemsIndexed(items) { index, text ->
-                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.tertiary) {
-                        Text(
-                            text = text,
-                            modifier = Modifier.clickable { dismissWith(index) }.fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 16.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    }
+                    CheckableItem(
+                        text = text,
+                        checked = index == selected,
+                        modifier = Modifier.fillMaxWidth().clickable { dismissWith(index) }.padding(horizontal = 8.dp),
+                    )
                 }
             }
         }
@@ -474,11 +472,12 @@ class DialogState {
 
     suspend inline fun showSelectActions(
         @StringRes title: Int? = null,
+        selected: Int = -1,
         builder: ActionScope.() -> Unit,
     ) {
         val (items, actions) = buildList { builder(ActionScope { action, that -> add(action to that) }) }.unzip()
-        val selected = showSelectItem(items, title)
-        actions[selected].invoke()
+        val index = showSelectItem(items, title, selected)
+        actions[index].invoke()
     }
 
     suspend fun showSelectItemWithCheckBox(
@@ -489,8 +488,6 @@ class DialogState {
         initialChecked: Boolean = false,
     ): Pair<Int, Boolean> = showNoButton {
         var checked by remember { mutableStateOf(initialChecked) }
-        val textStyle = MaterialTheme.typography.titleMedium
-        val selectedColor = MaterialTheme.colorScheme.tertiary
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
             Text(
                 text = stringResource(id = title),
@@ -499,19 +496,10 @@ class DialogState {
             )
             LazyColumn {
                 itemsIndexed(items) { index, text ->
-                    ListItem(
-                        headlineContent = {
-                            Text(
-                                text = text,
-                                style = if (index == selected) textStyle.copy(color = selectedColor) else textStyle,
-                            )
-                        },
-                        modifier = Modifier.clickable { dismissWith(index to checked) }.fillMaxWidth(),
-                        trailingContent = {
-                            if (index == selected) {
-                                Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = selectedColor)
-                            }
-                        },
+                    CheckableItem(
+                        text = text,
+                        checked = index == selected,
+                        modifier = Modifier.fillMaxWidth().clickable { dismissWith(index to checked) }.padding(horizontal = 8.dp),
                     )
                 }
             }
@@ -537,10 +525,11 @@ class DialogState {
                     headlineContent = {
                         Text(text = stringResource(id = text), style = MaterialTheme.typography.titleMedium)
                     },
-                    modifier = Modifier.clickable { dismissWith(index) },
+                    modifier = Modifier.clickable { dismissWith(index) }.padding(horizontal = 8.dp),
                     leadingContent = {
                         Icon(imageVector = icon, contentDescription = null, tint = AlertDialogDefaults.iconContentColor)
                     },
+                    colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
                 )
             }
         }
@@ -603,6 +592,25 @@ class DialogState {
             }
         }
     }
+}
+
+@Composable
+private fun CheckableItem(text: String, checked: Boolean, modifier: Modifier = Modifier) {
+    val textStyle = MaterialTheme.typography.titleMedium
+    val checkedColor = MaterialTheme.colorScheme.primary
+    ListItem(
+        headlineContent = {
+            Text(
+                text = text,
+                style = if (checked) textStyle.copy(color = checkedColor) else textStyle,
+            )
+        },
+        modifier = modifier,
+        trailingContent = checked.ifTrueThen {
+            Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = checkedColor)
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+    )
 }
 
 private val IconWithTextCorner = RoundedCornerShape(8.dp)

@@ -64,8 +64,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalTextToolbar
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.parseAsHtml
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
@@ -74,12 +75,14 @@ import androidx.core.text.inSpans
 import androidx.core.text.parseAsHtml
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.R
+import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.EhFilter.remember
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.data.GalleryComment
 import com.hippo.ehviewer.client.data.ListUrlBuilder
+import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.dao.Filter
 import com.hippo.ehviewer.dao.FilterMode
 import com.hippo.ehviewer.ui.LockDrawer
@@ -92,6 +95,7 @@ import com.hippo.ehviewer.ui.tools.animateFloatMergePredictiveBackAsState
 import com.hippo.ehviewer.ui.tools.normalizeSpan
 import com.hippo.ehviewer.ui.tools.rememberBBCodeTextToolbar
 import com.hippo.ehviewer.ui.tools.snackBarPadding
+import com.hippo.ehviewer.ui.tools.thenIf
 import com.hippo.ehviewer.ui.tools.toBBCode
 import com.hippo.ehviewer.ui.tools.updateSpan
 import com.hippo.ehviewer.util.ReadableTime
@@ -152,6 +156,7 @@ fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composi
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var commenting by rememberSaveable { mutableStateOf(false) }
     val animationProgress by animateFloatMergePredictiveBackAsState(enable = commenting) { commenting = false }
+    val animateItems by Settings.animateItems.collectAsState()
 
     val galleryDetail = remember { EhApplication.galleryDetailCache[gid]!! }
     val userCommentBackField = remember { mutableStateOf(TextFieldValue()) }
@@ -333,7 +338,7 @@ fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composi
                         }
                         if (comment.editable) {
                             onSelect(editComment) {
-                                userComment = TextFieldValue(comment.comment.parseAsHtml())
+                                userComment = TextFieldValue(AnnotatedString.fromHtml(comment.comment))
                                 commentId = comment.id
                                 commenting = true
                             }
@@ -356,7 +361,7 @@ fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composi
                     }
 
                     GalleryCommentCard(
-                        modifier = Modifier.animateItem(),
+                        modifier = Modifier.thenIf(animateItems) { animateItem() },
                         comment = item,
                         onUserClick = {
                             navigate(
