@@ -46,7 +46,7 @@ import org.json.JSONObject
 
 var okHttpClient = EhApplication.nonCacheOkHttpClient
 
-val jsCode = """
+private val jsCode = """
 (function() {
     // 使用表单name属性'LOGIN'来获取表单元素
     var form = document.forms['LOGIN'];

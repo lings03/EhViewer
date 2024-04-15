@@ -49,7 +49,7 @@ import okhttp3.Request
 import org.json.JSONObject
 
 private const val APPLY_JS = "javascript:(function(){var apply = document.getElementById(\"apply\").children[0];apply.click();})();"
-val jsCode = """
+private val jsCode = """
 (function() {
     var applyButton = document.querySelector('#apply input[type="submit"]');
     if (applyButton) {
