@@ -1,5 +1,7 @@
 package com.hippo.ehviewer.ui.settings
 
+import android.util.Log
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import arrow.atomic.Atomic
@@ -36,22 +39,66 @@ import com.hippo.ehviewer.util.setDefaultSettings
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.FormBody
 import okhttp3.Request
+import org.json.JSONObject
 
 private const val APPLY_JS = "javascript:(function(){var apply = document.getElementById(\"apply\").children[0];apply.click();})();"
+val jsCode = """
+(function() {
+    var applyButton = document.querySelector('#apply input[type="submit"]');
+    if (applyButton) {
+        var form = applyButton.form;
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                var formData = {};
+                Array.from(form.elements).forEach(function(field) {
+                    if (!field.name || field.disabled) {
+                        return;
+                    }
+                    switch (field.type) {
+                        case 'checkbox':
+                        case 'radio':
+                            if (field.checked) {
+                                formData[field.name] = field.value;
+                            }
+                            break;
+                        // case 'submit':
+                        case 'button':
+                            break;
+                        default:
+                            formData[field.name] = field.value;
+                            break;
+                    }
+                });
+                var json = JSON.stringify(formData);
+                Android.postFormData(form.action, json);
+            }, false);
+        }
+    }
+})();
+"""
+val url = EhUrl.uConfigUrl
+val cookieHeader = EhCookieStore.getCookieHeader(url)
 
 @Destination<RootGraph>
 @Composable
 fun UConfigScreen(navigator: DestinationsNavigator) {
     LockDrawer(true)
-    val url = EhUrl.uConfigUrl
     val webview = remember { Atomic<WebView?>(null) }
+    val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     class OkHttpWebViewClient() : AccompanistWebViewClient() {
 
         override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
-            val cookieHeader = EhCookieStore.getCookieHeader(url)
             val okHttpRequest = Request.Builder()
                 .url(url)
                 .addHeader("Referer", url)
@@ -83,9 +130,64 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
                 null
             }
         }
+        override fun onPageFinished(view: WebView, url: String?) {
+            super.onPageFinished(view, url)
+            view.evaluateJavascript(jsCode, null)
+        }
     }
     val okHttpWebViewClient = remember {
         OkHttpWebViewClient()
+    }
+    fun handlePostRequest(
+        webView: WebView,
+        url: String,
+        formData: String,
+        scope: CoroutineScope,
+    ) {
+        val formBodyBuilder = FormBody.Builder()
+        val formFields = JSONObject(formData)
+        formFields.keys().forEach {
+            formBodyBuilder.add(it, formFields.getString(it))
+        }
+        val formBody = formBodyBuilder.build()
+
+        val request = Request.Builder()
+            .url(url)
+            .post(formBody)
+            .addHeader("Referer", url)
+            .addHeader("Origin", EhUrl.origin)
+            .addHeader("User-Agent", Settings.userAgent)
+            .addHeader("Accept", CHROME_ACCEPT)
+            .addHeader("Accept-Language", CHROME_ACCEPT_LANGUAGE)
+            .addHeader("Cookie", cookieHeader)
+            .build()
+        scope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    nonH2OkHttpClient.newCall(request).execute()
+                }
+
+                if (response.isSuccessful) {
+                    withContext(Dispatchers.Main) {
+                        Log.d("handlePostRequest", "$response")
+                    }
+                } else {
+                    Log.e("handlePostRequest", "Request failed: $response")
+                }
+            } catch (e: IOException) {
+                Log.e("handlePostRequest", "Request error: ${e.localizedMessage}")
+            }
+        }
+    }
+    class WebAppInterface(
+        private val webView: WebView,
+        private val handler: (WebView, String, String, CoroutineScope) -> Unit,
+    ) {
+        @JavascriptInterface
+        fun postFormData(url: String, formData: String) {
+            Log.d("WebAppInterface", "Received form data: $formData")
+            handler(webView, url, formData, coroutineScope)
+        }
     }
     Scaffold(
         topBar = {
@@ -114,7 +216,14 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
         WebView(
             state = state,
             modifier = Modifier.padding(paddingValues).fillMaxSize(),
-            onCreated = { it.setDefaultSettings() },
+            onCreated = {
+                it.setDefaultSettings();
+                it.settings.javaScriptEnabled = true;
+                it.addJavascriptInterface(
+                    WebAppInterface(it, ::handlePostRequest),
+                    "Android"
+                )
+                        },
             factory = { WebView(it).apply { webview.set(this) } },
             client = okHttpWebViewClient,
         )
