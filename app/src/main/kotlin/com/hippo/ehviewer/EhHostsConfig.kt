@@ -15,9 +15,9 @@ val builtInHosts = hostsDsl {
         "2001:1af8:4700:a0c9:3::47de" blockedInCN false
     }
     hosts("e-hentai.org", "repo.e-hentai.org") {
-        "104.20.134.21" blockedInCN false
-        "104.20.135.21" blockedInCN false
-        "172.67.0.127" blockedInCN false
+        "104.20.18.168" blockedInCN false
+        "104.20.19.168" blockedInCN false
+        "172.67.2.238" blockedInCN false
     }
     hosts("api.e-hentai.org") {
         "178.162.139.18" blockedInCN false
