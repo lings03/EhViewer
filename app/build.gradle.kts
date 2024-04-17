@@ -64,7 +64,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 180054
-        versionName = "1.11.3.4"
+        versionName = "1.11.3.5"
         versionNameSuffix = "-cc"
         resourceConfigurations.addAll(
             listOf(
