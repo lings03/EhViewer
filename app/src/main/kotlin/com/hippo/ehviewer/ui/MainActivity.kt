@@ -220,7 +220,7 @@ class MainActivity : EhActivity() {
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Settings.dF && Settings.bypassVpn) {
+        if (Settings.dF) {
             bypassVpn()
         }
         installSplashScreen()
