@@ -15,45 +15,40 @@
  */
 package com.hippo.unifile
 
-import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import splitties.init.appCtx
 
 object DocumentsContractApi21 {
-    private const val PATH_DOCUMENT = "document"
-    private const val PATH_TREE = "tree"
     private val resolver = appCtx.contentResolver
     private val projection = arrayOf(
         DocumentsContract.Document.COLUMN_DOCUMENT_ID,
         DocumentsContract.Document.COLUMN_DISPLAY_NAME,
         DocumentsContract.Document.COLUMN_MIME_TYPE,
     )
+
     fun createFile(self: Uri, mimeType: String, displayName: String) = runCatching {
         DocumentsContract.createDocument(resolver, self, mimeType, displayName)
     }.getOrNull()
 
     fun createDirectory(self: Uri, displayName: String) = createFile(self, DocumentsContract.Document.MIME_TYPE_DIR, displayName)
 
-    fun prepareTreeUri(treeUri: Uri?): Uri {
+    fun prepareTreeUri(treeUri: Uri): Uri {
+        val documentId = if (treeUri.pathSegments.size == 2) {
+            DocumentsContract.getTreeDocumentId(treeUri)
+        } else {
+            DocumentsContract.getDocumentId(treeUri)
+        }
         return DocumentsContract.buildDocumentUriUsingTree(
             treeUri,
-            DocumentsContract.getTreeDocumentId(treeUri),
+            documentId,
         )
-    }
-
-    fun getTreeDocumentPath(documentUri: Uri): String {
-        val paths = documentUri.pathSegments
-        if (paths.size >= 4 && PATH_TREE == paths[0] && PATH_DOCUMENT == paths[2]) {
-            return paths[3]
-        }
-        error("Invalid URI: $documentUri")
     }
 
     fun buildChildUri(uri: Uri, displayName: String): Uri {
         return DocumentsContract.buildDocumentUriUsingTree(
             uri,
-            getTreeDocumentPath(uri) + "/" + displayName,
+            DocumentsContract.getDocumentId(uri) + "/" + displayName,
         )
     }
 
@@ -70,7 +65,7 @@ object DocumentsContractApi21 {
         }
     }
 
-    fun renameTo(context: Context, self: Uri, displayName: String) = runCatching {
-        DocumentsContract.renameDocument(context.contentResolver, self, displayName)
+    fun renameTo(self: Uri, displayName: String) = runCatching {
+        DocumentsContract.renameDocument(resolver, self, displayName)
     }.getOrNull()
 }
