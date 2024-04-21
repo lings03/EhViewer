@@ -604,8 +604,6 @@
     <string name="dark_theme_off">总是关闭</string>
     <string name="dark_theme_on">总是开启</string>
     <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
-    <string name="settings_advanced_domain_fronting_title">域名前置（重启应用后生效）</string>
-    <string name="settings_advanced_domain_fronting_summary">绕过 SNI 封锁\n启用时会禁用代理设置</string>
     <string name="settings_advanced_dns_over_http_hint">Server URL, blank: disable</string>
     <string name="pref_crop_borders">裁剪边缘</string>
     <!-- Tachiyomi Reader End-->
