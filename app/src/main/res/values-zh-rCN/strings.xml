@@ -603,7 +603,7 @@
     <string name="dark_theme_off">总是关闭</string>
     <string name="dark_theme_on">总是开启</string>
     <string name="settings_advanced_bypass_vpn_title">绕过VPN</string>
-    <string name="settings_advanced_bypass_vpn_summary">尝试绕过VPN（需要重启应用）</string>
+    <string name="settings_advanced_bypass_vpn_summary">尝试绕过VPN（重启生效)</string>
     <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
     <string name="settings_advanced_dns_over_http_hint">Server URL, blank: disable</string>
     <string name="pref_crop_borders">裁剪边缘</string>

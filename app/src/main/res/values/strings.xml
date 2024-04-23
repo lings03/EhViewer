@@ -663,7 +663,7 @@
     <string name="dark_theme_off">Always off</string>
     <string name="dark_theme_on">Always on</string>
     <string name="settings_advanced_bypass_vpn_title">Bypass VPN</string>
-    <string name="settings_advanced_bypass_vpn_summary">Try to bypass VPN (App restart required)</string>
+    <string name="settings_advanced_bypass_vpn_summary">Try to bypass VPN (Restart required)</string>
     <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
     <string name="settings_advanced_dns_over_http_hint">Server URL, blank: disable</string>
     <!-- Tachiyomi Reader End-->
