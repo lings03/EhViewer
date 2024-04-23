@@ -25,6 +25,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -220,7 +221,7 @@ class MainActivity : EhActivity() {
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Settings.dF) {
+        if (Settings.bypassVpn) {
             bypassVpn()
         }
         installSplashScreen()
@@ -540,9 +541,14 @@ class MainActivity : EhActivity() {
         val capabilities = connectivityManager.getNetworkCapabilities(network)
         capabilities?.let {
             if (it.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                val builder = NetworkRequest.Builder()
-                    // .addCapability(NetworkCapabilities.NET_CAPABILITY_FOREGROUND)
-                    .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    NetworkRequest.Builder()
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_FOREGROUND)
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                } else {
+                    NetworkRequest.Builder()
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                }
                 connectivityManager.registerNetworkCallback(builder.build(), mNetworkCallback)
             }
         }

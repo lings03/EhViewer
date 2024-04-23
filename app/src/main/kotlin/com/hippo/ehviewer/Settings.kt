@@ -157,6 +157,7 @@ object Settings : DataStorePreferences(null) {
     var preloadThumbAggressively by boolPref("preload_thumb_aggressively", false)
     var dF by boolPref(KEY_DOMAIN_FRONTING, true)
     var downloadOriginImage by boolPref("download_origin_image", false)
+    var bypassVpn by boolPref("bypass_vpn", true)
     var enableQuic by boolPref("enable_quic", false)
     var saveAsCbz by boolPref("save_as_cbz", false)
     var archiveMetadata by boolPref("archive_metadata", true)

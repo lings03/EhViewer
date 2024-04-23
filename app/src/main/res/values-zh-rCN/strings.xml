@@ -358,8 +358,6 @@
     <string name="settings_advanced_dump_logcat_to">已保存日志至 %s</string>
     <string name="settings_advanced_read_cache_size">阅读缓存大小</string>
     <string name="settings_advanced_app_language_title">App 界面语言</string>
-    <string name="settings_advanced_enable_quic">QUIC 支持</string>
-    <string name="settings_advanced_enable_quic_summary">启用 QUIC 协议支持（需要重启应用）</string>
     <string name="settings_advanced_http_engine">Http 引擎（重启生效)</string>
     <string name="settings_advanced_touch_slop">[实验性] 触摸溢出系数</string>
     <string name="settings_advanced_touch_slop_summary">增大此项将降低滑动手势敏感度</string>
@@ -604,6 +602,8 @@
     <string name="dark_theme_follow_system">跟随系统</string>
     <string name="dark_theme_off">总是关闭</string>
     <string name="dark_theme_on">总是开启</string>
+    <string name="settings_advanced_bypass_vpn_title">绕过VPN</string>
+    <string name="settings_advanced_bypass_vpn_summary">尝试绕过VPN（需要重启应用）</string>
     <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
     <string name="settings_advanced_dns_over_http_hint">Server URL, blank: disable</string>
     <string name="pref_crop_borders">裁剪边缘</string>

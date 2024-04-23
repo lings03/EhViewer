@@ -401,8 +401,6 @@
     <string name="settings_advanced_dump_logcat_to">Logcat dumped to %s</string>
     <string name="settings_advanced_read_cache_size">Read cache size</string>
     <string name="settings_advanced_app_language_title">App language</string>
-    <string name="settings_advanced_enable_quic">QUIC support</string>
-    <string name="settings_advanced_enable_quic_summary">Enable QUIC protocol support (App restart required)</string>
     <string name="settings_advanced_http_engine">Http Engine (Restart required)</string>
     <string name="settings_advanced_touch_slop">[Experimental] Touch slop factor</string>
     <string name="settings_advanced_touch_slop_summary">Increasing this will reduce swipe gesture sensitivity</string>
@@ -664,6 +662,8 @@
     <string name="dark_theme_follow_system">Follow system</string>
     <string name="dark_theme_off">Always off</string>
     <string name="dark_theme_on">Always on</string>
+    <string name="settings_advanced_bypass_vpn_title">Bypass VPN</string>
+    <string name="settings_advanced_bypass_vpn_summary">Try to bypass VPN (App restart required)</string>
     <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
     <string name="settings_advanced_dns_over_http_hint">Server URL, blank: disable</string>
     <!-- Tachiyomi Reader End-->

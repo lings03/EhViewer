@@ -161,6 +161,11 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
             )
             var enableCronet by Settings::enableQuic.observed
             var enableDf by Settings::dF.observed
+            SwitchPreference(
+                title = stringResource(id = R.string.settings_advanced_bypass_vpn_title),
+                summary = stringResource(id = R.string.settings_advanced_bypass_vpn_summary),
+                value = Settings::bypassVpn,
+            )
             Preference(
                 title = stringResource(id = R.string.settings_advanced_http_engine),
                 summary = if (enableCronet) "Cronet" else "OkHttp",
