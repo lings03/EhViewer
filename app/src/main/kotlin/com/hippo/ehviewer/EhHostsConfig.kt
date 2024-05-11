@@ -14,10 +14,10 @@ val builtInHosts = hostsDsl {
         "2001:1af8:4700:a0c9:4::47de" blockedInCN false
         "2001:1af8:4700:a0c9:3::47de" blockedInCN false
     }
-    hosts("e-hentai.org", "repo.e-hentai.org") {
+    hosts("e-hentai.org", "repo.e-hentai.org", "forums.e-hentai.org") {
         "104.20.18.168" blockedInCN false
         "104.20.19.168" blockedInCN false
-        "172.67.2.238" blockedInCN false
+        "172.67.2.238" blockedInCN true
     }
     hosts("api.e-hentai.org") {
         "178.162.139.18" blockedInCN false
@@ -41,17 +41,5 @@ val builtInHosts = hostsDsl {
         "178.175.129.254" blockedInCN false
         "178.175.128.254" blockedInCN false
         "178.175.132.22" blockedInCN false
-    }
-    hosts("forums.e-hentai.org") {
-        "94.100.18.243" blockedInCN false
-        "104.20.134.21" blockedInCN false
-        "104.20.135.21" blockedInCN false
-        "172.67.0.127" blockedInCN false
-    }
-    hosts("raw.githubusercontent.com") {
-        "151.101.0.133" blockedInCN true
-        "151.101.64.133" blockedInCN false
-        "151.101.128.133" blockedInCN false
-        "151.101.192.133" blockedInCN false
     }
 }
