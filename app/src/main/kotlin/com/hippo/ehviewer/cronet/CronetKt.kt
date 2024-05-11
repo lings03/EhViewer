@@ -15,6 +15,7 @@ var experimentalOptions = JSONObject()
 const val DNS_POISONING_CIRCUMVENTION_SUFFIX = ".cdn.cloudflare.net"
 
 fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
+    val apiGithubCom = listOf("140.82.116.5", "140.82.116.6", "20.205.243.168", "20.27.177.116").random()
     builder.enableBrotli(true)
         .enableQuic(true)
         .addQuicHint("e-hentai.org", 443, 443)
@@ -37,7 +38,8 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
                     "MAP e-hentai.org $CloudflareIP," +
                     "MAP exhentai.org $CloudflareIP," +
                     "MAP *.exhentai.org $CloudflareIP," +
-                    "MAP cdn.jsdelivr.net $CloudflareIP",
+                    "MAP cdn.jsdelivr.net $CloudflareIP," +
+                    "MAP api.github.com $apiGithubCom",
             ),
         )
     } else {
@@ -49,7 +51,8 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
                     "MAP e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
                     "MAP exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
                     "MAP *.exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
-                    "MAP cdn.jsdelivr.net cdn.jsdelivr.net$DNS_POISONING_CIRCUMVENTION_SUFFIX",
+                    "MAP cdn.jsdelivr.net cdn.jsdelivr.net$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
+                    "MAP api.github.com $apiGithubCom",
             ),
         )
     }
