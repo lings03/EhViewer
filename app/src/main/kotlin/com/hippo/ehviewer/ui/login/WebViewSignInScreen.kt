@@ -276,8 +276,10 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
                 }
 
                 if (response.isSuccessful) {
+                    val responseBody = withContext(Dispatchers.IO) {
+                        response.body.string()
+                    }
                     withContext(Dispatchers.Main) {
-                        val responseBody = response.body.string()
                         webView.loadDataWithBaseURL(url, responseBody, "text/html", "UTF-8", null)
                     }
                 } else {
