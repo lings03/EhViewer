@@ -23,7 +23,6 @@ import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.StartDestination
-import com.hippo.ehviewer.ui.destinations.SelectSiteScreenDestination
 import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.util.setDefaultSettings
 import com.ramcosta.composedestinations.annotation.Destination
@@ -31,6 +30,7 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
+import eu.kanade.tachiyomi.util.lang.withUIContext
 import io.ktor.http.Url
 import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
@@ -82,8 +82,6 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
     val state = rememberWebViewState(url = EhUrl.URL_SIGN_IN)
     class OkHttpWebViewClient(
         private val jsCode: String,
-        private val onLoginSuccess: () -> Unit,
-        private val onLoginFailed: () -> Unit,
     ) : AccompanistWebViewClient() {
 
         override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
@@ -155,23 +153,8 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
             if (getId && getHash) {
                 present = true
                 coroutineScope.launchIO {
-                    try {
-                        val canEx = withNonCancellableContext { postLogin() }
-                        if (canEx) {
-                            withContext(Dispatchers.Main) {
-                                onLoginSuccess()
-                            }
-                        } else {
-                            withContext(Dispatchers.Main) {
-                                onLoginFailed()
-                            }
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            onLoginFailed()
-                            Log.e("OkHttpWebViewClient", "Login failed: ${e.localizedMessage}")
-                        }
-                    }
+                    withNonCancellableContext { postLogin() }
+                    withUIContext { navigator.popNavigate(StartDestination) }
                 }
             }
         }
@@ -192,12 +175,6 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
     val okHttpWebViewClient = remember {
         OkHttpWebViewClient(
             jsCode = jsCode,
-            onLoginSuccess = {
-                navigator.popNavigate(SelectSiteScreenDestination)
-            },
-            onLoginFailed = {
-                navigator.popNavigate(StartDestination)
-            },
         )
     }
     fun handlePostRequest(webView: WebView, url: String, formData: String, scope: CoroutineScope) {

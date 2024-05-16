@@ -53,8 +53,6 @@
     <string name="error_cant_save_image">Das Bild konnte nicht gespeichert werden</string>
     <string name="error_invalid_number">Nummer ungültig</string>
     <string name="get_it">Verstanden</string>
-    <string name="select_scene">Wähle eine Galerie-Webseite aus.</string>
-    <string name="select_scene_explain">e-hentai: für jeden verfügbar\nexhentai: nur für diejenigen verfügbar, die sich angemeldet haben</string>
     <string name="gallery_list_search_bar_hint_exhentai">ExHentai durchsuchen</string>
     <string name="gallery_list_search_bar_hint_e_hentai">E-Hentai durchsuchen</string>
     <string name="gallery_list_empty_hit">Die Welt ist so groß und der Panda sitzt ganz allein</string>

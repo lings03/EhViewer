@@ -40,6 +40,6 @@ suspend fun postLogin() = coroutineScope {
         EhCookieStore.flush()
     }.onFailure {
         Settings.gallerySite = EhUrl.SITE_E
-        Settings.needSignIn = false
-    }.isSuccess
+    }
+    Settings.needSignIn = false
 }

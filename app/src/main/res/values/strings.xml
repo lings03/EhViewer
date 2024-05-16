@@ -99,9 +99,6 @@
     <string name="sign_in_failed">Sign in failed</string>
     <string name="sign_in_failed_tip">If this issue continues, try \"%s\".</string>
     <string name="get_it">Got it</string>
-    <!-- Select scene -->
-    <string name="select_scene">Which gallery site do you want to visit?</string>
-    <string name="select_scene_explain">e-hentai: available for anyone\nexhentai: available for who has signed in</string>
     <!-- Update -->
     <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">Search ExHentai</string>
