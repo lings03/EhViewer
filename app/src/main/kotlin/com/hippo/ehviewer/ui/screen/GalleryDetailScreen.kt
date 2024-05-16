@@ -78,8 +78,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.core.text.parseAsHtml
-import arrow.core.left
 import arrow.core.partially1
 import coil3.imageLoader
 import com.hippo.ehviewer.EhApplication.Companion.galleryDetailCache
@@ -105,10 +105,6 @@ import com.hippo.ehviewer.client.data.findBaseInfo
 import com.hippo.ehviewer.client.exception.EhException
 import com.hippo.ehviewer.client.exception.NoHAtHClientException
 import com.hippo.ehviewer.client.getImageKey
-import com.hippo.ehviewer.client.parser.ArchiveParser
-import com.hippo.ehviewer.client.parser.HomeParser
-import com.hippo.ehviewer.client.parser.TorrentResult
-import com.hippo.ehviewer.client.parser.format
 import com.hippo.ehviewer.coil.justDownload
 import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.dao.DownloadInfo
@@ -127,11 +123,13 @@ import com.hippo.ehviewer.ui.destinations.GalleryPreviewScreenDestination
 import com.hippo.ehviewer.ui.getFavoriteIcon
 import com.hippo.ehviewer.ui.jumpToReaderByPage
 import com.hippo.ehviewer.ui.legacy.CoilImageGetter
+import com.hippo.ehviewer.ui.main.ArchiveList
 import com.hippo.ehviewer.ui.main.EhPreviewItem
 import com.hippo.ehviewer.ui.main.GalleryCommentCard
 import com.hippo.ehviewer.ui.main.GalleryDetailErrorTip
 import com.hippo.ehviewer.ui.main.GalleryDetailHeaderCard
 import com.hippo.ehviewer.ui.main.GalleryTags
+import com.hippo.ehviewer.ui.main.TorrentList
 import com.hippo.ehviewer.ui.modifyFavorites
 import com.hippo.ehviewer.ui.navToReader
 import com.hippo.ehviewer.ui.openBrowser
@@ -164,6 +162,9 @@ import eu.kanade.tachiyomi.util.lang.withIOContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import moe.tarsin.coroutines.runSuspendCatching
@@ -293,13 +294,13 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
         }
     }
 
-    var mArchiveFormParamOr by remember { mutableStateOf<String?>(null) }
-    var mArchiveList by remember { mutableStateOf<List<ArchiveParser.Archive>?>(null) }
-    var mCurrentFunds by remember { mutableStateOf<HomeParser.Funds?>(null) }
+    val archiveResult = remember(galleryInfo) {
+        async(Dispatchers.IO, CoroutineStart.LAZY) {
+            val detail = galleryInfo as GalleryDetail
+            EhEngine.getArchiveList(detail.archiveUrl!!, gid, token)
+        }
+    }
 
-    val archiveFree = stringResource(R.string.archive_free)
-    val archiveOriginal = stringResource(R.string.archive_original)
-    val archiveResample = stringResource(R.string.archive_resample)
     val failureNoHath = stringResource(R.string.download_archive_failure_no_hath)
     val noArchive = stringResource(R.string.no_archives)
     val downloadStarted = stringResource(R.string.download_archive_started)
@@ -311,42 +312,19 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
             if (galleryDetail.apiUid < 0) {
                 showSnackbar(signInFirst)
             } else {
-                Unit.runSuspendCatching {
-                    if (mArchiveList == null) {
-                        val result = bgWork {
-                            withIOContext {
-                                EhEngine.getArchiveList(galleryDetail.archiveUrl!!, gid, token)
-                            }
-                        }
-                        mArchiveFormParamOr = result.paramOr
-                        mArchiveList = result.archiveList
-                        mCurrentFunds = result.funds
-                    }
-                    if (mArchiveList!!.isEmpty()) {
+                runSuspendCatching {
+                    val (paramOr, archiveList, funds) = bgWork { archiveResult.await() }
+                    if (archiveList.isEmpty()) {
                         showSnackbar(noArchive)
                     } else {
-                        val items = mArchiveList!!.map {
-                            it.run {
-                                if (isHAtH) {
-                                    val costStr = if (cost == "Free") archiveFree else cost
-                                    "[H@H] $name [$size] [$costStr]"
-                                } else {
-                                    val nameStr = if (res == "org") archiveOriginal else archiveResample
-                                    val costStr = if (cost == "Free!") archiveFree else cost
-                                    "$nameStr [$size] [$costStr]"
-                                }
-                            }
+                        val selected = showNoButton {
+                            ArchiveList(
+                                funds = funds,
+                                items = archiveList,
+                                onItemClick = { dismissWith(it) },
+                            )
                         }
-                        var fundsGP = mCurrentFunds!!.fundsGP.toString()
-                        // Ex GP numbers are rounded down to the nearest thousand
-                        if (EhUtils.isExHentai) {
-                            fundsGP += "+"
-                        }
-                        val title = getString(R.string.current_funds, fundsGP, mCurrentFunds!!.fundsC)
-                        val selected = showSelectItem(items, title.left())
-                        val res = mArchiveList!![selected].res
-                        val isHAtH = mArchiveList!![selected].isHAtH
-                        EhEngine.downloadArchive(gid, token, mArchiveFormParamOr!!, res, isHAtH)?.let {
+                        EhEngine.downloadArchive(gid, token, paramOr, selected.res, selected.isHAtH)?.let {
                             val uri = Uri.parse(it)
                             val intent = Intent().apply {
                                 action = Intent.ACTION_VIEW
@@ -477,7 +455,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
             val items = galleryDetail.newerVersions.map {
                 getString(R.string.newer_version_title, it.title, it.posted)
             }
-            val selected = showSelectItem(items)
+            val selected = awaitSelectItem(items)
             val info = galleryDetail.newerVersions[selected]
             withUIContext {
                 // Can't use GalleryInfoArgs as thumbKey is null
@@ -583,29 +561,30 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                     )
                 },
             )
-            val torrentText = stringResource(R.string.torrents)
+            val torrentText = stringResource(R.string.torrent_count, galleryDetail.torrentCount)
             val permissionDenied = stringResource(R.string.permission_denied)
             val downloadTorrentFailed = stringResource(R.string.download_torrent_failure)
             val downloadTorrentStarted = stringResource(R.string.download_torrent_started)
             val noTorrents = stringResource(R.string.no_torrents)
-            val noCurrentTorrents = stringResource(R.string.no_current_torrents)
-            var mTorrentList by remember { mutableStateOf<TorrentResult?>(null) }
-            suspend fun showTorrentDialog() {
-                if (mTorrentList == null) {
-                    mTorrentList = bgWork {
-                        withIOContext {
-                            EhEngine.getTorrentList(galleryDetail.torrentUrl!!, gid, token)
-                        }
-                    }
+            val torrentResult = remember(galleryDetail) {
+                async(Dispatchers.IO, CoroutineStart.LAZY) {
+                    EhEngine.getTorrentList(galleryDetail.torrentUrl!!, gid, token)
                 }
-                if (mTorrentList!!.isEmpty()) {
-                    showSnackbar(noCurrentTorrents)
+            }
+            suspend fun showTorrentDialog() {
+                val torrentList = bgWork { torrentResult.await() }
+                if (torrentList.isEmpty()) {
+                    showSnackbar(noTorrents)
                 } else {
-                    val items = mTorrentList!!.map { it.format() }
-                    val selected = showSelectItem(items, R.string.torrents, respectDefaultWidth = false)
-                    val url = mTorrentList!![selected].url
-                    val name = "${mTorrentList!![selected].name}.torrent"
-                    val r = DownloadManager.Request(Uri.parse(url.replace("exhentai.org", "ehtracker.org")))
+                    val selected = showNoButton(false) {
+                        TorrentList(
+                            items = torrentList,
+                            onItemClick = { dismissWith(it) },
+                        )
+                    }
+                    val url = selected.url
+                    val name = "${selected.name}.torrent"
+                    val r = DownloadManager.Request(url.toUri())
                     r.setDestinationInExternalPublicDir(
                         Environment.DIRECTORY_DOWNLOADS,
                         AppConfig.APP_DIRNAME + "/" + FileUtils.sanitizeFilename(name),
@@ -733,7 +712,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                         tag
                     }
                     launchIO {
-                        showSelectActions {
+                        awaitSelectAction {
                             with(activity) {
                                 onSelect(copy) {
                                     addTextToClipboard(tag)
@@ -756,7 +735,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                                     onSelect(downTag) { galleryDetail.voteTag(tag, -1) }
                                 }
                             }
-                        }
+                        }()
                     }
                 },
             )
@@ -822,7 +801,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
         if (showBottomSheet && galleryDetail != null) {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
-                windowInsets = WindowInsets(0, 0, 0, 0),
+                contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
             ) {
                 GalleryInfoBottomSheet(galleryDetail, navigator)
             }

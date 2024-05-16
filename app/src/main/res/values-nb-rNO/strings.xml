@@ -8,6 +8,8 @@
     <string name="error_unknown_host">Ukjent vert</string>
     <string name="error_redirection">For mange videresendinger</string>
     <string name="error_socket">Nettverksfeil</string>
+    <string name="password">Passord</string>
+    <string name="sign_in_via_webview">Logg inn via WebView</string>
     <string name="downloads">Nedlastninger</string>
     <string name="register">Registrering</string>
     <string name="error_invalid_number">Ugyldig nummer</string>
@@ -17,6 +19,7 @@
     <string name="subscription">Abonnement</string>
     <string name="settings">Innstillinger</string>
     <string name="sign_in_via_cookies">Logg inn via informasjonskapsler</string>
+    <string name="username">Brukernavn</string>
     <string name="sign_in">Logg inn</string>
     <string name="sign_in_first">Logg inn først</string>
     <string name="download">Last ned</string>
