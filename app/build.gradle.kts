@@ -1,8 +1,6 @@
 import com.mikepenz.aboutlibraries.plugin.DuplicateMode.MERGE
 import com.mikepenz.aboutlibraries.plugin.DuplicateRule.GROUP
 import java.time.Instant
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 val isRelease: Boolean
     get() = gradle.startParameter.taskNames.any { it.contains("Release") }
@@ -22,6 +20,7 @@ plugins {
 android {
     compileSdk = 34
     ndkVersion = "27.0.11718014-beta1"
+    androidResources.generateLocaleConfig = true
 
     splits {
         abi {
@@ -49,11 +48,6 @@ android {
         commandLine = "git rev-parse --short=7 HEAD".split(' ')
     }.standardOutput.asText.get().trim()
 
-    val buildTime by lazy {
-        val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(ZoneOffset.UTC)
-        formatter.format(Instant.now())
-    }
-
     val repoName = providers.exec {
         commandLine = "git remote get-url origin".split(' ')
     }.standardOutput.asText.get().trim().removePrefix("https://github.com/").removePrefix("git@github.com:")
@@ -66,8 +60,8 @@ android {
         applicationId = "moe.tarsin.ehviewer"
         minSdk = 26
         targetSdk = 34
-        versionCode = 180055
-        versionName = "1.11.4.3"
+        versionCode = 180056
+        versionName = "1.11.5"
         versionNameSuffix = "-cc"
         resourceConfigurations.addAll(
             listOf(
@@ -130,7 +124,7 @@ android {
             "-opt-in=coil3.annotation.ExperimentalCoilApi",
             "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi",
+            "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
             "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
             "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
             "-opt-in=androidx.compose.animation.ExperimentalAnimationApi",
@@ -163,11 +157,11 @@ android {
             isShrinkResources = true
             proguardFiles("proguard-rules.pro")
             signingConfig = signConfig
-            buildConfigField("String", "BUILD_TIME", "\"$buildTime\"")
+            buildConfigField("long", "BUILD_TIME", "${Instant.now().epochSecond}")
         }
         debug {
             applicationIdSuffix = ".debug"
-            buildConfigField("String", "BUILD_TIME", "\"\"")
+            buildConfigField("long", "BUILD_TIME", "0")
             lint {
                 abortOnError = false
             }

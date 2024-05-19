@@ -51,6 +51,7 @@ import com.hippo.ehviewer.cronet.cronetHttpClient
 import com.hippo.ehviewer.dailycheck.checkDawn
 import com.hippo.ehviewer.dao.SearchDatabase
 import com.hippo.ehviewer.download.DownloadManager
+import com.hippo.ehviewer.download.DownloadsFilterMode
 import com.hippo.ehviewer.ktbuilder.cache
 import com.hippo.ehviewer.ktbuilder.cronet
 import com.hippo.ehviewer.ktbuilder.diskCache
@@ -122,7 +123,12 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
             launch { EhTagDatabase }
             launch { EhDB }
             dataStateFlow.value
-            launch { DownloadManager.readMetadataFromLocal() }
+            launch {
+                if (DownloadManager.labelList.isNotEmpty() && Settings.downloadFilterMode.key !in Settings.prefs) {
+                    Settings.downloadFilterMode.value = DownloadsFilterMode.CUSTOM.flag
+                }
+                DownloadManager.readMetadataFromLocal()
+            }
             launch {
                 FileUtils.cleanupDirectory(AppConfig.externalCrashDir)
                 FileUtils.cleanupDirectory(AppConfig.externalParseErrorDir)

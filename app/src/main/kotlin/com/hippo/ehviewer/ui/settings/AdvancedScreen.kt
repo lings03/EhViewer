@@ -29,6 +29,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -55,8 +56,12 @@ import com.hippo.ehviewer.ui.tools.rememberedAccessor
 import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.Crash
 import com.hippo.ehviewer.util.ReadableTime
+import com.hippo.ehviewer.util.getAppLanguage
+import com.hippo.ehviewer.util.getLanguages
 import com.hippo.ehviewer.util.isCronetAvailable
+import com.hippo.ehviewer.util.setAppLanguage
 import com.hippo.unifile.asUniFile
+import com.jamal.composeprefs3.ui.prefs.DropDownPref
 import com.jamal.composeprefs3.ui.prefs.SwitchPref
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
@@ -99,10 +104,12 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         Column(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection).verticalScroll(rememberScrollState()).padding(paddingValues)) {
-            SwitchPreference(
-                title = "New Compose Reader [WIP!!!]",
-                value = Settings::newReader,
-            )
+            if (AppConfig.isSnapshot) {
+                SwitchPreference(
+                    title = "New Compose Reader [WIP!!!]",
+                    value = Settings::newReader,
+                )
+            }
             SwitchPreference(
                 title = stringResource(id = R.string.settings_advanced_save_parse_error_body),
                 summary = stringResource(id = R.string.settings_advanced_save_parse_error_body_summary),
@@ -153,11 +160,17 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 entryValueRes = R.array.read_cache_size_entry_values,
                 value = Settings::readCacheSize.observed,
             )
-            SimpleMenuPreference(
+            var currentLanguage by remember { mutableStateOf(getAppLanguage()) }
+            val languages = remember { context.getLanguages() }
+            DropDownPref(
                 title = stringResource(id = R.string.settings_advanced_app_language_title),
-                entry = R.array.app_language_entries,
-                entryValueRes = R.array.app_language_entry_values,
-                value = Settings::language,
+                defaultValue = currentLanguage,
+                onValueChange = {
+                    setAppLanguage(it)
+                    currentLanguage = it
+                },
+                useSelectedAsSummary = true,
+                entries = languages,
             )
             var enableCronet by Settings::enableQuic.observed
             var enableDf by Settings::dF.observed

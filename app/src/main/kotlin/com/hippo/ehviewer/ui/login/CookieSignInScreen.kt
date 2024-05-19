@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +59,6 @@ import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.ui.StartDestination
 import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.ui.tools.LocalDialogState
-import com.hippo.ehviewer.ui.tools.LocalWindowSizeClass
 import com.hippo.ehviewer.util.ExceptionUtils
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
@@ -73,7 +73,7 @@ import kotlinx.coroutines.launch
 @Destination<RootGraph>
 @Composable
 fun CookieSignInScene(navigator: DestinationsNavigator) {
-    val windowSizeClass = LocalWindowSizeClass.current
+    val windowSizeClass = compositionLocalOf<androidx.compose.material3.windowsizeclass.WindowSizeClass> { error("CompositionLocal LocalWindowSizeClass not present!") }.current
     val clipboardManager = LocalClipboardManager.current
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
