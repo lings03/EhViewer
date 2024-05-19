@@ -28,9 +28,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +49,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.window.core.layout.WindowWidthSizeClass
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
@@ -59,6 +58,7 @@ import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.ui.StartDestination
 import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.ui.tools.LocalDialogState
+import com.hippo.ehviewer.ui.tools.LocalWindowSizeClass
 import com.hippo.ehviewer.util.ExceptionUtils
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
@@ -73,7 +73,7 @@ import kotlinx.coroutines.launch
 @Destination<RootGraph>
 @Composable
 fun CookieSignInScene(navigator: DestinationsNavigator) {
-    val windowSizeClass = compositionLocalOf<androidx.compose.material3.windowsizeclass.WindowSizeClass> { error("CompositionLocal LocalWindowSizeClass not present!") }.current
+    val windowSizeClass = LocalWindowSizeClass.current
     val clipboardManager = LocalClipboardManager.current
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -253,8 +253,8 @@ fun CookieSignInScene(navigator: DestinationsNavigator) {
 
     Box(contentAlignment = Alignment.Center) {
         Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-            when (windowSizeClass.widthSizeClass) {
-                WindowWidthSizeClass.Compact, WindowWidthSizeClass.Medium -> {
+            when (windowSizeClass.windowWidthSizeClass) {
+                WindowWidthSizeClass.COMPACT, WindowWidthSizeClass.MEDIUM -> {
                     Column(
                         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(dimensionResource(id = R.dimen.keyline_margin)),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -281,7 +281,7 @@ fun CookieSignInScene(navigator: DestinationsNavigator) {
                         FillCookiesButton(modifier = Modifier.padding(horizontal = 8.dp))
                     }
                 }
-                WindowWidthSizeClass.Expanded -> {
+                WindowWidthSizeClass.EXPANDED -> {
                     Row(
                         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(dimensionResource(id = R.dimen.keyline_margin)),
                         verticalAlignment = Alignment.CenterVertically,
