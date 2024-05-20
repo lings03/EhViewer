@@ -1,7 +1,6 @@
 package com.hippo.ehviewer.client
 
 import android.os.Build
-import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.builtInHosts
 import com.hippo.ehviewer.ui.settings.EhDoH
 import java.net.InetAddress
@@ -21,7 +20,7 @@ fun HostsMap.hosts(vararg hosts: String, builder: HostMapBuilder.() -> Unit) = a
     hosts.forEach { host ->
         fun String.toInetAddress() = InetAddress.getByName(this).let { InetAddress.getByAddress(host, it.address) }
         mutableListOf<InetAddress>().apply {
-            HostMapBuilder { if (!(Settings.dF && it)) add(toInetAddress()) }.apply(builder)
+            HostMapBuilder { if (!it) add(toInetAddress()) }.apply(builder)
             put(host, this)
         }
     }

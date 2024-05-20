@@ -1,6 +1,7 @@
 package com.hippo.ehviewer.cronet
 
 import com.hippo.ehviewer.Settings
+import com.hippo.ehviewer.builtInHosts
 import okio.Path.Companion.toOkioPath
 import org.chromium.net.ExperimentalCronetEngine
 import org.json.JSONObject
@@ -12,10 +13,8 @@ val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builde
     configureCronetEngineBuilder(this)
 }.build()
 var experimentalOptions = JSONObject()
-const val DNS_POISONING_CIRCUMVENTION_SUFFIX = ".cdn.cloudflare.net"
 
 fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
-    val apiGithubCom = listOf("140.82.116.5", "140.82.116.6", "20.205.243.168", "20.27.177.116").random()
     builder.enableBrotli(true)
         .enableQuic(true)
         .addQuicHint("e-hentai.org", 443, 443)
@@ -39,7 +38,7 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
                     "MAP exhentai.org $CloudflareIP," +
                     "MAP *.exhentai.org $CloudflareIP," +
                     "MAP cdn.jsdelivr.net $CloudflareIP," +
-                    "MAP api.github.com $apiGithubCom",
+                    "MAP api.github.com ${builtInHosts["api.github.com"]}",
             ),
         )
     } else {
@@ -47,12 +46,12 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
             "HostResolverRules",
             JSONObject().put(
                 "host_resolver_rules",
-                "MAP *.e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
-                    "MAP e-hentai.org e-hentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
-                    "MAP exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
-                    "MAP *.exhentai.org exhentai.org$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
-                    "MAP cdn.jsdelivr.net cdn.jsdelivr.net$DNS_POISONING_CIRCUMVENTION_SUFFIX," +
-                    "MAP api.github.com $apiGithubCom",
+                "MAP *.e-hentai.org ${builtInHosts["e-hentai.org"]}," +
+                    "MAP e-hentai.org ${builtInHosts["e-hentai.org"]}," +
+                    "MAP exhentai.org ${builtInHosts["exhentai.org"]}," +
+                    "MAP *.exhentai.org ${builtInHosts["exhentai.org"]}," +
+                    "MAP api.github.com ${builtInHosts["api.github.com"]}," +
+                    "MAP cdn.jsdelivr.net cdn.jsdelivr.net.cdn.cloudflare.net",
             ),
         )
     }
