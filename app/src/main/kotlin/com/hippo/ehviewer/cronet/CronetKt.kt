@@ -13,6 +13,7 @@ val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builde
     configureCronetEngineBuilder(this)
 }.build()
 var experimentalOptions = JSONObject()
+const val CFSUFFIX = ".cdn.cloudflare.net"
 
 fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     builder.enableBrotli(true)
@@ -48,10 +49,10 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
                 "host_resolver_rules",
                 "MAP *.e-hentai.org ${builtInHosts["e-hentai.org"]}," +
                     "MAP e-hentai.org ${builtInHosts["e-hentai.org"]}," +
-                    "MAP exhentai.org ${builtInHosts["exhentai.org"]}," +
-                    "MAP *.exhentai.org ${builtInHosts["exhentai.org"]}," +
+                    "MAP exhentai.org exhentai.org$CFSUFFIX," +
+                    "MAP *.exhentai.org exhentai.org$CFSUFFIX," +
                     "MAP api.github.com ${builtInHosts["api.github.com"]}," +
-                    "MAP testingcf.jsdelivr.net testingcf.jsdelivr.net.cdn.cloudflare.net",
+                    "MAP testingcf.jsdelivr.net testingcf.jsdelivr$CFSUFFIX",
             ),
         )
     }
