@@ -14,6 +14,7 @@ val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builde
 }.build()
 var experimentalOptions = JSONObject()
 const val CFSUFFIX = ".cdn.cloudflare.net"
+fun randomIP(host: String): String? = builtInHosts[host]?.random()?.hostAddress
 
 fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
     builder.enableBrotli(true)
@@ -39,7 +40,7 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
                     "MAP exhentai.org $CloudflareIP," +
                     "MAP *.exhentai.org $CloudflareIP," +
                     "MAP testingcf.jsdelivr.net $CloudflareIP," +
-                    "MAP api.github.com ${builtInHosts["api.github.com"]}",
+                    "MAP api.github.com ${randomIP("api.github.com")}",
             ),
         )
     } else {
@@ -47,11 +48,11 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
             "HostResolverRules",
             JSONObject().put(
                 "host_resolver_rules",
-                "MAP *.e-hentai.org ${builtInHosts["e-hentai.org"]}," +
-                    "MAP e-hentai.org ${builtInHosts["e-hentai.org"]}," +
+                "MAP *.e-hentai.org ${randomIP("e-hentai.org")}," +
+                    "MAP e-hentai.org ${randomIP("e-hentai.org")}," +
                     "MAP exhentai.org exhentai.org$CFSUFFIX," +
                     "MAP *.exhentai.org exhentai.org$CFSUFFIX," +
-                    "MAP api.github.com ${builtInHosts["api.github.com"]}," +
+                    "MAP api.github.com ${randomIP("api.github.com")}," +
                     "MAP testingcf.jsdelivr.net testingcf.jsdelivr$CFSUFFIX",
             ),
         )
