@@ -35,8 +35,8 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
             "HostResolverRules",
             JSONObject().put(
                 "host_resolver_rules",
-                "MAP *.e-hentai.org $CloudflareIP," +
-                    "MAP e-hentai.org $CloudflareIP," +
+                "MAP e-hentai.org $CloudflareIP," +
+                    "MAP *.e-hentai.org $CloudflareIP," +
                     "MAP exhentai.org $CloudflareIP," +
                     "MAP *.exhentai.org $CloudflareIP," +
                     "MAP testingcf.jsdelivr.net $CloudflareIP," +
@@ -48,12 +48,12 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
             "HostResolverRules",
             JSONObject().put(
                 "host_resolver_rules",
-                "MAP *.e-hentai.org ${randomIP("e-hentai.org")}," +
-                    "MAP e-hentai.org ${randomIP("e-hentai.org")}," +
+                "MAP e-hentai.org ${randomIP("e-hentai.org")}," +
+                    "MAP *.e-hentai.org ${randomIP("e-hentai.org")}," +
                     "MAP exhentai.org exhentai.org$CFSUFFIX," +
                     "MAP *.exhentai.org exhentai.org$CFSUFFIX," +
-                    "MAP api.github.com ${randomIP("api.github.com")}," +
-                    "MAP testingcf.jsdelivr.net testingcf.jsdelivr$CFSUFFIX",
+                    "MAP testingcf.jsdelivr.net testingcf.jsdelivr.net$CFSUFFIX," +
+                    "MAP api.github.com ${randomIP("api.github.com")}",
             ),
         )
     }
