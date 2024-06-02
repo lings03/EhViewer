@@ -109,6 +109,7 @@ import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.dao.QuickSearch
 import com.hippo.ehviewer.icons.EhIcons
 import com.hippo.ehviewer.icons.filled.GoTo
+import com.hippo.ehviewer.ui.DrawerHandle
 import com.hippo.ehviewer.ui.LocalSideSheetState
 import com.hippo.ehviewer.ui.awaitSelectDate
 import com.hippo.ehviewer.ui.composing
@@ -153,10 +154,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Destination<RootGraph>
 @Composable
-fun HomePageScreen(navigator: DestinationsNavigator) {
-    val displayName by Settings.displayName.collectAsState()
-    GalleryListScreen(ListUrlBuilder(category = displayName?.let { EhUtils.NONE } ?: EhUtils.NON_H), navigator)
-}
+fun HomePageScreen(navigator: DestinationsNavigator) = GalleryListScreen(ListUrlBuilder(), navigator)
 
 @Destination<RootGraph>
 @Composable
@@ -175,12 +173,15 @@ fun ToplistScreen(navigator: DestinationsNavigator) = GalleryListScreen(ListUrlB
 fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = composing(navigator) {
     val searchFieldState = rememberTextFieldState()
     var urlBuilder by rememberSaveable(lub) { mutableStateOf(lub) }
+    var searchBarExpanded by rememberSaveable { mutableStateOf(false) }
     var searchBarOffsetY by remember { mutableIntStateOf(0) }
     var showSearchLayout by rememberSaveable { mutableStateOf(false) }
 
     var category by rememberMutableStateInDataStore("SearchCategory") { EhUtils.ALL_CATEGORY }
     var advancedSearchOption by rememberMutableStateInDataStore("AdvancedSearchOption") { AdvancedSearchOption() }
     var imageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+
+    DrawerHandle(!searchBarExpanded)
 
     LaunchedEffect(urlBuilder) {
         if (urlBuilder.category != EhUtils.NONE) category = urlBuilder.category
@@ -384,7 +385,8 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
                     stickyHeader {
                         HorizontalDivider()
                     }
-                    itemsIndexed(quickSearchList, key = { _, item -> item.id!! }) { index, item ->
+                    itemsIndexed(quickSearchList, key = { _, item -> item.id!! }) { itemIndex, item ->
+                        val index by rememberUpdatedState(itemIndex)
                         ReorderableItem(reorderableLazyListState, key = item.id!!) { isDragging ->
                             // Not using rememberSwipeToDismissBoxState to prevent LazyColumn from reusing it
                             val dismissState = remember { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, density, positionalThreshold = positionalThreshold) }
@@ -398,11 +400,10 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
                                         }.onSuccess {
                                             EhDB.deleteQuickSearch(item)
                                             with(quickSearchList) {
-                                                val removeIndex = indexOf(item)
-                                                subList(removeIndex + 1, size).forEach {
+                                                subList(index + 1, size).forEach {
                                                     it.position--
                                                 }
-                                                removeAt(removeIndex)
+                                                removeAt(index)
                                             }
                                         }.onFailure {
                                             dismissState.reset()
@@ -541,12 +542,15 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
     }
 
     SearchBarScreen(
+        onApplySearch = ::onApplySearch,
+        expanded = searchBarExpanded,
+        onExpandedChange = {
+            searchBarExpanded = it
+            fabHidden = it
+        },
         title = suitableTitle,
         searchFieldState = searchFieldState,
         searchFieldHint = searchBarHint,
-        onApplySearch = ::onApplySearch,
-        onSearchExpanded = { fabHidden = true },
-        onSearchHidden = { fabHidden = false },
         suggestionProvider = {
             GalleryDetailUrlParser.parse(it, false)?.run {
                 GalleryDetailUrlSuggestion(gid, token)

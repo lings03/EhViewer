@@ -1,6 +1,5 @@
 import com.mikepenz.aboutlibraries.plugin.DuplicateMode.MERGE
 import com.mikepenz.aboutlibraries.plugin.DuplicateRule.GROUP
-import java.time.Instant
 
 val isRelease: Boolean
     get() = gradle.startParameter.taskNames.any { it.contains("Release") }
@@ -50,6 +49,10 @@ android {
         commandLine = "git rev-parse --short=7 HEAD".split(' ')
     }.standardOutput.asText.get().trim()
 
+    val commitTime = providers.exec {
+        commandLine = "git log -1 --format=%ct".split(' ')
+    }.standardOutput.asText.get().trim()
+
     val repoName = providers.exec {
         commandLine = "git remote get-url origin".split(' ')
     }.standardOutput.asText.get().trim().removePrefix("https://github.com/").removePrefix("git@github.com:")
@@ -83,6 +86,7 @@ android {
         )
         buildConfigField("String", "RAW_VERSION_NAME", "\"$versionName${versionNameSuffix.orEmpty()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
+        buildConfigField("long", "COMMIT_TIME", commitTime)
         buildConfigField("String", "REPO_NAME", "\"$repoName\"")
         buildConfigField("String", "CHROME_VERSION", "\"$chromeVersion\"")
         ndk {
@@ -119,30 +123,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        freeCompilerArgs = listOf(
-            // https://kotlinlang.org/docs/compiler-reference.html#progressive
-            "-progressive",
-            "-Xjvm-default=all",
-            "-Xcontext-receivers",
-
-            "-opt-in=coil3.annotation.ExperimentalCoilApi",
-            "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
-            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
-            "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
-            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
-            "-opt-in=androidx.compose.animation.ExperimentalAnimationApi",
-            "-opt-in=androidx.paging.ExperimentalPagingApi",
-            "-opt-in=kotlin.contracts.ExperimentalContracts",
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-opt-in=kotlinx.coroutines.FlowPreview",
-            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-            "-opt-in=splitties.experimental.ExperimentalSplittiesApi",
-            "-opt-in=splitties.preferences.DataStorePreferencesPreview",
-        )
-    }
-
     lint {
         disable += setOf("MissingTranslation", "MissingQuantity")
         fatal += setOf("NewApi", "InlinedApi")
@@ -162,11 +142,9 @@ android {
             isShrinkResources = true
             proguardFiles("proguard-rules.pro")
             signingConfig = signConfig
-            buildConfigField("long", "BUILD_TIME", "${Instant.now().epochSecond}")
         }
         debug {
             applicationIdSuffix = ".debug"
-            buildConfigField("long", "BUILD_TIME", "0")
             lint {
                 abortOnError = false
             }
@@ -287,6 +265,29 @@ dependencies {
 
 kotlin {
     jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs = listOf(
+            // https://kotlinlang.org/docs/compiler-reference.html#progressive
+            "-progressive",
+            "-Xjvm-default=all",
+            "-Xcontext-receivers",
+
+            "-opt-in=coil3.annotation.ExperimentalCoilApi",
+            "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            "-opt-in=androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi",
+            "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi",
+            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+            "-opt-in=androidx.compose.animation.ExperimentalAnimationApi",
+            "-opt-in=androidx.paging.ExperimentalPagingApi",
+            "-opt-in=kotlin.contracts.ExperimentalContracts",
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-opt-in=kotlinx.coroutines.FlowPreview",
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
+            "-opt-in=splitties.experimental.ExperimentalSplittiesApi",
+            "-opt-in=splitties.preferences.DataStorePreferencesPreview",
+        )
+    }
 }
 
 ksp {

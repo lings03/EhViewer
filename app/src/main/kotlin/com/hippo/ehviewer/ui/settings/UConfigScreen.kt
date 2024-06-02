@@ -34,7 +34,6 @@ import com.hippo.ehviewer.client.CHROME_ACCEPT
 import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhUrl
-import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.util.setDefaultSettings
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
@@ -91,7 +90,7 @@ val cookieHeader = EhCookieStore.getCookieHeader(url)
 @Destination<RootGraph>
 @Composable
 fun UConfigScreen(navigator: DestinationsNavigator) {
-    LockDrawer(true)
+    val url = EhUrl.uConfigUrl
     val webview = remember { Atomic<WebView?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }

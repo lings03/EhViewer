@@ -21,7 +21,6 @@ import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
-import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.StartDestination
 import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.util.setDefaultSettings
@@ -77,7 +76,6 @@ private val jsCode = """
 @Destination<RootGraph>
 @Composable
 fun WebViewSignInScreen(navigator: DestinationsNavigator) {
-    LockDrawer(true)
     val coroutineScope = rememberCoroutineScope()
     val state = rememberWebViewState(url = EhUrl.URL_SIGN_IN)
     class OkHttpWebViewClient(

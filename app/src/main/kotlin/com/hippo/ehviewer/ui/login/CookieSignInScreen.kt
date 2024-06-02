@@ -126,7 +126,7 @@ fun CookieSignInScene(navigator: DestinationsNavigator) {
                 withNonCancellableContext { postLogin() }
                 withUIContext { navigator.popNavigate(StartDestination) }
             }.onFailure {
-                EhCookieStore.signOut()
+                EhCookieStore.removeAllCookies()
                 dialogState.awaitPermissionOrCancel(
                     confirmText = R.string.get_it,
                     showCancelButton = false,

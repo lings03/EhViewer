@@ -10,6 +10,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import com.hippo.ehviewer.client.CHROME_USER_AGENT
+import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
 import com.hippo.ehviewer.download.DownloadsFilterMode
 import com.hippo.ehviewer.download.SortMode
@@ -114,6 +115,7 @@ object Settings : DataStorePreferences(null) {
     val languageFilter = intPref("language_filter", -1)
     val downloadSortMode = intPref("download_sort_mode", SortMode.Default.flag)
     val downloadFilterMode = intPref("download_filter_mode", DownloadsFilterMode.Default.flag)
+    val hasSignedIn = boolPref("has_signed_in", EhCookieStore.hasSignedIn())
     val meteredNetworkWarning = boolPref("cellular_network_warning", false)
     val blackDarkTheme = boolPref("black_dark_theme", false)
     val gridView = boolPref("grid_view", false)
@@ -122,7 +124,7 @@ object Settings : DataStorePreferences(null) {
     val security = boolPref("require_unlock", false)
     val animateItems = boolPref("animate_items", true)
     val displayName = stringOrNullPref("display_name", null)
-    val recentDownloadLabel = stringOrNullPref("recent_download_label", null)
+    val recentDownloadLabel = stringOrNullPref("recent_download_label", "")
 
     var downloadScheme by stringOrNullPref("image_scheme", null)
     var downloadAuthority by stringOrNullPref("image_authority", null)
@@ -177,7 +179,7 @@ object Settings : DataStorePreferences(null) {
     var dohUrl by stringPref("doh_url", "https://dns11.quad9.net/dns-query")
     var cloudflareIp by stringOrNullPref("cloudflare_ip", "cdn.sstatic.net")
     var cloudflareIpOverride by boolPref("cloudflare_ip_override", false)
-    var lastUpdateTime by longPref("last_update_time", BuildConfig.BUILD_TIME)
+    var lastUpdateTime by longPref("last_update_time", BuildConfig.COMMIT_TIME)
 
     // Tachiyomi Reader
     var newReader by boolPref("new_compose_reader", false)

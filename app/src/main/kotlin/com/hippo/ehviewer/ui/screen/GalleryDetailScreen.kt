@@ -60,7 +60,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -113,7 +112,6 @@ import com.hippo.ehviewer.download.DownloadManager as EhDownloadManager
 import com.hippo.ehviewer.ktbuilder.imageRequest
 import com.hippo.ehviewer.spider.SpiderDen
 import com.hippo.ehviewer.ui.GalleryInfoBottomSheet
-import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.MainActivity
 import com.hippo.ehviewer.ui.composing
 import com.hippo.ehviewer.ui.confirmRemoveDownload
@@ -164,6 +162,7 @@ import eu.kanade.tachiyomi.util.system.logcat
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
@@ -215,7 +214,6 @@ private fun List<GalleryTagGroup>.getArtistTag(): String? {
 @Destination<RootGraph>
 @Composable
 fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNavigator) = composing(navigator) {
-    LockDrawer(true)
     var galleryInfo by remember {
         val casted = args as? GalleryInfoArgs
         mutableStateOf<GalleryInfo?>(casted?.galleryInfo)
@@ -295,7 +293,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
     }
 
     val archiveResult = remember(galleryInfo) {
-        async(Dispatchers.IO, CoroutineStart.LAZY) {
+        async(Dispatchers.IO + Job(), CoroutineStart.LAZY) {
             val detail = galleryInfo as GalleryDetail
             EhEngine.getArchiveList(detail.archiveUrl!!, gid, token)
         }
@@ -567,7 +565,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
             val downloadTorrentStarted = stringResource(R.string.download_torrent_started)
             val noTorrents = stringResource(R.string.no_torrents)
             val torrentResult = remember(galleryDetail) {
-                async(Dispatchers.IO, CoroutineStart.LAZY) {
+                async(Dispatchers.IO + Job(), CoroutineStart.LAZY) {
                     EhEngine.getTorrentList(galleryDetail.torrentUrl!!, gid, token)
                 }
             }
@@ -639,23 +637,22 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                     showSnackbar(signInFirst)
                     return@launchIO
                 }
-                awaitPermissionOrCancel(title = R.string.rate) {
+                val pendingRating = awaitResult(galleryDetail.rating.coerceAtLeast(.5f), title = R.string.rate) {
                     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        var rating by remember { mutableFloatStateOf(galleryDetail.rating.coerceAtLeast(.5f)) }
-                        var text by remember { mutableIntStateOf(getRatingText(rating)) }
+                        var text by remember { mutableIntStateOf(getRatingText(expectedValue)) }
                         Text(text = stringResource(id = text), style = MaterialTheme.typography.bodyLarge)
                         Spacer(modifier = Modifier.size(keylineMargin))
                         GalleryRatingBar(
-                            rating = rating,
+                            rating = expectedValue,
                             onRatingChange = {
-                                rating = it.coerceAtLeast(.5f)
-                                text = getRatingText(rating)
+                                expectedValue = it.coerceAtLeast(.5f)
+                                text = getRatingText(expectedValue)
                             },
                         )
                     }
                 }
                 galleryDetail.runSuspendCatching {
-                    EhEngine.rateGallery(apiUid, apiKey, gid, token, rating)
+                    EhEngine.rateGallery(apiUid, apiKey, gid, token, pendingRating)
                 }.onSuccess { result ->
                     galleryInfo = galleryDetail.apply {
                         rating = result.rating
@@ -1077,7 +1074,7 @@ fun GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNa
                                     } else {
                                         val info = galleryInfo!!
                                         val uri = awaitActivityResult(
-                                            CreateDocument("application/x-cbz"),
+                                            CreateDocument("application/vnd.comicbook+zip"),
                                             EhUtils.getSuitableTitle(info) + ".cbz",
                                         )
                                         val dirname = downloadInfo?.dirname

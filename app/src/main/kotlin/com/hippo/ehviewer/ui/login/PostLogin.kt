@@ -41,5 +41,6 @@ suspend fun postLogin() = coroutineScope {
     }.onFailure {
         Settings.gallerySite = EhUrl.SITE_E
     }
+    Settings.hasSignedIn.value = true
     Settings.needSignIn = false
 }

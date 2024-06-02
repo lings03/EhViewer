@@ -57,15 +57,14 @@ import androidx.paging.filter
 import com.hippo.ehviewer.EhDB
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
-import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.data.BaseGalleryInfo
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
 import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.icons.EhIcons
 import com.hippo.ehviewer.icons.filled.GoTo
+import com.hippo.ehviewer.ui.DrawerHandle
 import com.hippo.ehviewer.ui.LocalSideSheetState
-import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.awaitSelectDate
 import com.hippo.ehviewer.ui.composing
 import com.hippo.ehviewer.ui.main.FAB_ANIMATE_TIME
@@ -100,9 +99,11 @@ fun FavouritesScreen(navigator: DestinationsNavigator) = composing(navigator) {
     val localFavName = stringResource(R.string.local_favorites)
     val cloudFavName = stringResource(R.string.cloud_favorites)
     val animateItems by Settings.animateItems.collectAsState()
+    val hasSignedIn by Settings.hasSignedIn.collectAsState()
 
     // Meta State
     var urlBuilder by rememberSaveable { mutableStateOf(FavListUrlBuilder(favCat = Settings.recentFavCat)) }
+    var searchBarExpanded by rememberSaveable { mutableStateOf(false) }
     var searchBarOffsetY by remember { mutableIntStateOf(0) }
 
     // Derived State
@@ -192,7 +193,7 @@ fun FavouritesScreen(navigator: DestinationsNavigator) = composing(navigator) {
             }
         }
         val localFav = stringResource(id = R.string.local_favorites) to localFavCount
-        val faves = if (EhCookieStore.hasSignedIn()) {
+        val faves = if (hasSignedIn) {
             arrayOf(
                 localFav,
                 stringResource(id = R.string.cloud_favorites) to Settings.favCloudCount,
@@ -224,17 +225,18 @@ fun FavouritesScreen(navigator: DestinationsNavigator) = composing(navigator) {
     var fabHidden by remember { mutableStateOf(false) }
     val checkedInfoMap = remember { mutableStateMapOf<Long, BaseGalleryInfo>() }
     val selectMode = checkedInfoMap.isNotEmpty()
-    LockDrawer(selectMode)
+    DrawerHandle(!selectMode && !searchBarExpanded)
 
     SearchBarScreen(
+        onApplySearch = { refresh(FavListUrlBuilder(urlBuilder.favCat, it)) },
+        expanded = searchBarExpanded,
+        onExpandedChange = {
+            searchBarExpanded = it
+            fabHidden = it
+            if (it) checkedInfoMap.clear()
+        },
         title = title,
         searchFieldHint = searchBarHint,
-        onApplySearch = { refresh(FavListUrlBuilder(urlBuilder.favCat, it)) },
-        onSearchExpanded = {
-            checkedInfoMap.clear()
-            fabHidden = true
-        },
-        onSearchHidden = { fabHidden = false },
         tagNamespace = !isLocalFav,
         searchBarOffsetY = { searchBarOffsetY },
         trailingIcon = {
@@ -399,7 +401,7 @@ fun FavouritesScreen(navigator: DestinationsNavigator) = composing(navigator) {
                 // First is local favorite, the other 10 is cloud favorite
                 val items = buildList {
                     add(localFavName)
-                    if (EhCookieStore.hasSignedIn()) {
+                    if (hasSignedIn) {
                         addAll(Settings.favCat)
                     }
                 }
