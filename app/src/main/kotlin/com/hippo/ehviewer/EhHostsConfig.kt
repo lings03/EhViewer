@@ -54,4 +54,9 @@ val builtInHosts = hostsDsl {
         "20.205.243.168" blockedInCN false
         "20.27.177.116" blockedInCN false
     }
+    hosts("github.com") {
+        "20.200.245.247" blockedInCN false
+        "20.201.28.151" blockedInCN false
+        "20.205.243.166" blockedInCN false
+    }
 }
