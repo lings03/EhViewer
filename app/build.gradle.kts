@@ -67,7 +67,7 @@ android {
         targetSdk = 34
         versionCode = 180056
         versionName = "1.11.6"
-        versionNameSuffix = "-RC1-cc"
+        versionNameSuffix = "-RC2-cc"
         resourceConfigurations.addAll(
             listOf(
                 "zh",
