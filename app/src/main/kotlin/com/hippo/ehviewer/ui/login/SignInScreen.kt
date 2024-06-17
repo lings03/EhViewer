@@ -221,24 +221,10 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                             Text(text = stringResource(id = R.string.sign_in))
                         }
                     }
-                    Row(modifier = Modifier.padding(horizontal = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(
-                            onClick = { navigator.navigate(CookieSignInSceneDestination) },
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(
-                                text = buildAnnotatedString {
-                                    withStyle(
-                                        style = SpanStyle(textDecoration = TextDecoration.Underline),
-                                    ) {
-                                        append(stringResource(id = R.string.sign_in_via_cookies))
-                                    }
-                                },
-                            )
-                        }
+                    Row(modifier = Modifier.padding(horizontal = 4.dp)) {
                         TextButton(
                             onClick = { navigator.navigate(WebViewSignInScreenDestination) },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.padding(horizontal = 8.dp),
                         ) {
                             Text(
                                 text = buildAnnotatedString {
@@ -250,25 +236,38 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                                 },
                             )
                         }
-
                         TextButton(
-                            onClick = {
-                                Settings.needSignIn = false
-                                Settings.gallerySite = EhUrl.SITE_E
-                                navigator.popNavigate(StartDestination)
-                            },
-                            modifier = Modifier.weight(1f),
+                            onClick = { navigator.navigate(CookieSignInSceneDestination) },
+                            modifier = Modifier.padding(horizontal = 8.dp),
                         ) {
                             Text(
                                 text = buildAnnotatedString {
                                     withStyle(
                                         style = SpanStyle(textDecoration = TextDecoration.Underline),
                                     ) {
-                                        append(stringResource(id = R.string.guest_mode))
+                                        append(stringResource(id = R.string.sign_in_via_cookies))
                                     }
                                 },
                             )
                         }
+                    }
+
+                    TextButton(
+                        onClick = {
+                            Settings.needSignIn = false
+                            Settings.gallerySite = EhUrl.SITE_E
+                            navigator.popNavigate(StartDestination)
+                        },
+                    ) {
+                        Text(
+                            text = buildAnnotatedString {
+                                withStyle(
+                                    style = SpanStyle(textDecoration = TextDecoration.Underline),
+                                ) {
+                                    append(stringResource(id = R.string.guest_mode))
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -322,7 +321,7 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                         Row(horizontalArrangement = Arrangement.Center) {
                             TextButton(
                                 onClick = { navigator.navigate(CookieSignInSceneDestination) },
-                                modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
+                                modifier = Modifier.padding(horizontal = 4.dp),
                             ) {
                                 Text(
                                     text = buildAnnotatedString {
@@ -336,7 +335,7 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                             }
                             TextButton(
                                 onClick = { navigator.navigate(WebViewSignInScreenDestination) },
-                                modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
+                                modifier = Modifier.padding(horizontal = 4.dp),
                             ) {
                                 Text(
                                     text = buildAnnotatedString {
@@ -348,24 +347,24 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                                     },
                                 )
                             }
-                            TextButton(
-                                onClick = {
-                                    Settings.needSignIn = false
-                                    Settings.gallerySite = EhUrl.SITE_E
-                                    navigator.popNavigate(StartDestination)
+                        }
+                        TextButton(
+                            onClick = {
+                                Settings.needSignIn = false
+                                Settings.gallerySite = EhUrl.SITE_E
+                                navigator.popNavigate(StartDestination)
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        ) {
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(
+                                        style = SpanStyle(textDecoration = TextDecoration.Underline),
+                                    ) {
+                                        append(stringResource(id = R.string.guest_mode))
+                                    }
                                 },
-                                modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
-                            ) {
-                                Text(
-                                    text = buildAnnotatedString {
-                                        withStyle(
-                                            style = SpanStyle(textDecoration = TextDecoration.Underline),
-                                        ) {
-                                            append(stringResource(id = R.string.guest_mode))
-                                        }
-                                    },
-                                )
-                            }
+                            )
                         }
                     }
                 }
