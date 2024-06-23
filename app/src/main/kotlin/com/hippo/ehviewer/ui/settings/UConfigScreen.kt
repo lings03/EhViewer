@@ -94,7 +94,7 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
     val webview = remember { Atomic<WebView?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    class OkHttpWebViewClient() : AccompanistWebViewClient() {
+    class OkHttpWebViewClient : AccompanistWebViewClient() {
 
         override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
