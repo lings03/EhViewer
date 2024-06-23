@@ -57,7 +57,7 @@ import com.hippo.ehviewer.ktbuilder.cronet
 import com.hippo.ehviewer.ktbuilder.diskCache
 import com.hippo.ehviewer.ktbuilder.httpClient
 import com.hippo.ehviewer.ktbuilder.imageLoader
-import com.hippo.ehviewer.ktor.CronetEngine
+import com.hippo.ehviewer.ktor.Cronet
 import com.hippo.ehviewer.legacy.cleanObsoleteCache
 import com.hippo.ehviewer.ui.keepNoMediaFileStatus
 import com.hippo.ehviewer.ui.lockObserver
@@ -66,6 +66,7 @@ import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.Crash
 import com.hippo.ehviewer.util.FavouriteStatusRouter
 import com.hippo.ehviewer.util.FileUtils
+import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastP
 import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
@@ -92,7 +93,9 @@ import splitties.init.appCtx
 private val lifecycle = ProcessLifecycleOwner.get().lifecycle
 private val lifecycleScope = lifecycle.coroutineScope
 
-class EhApplication : Application(), SingletonImageLoader.Factory {
+class EhApplication :
+    Application(),
+    SingletonImageLoader.Factory {
     override fun onCreate() {
         // Initialize Settings on first access
         lifecycleScope.launchIO {
@@ -183,8 +186,10 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
             add(KtorNetworkFetcherFactory { ktorClient })
             add(MergeInterceptor)
             add(DownloadThumbInterceptor)
+            if (isAtLeastO) {
+                add(HardwareBitmapInterceptor)
+            }
             add(CropBorderInterceptor)
-            add(HardwareBitmapInterceptor)
             if (isAtLeastP) {
                 add(AnimatedImageDecoder.Factory(false))
             } else {
@@ -211,7 +216,10 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
     companion object {
         val ktorClient by lazy {
             if (Settings.enableQuic && isCronetAvailable) {
-                HttpClient(CronetEngine) {
+                HttpClient(Cronet) {
+                    engine {
+                        client = cronetHttpClient
+                    }
                     install(HttpCookies) {
                         storage = EhCookieStore
                     }
@@ -235,7 +243,7 @@ class EhApplication : Application(), SingletonImageLoader.Factory {
         }
 
         val noRedirectKtorClient by lazy {
-            HttpClient(CronetEngine) {
+            HttpClient(ktorClient.engine) {
                 followRedirects = false
                 install(HttpCookies) {
                     storage = EhCookieStore

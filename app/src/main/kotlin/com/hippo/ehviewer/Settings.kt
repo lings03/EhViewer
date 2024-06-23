@@ -102,6 +102,7 @@ object Settings : DataStorePreferences(null) {
     private const val KEY_BUILT_IN_HOSTS = "built_in_hosts_2"
     private const val KEY_DOMAIN_FRONTING = "domain_fronting"
 
+    @Suppress("ktlint:standard:backing-property-naming")
     private val _favFlow = MutableSharedFlow<Unit>()
     val favChangesFlow = _favFlow.debounce(1000)
     var favCat by stringArrayPref("fav_cat", 10, "Favorites").emitTo(_favFlow)
@@ -142,6 +143,7 @@ object Settings : DataStorePreferences(null) {
     var readCacheSize by intPref("read_cache_size_2", 640)
     var launchPage by intPref("launch_page_2", 0)
     var commentThreshold by intPref("comment_threshold", -101)
+    var hardwareBitmapThreshold by intPref("hardware_bitmap_threshold", 16384)
     var forceEhThumb by boolPref("force_eh_thumb", false)
     var showComments by boolPref("show_gallery_comments", true)
     var requestNews by boolPref("request_news", false).observed { updateWhenRequestNewsChanges() }
@@ -233,7 +235,7 @@ object Settings : DataStorePreferences(null) {
     private fun intArrayPref(key: String, count: Int) = object : Delegate<IntArray> {
         override val flowGetter: () -> Flow<Unit> = { _value.asFlow().flatMapMerge { it.changesFlow() }.conflate() }
 
-        @Suppress("ktlint:standard:property-naming")
+        @Suppress("ktlint:standard:backing-property-naming")
         private var _value = (0 until count).map { intPref("${key}_$it", 0) }.toTypedArray()
         override fun getValue(thisRef: Any?, prop: KProperty<*>?): IntArray = _value.map { it.value }.toIntArray()
         override fun setValue(thisRef: Any?, prop: KProperty<*>?, value: IntArray) {
@@ -245,7 +247,7 @@ object Settings : DataStorePreferences(null) {
     private fun stringArrayPref(key: String, count: Int, defMetaValue: String) = object : Delegate<Array<String>> {
         override val flowGetter: () -> Flow<Unit> = { _value.asFlow().flatMapMerge { it.changesFlow() }.conflate() }
 
-        @Suppress("ktlint:standard:property-naming")
+        @Suppress("ktlint:standard:backing-property-naming")
         private var _value = (0 until count).map { stringPref("${key}_$it", "$defMetaValue $it") }.toTypedArray()
         override fun getValue(thisRef: Any?, prop: KProperty<*>?): Array<String> = _value.map { it.value }.toTypedArray()
         override fun setValue(thisRef: Any?, prop: KProperty<*>?, value: Array<String>) {

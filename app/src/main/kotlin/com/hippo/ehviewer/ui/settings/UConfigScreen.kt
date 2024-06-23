@@ -105,7 +105,7 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
                 .addHeader("User-Agent", Settings.userAgent)
                 .addHeader("Accept", CHROME_ACCEPT)
                 .addHeader("Accept-Language", CHROME_ACCEPT_LANGUAGE)
-                .addHeader("Cookie", cookieHeader)
+                .addHeader("Cookie", cookieHeader.toString())
                 .build()
 
             return try {
@@ -158,7 +158,7 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
             .addHeader("User-Agent", Settings.userAgent)
             .addHeader("Accept", CHROME_ACCEPT)
             .addHeader("Accept-Language", CHROME_ACCEPT_LANGUAGE)
-            .addHeader("Cookie", cookieHeader)
+            .addHeader("Cookie", cookieHeader.toString())
             .build()
         scope.launch {
             try {

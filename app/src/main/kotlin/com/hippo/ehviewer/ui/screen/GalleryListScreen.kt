@@ -39,12 +39,10 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBoxDefaults
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -77,7 +75,6 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.viewModelScope
@@ -87,6 +84,8 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.cachedIn
 import androidx.paging.compose.collectAsLazyPagingItems
+import arrow.core.raise.ensure
+import arrow.core.raise.ensureNotNull
 import com.hippo.ehviewer.EhDB
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
@@ -176,6 +175,7 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
     var searchBarExpanded by rememberSaveable { mutableStateOf(false) }
     var searchBarOffsetY by remember { mutableIntStateOf(0) }
     var showSearchLayout by rememberSaveable { mutableStateOf(false) }
+    val animateItems by Settings.animateItems.collectAsState()
 
     var category by rememberMutableStateInDataStore("SearchCategory") { EhUtils.ALL_CATEGORY }
     var advancedSearchOption by rememberMutableStateInDataStore("AdvancedSearchOption") { AdvancedSearchOption() }
@@ -202,7 +202,6 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
         onBack = { showSearchLayout = false },
     )
     val density = LocalDensity.current
-    val positionalThreshold = SwipeToDismissBoxDefaults.positionalThreshold
     val listState = rememberLazyGridState()
     val gridState = rememberLazyStaggeredGridState()
     val isTopList = remember(urlBuilder) { urlBuilder.mode == MODE_TOPLIST }
@@ -340,20 +339,15 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
                                     checkBoxText = R.string.save_progress,
                                 ) { input, checked ->
                                     var text = input.trim()
-                                    nameEmpty.takeIf {
-                                        text.isEmpty()
-                                    } ?: dupName.takeIf {
-                                        if (checked) text += "@$next"
-                                        quickSearchList.fastAny { it.name == text }
-                                    } ?: run {
-                                        val quickSearch = urlBuilder.toQuickSearch(text)
-                                        quickSearch.position = quickSearchList.size
-                                        // Insert to DB first to update the id
-                                        EhDB.insertQuickSearch(quickSearch)
-                                        quickSearchList.add(quickSearch)
-                                        saveProgress = checked
-                                        null
-                                    }
+                                    ensure(text.isNotBlank()) { nameEmpty }
+                                    if (checked) text += "@$next"
+                                    ensure(quickSearchList.none { it.name == text }) { dupName }
+                                    val quickSearch = urlBuilder.toQuickSearch(text)
+                                    quickSearch.position = quickSearchList.size
+                                    // Insert to DB first to update the id
+                                    EhDB.insertQuickSearch(quickSearch)
+                                    quickSearchList.add(quickSearch)
+                                    saveProgress = checked
                                 }
                             }
                         }
@@ -370,9 +364,7 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
                 val quickSearchListState = rememberLazyListState()
                 val hapticFeedback = rememberHapticFeedback()
                 val reorderableLazyListState = rememberReorderableLazyListState(quickSearchListState) { from, to ->
-                    val fromIndex = from.index - 1
-                    val toIndex = to.index - 1
-                    quickSearchList.apply { add(toIndex, removeAt(fromIndex)) }
+                    quickSearchList.apply { add(to.index, removeAt(from.index)) }
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.MOVE)
                 }
                 var fromIndex by remember { mutableIntStateOf(-1) }
@@ -381,15 +373,11 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
                     state = quickSearchListState,
                     contentPadding = WindowInsets.systemBars.only(WindowInsetsSides.Bottom).asPaddingValues(),
                 ) {
-                    // Fix the first item's reorder animation
-                    stickyHeader {
-                        HorizontalDivider()
-                    }
                     itemsIndexed(quickSearchList, key = { _, item -> item.id!! }) { itemIndex, item ->
                         val index by rememberUpdatedState(itemIndex)
-                        ReorderableItem(reorderableLazyListState, key = item.id!!) { isDragging ->
+                        ReorderableItem(reorderableLazyListState, item.id!!, animated = animateItems) { isDragging ->
                             // Not using rememberSwipeToDismissBoxState to prevent LazyColumn from reusing it
-                            val dismissState = remember { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, density, positionalThreshold = positionalThreshold) }
+                            val dismissState = remember { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, density) }
                             LaunchedEffect(dismissState) {
                                 snapshotFlow { dismissState.currentValue }.collect { value ->
                                     if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -735,11 +723,8 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
                     val page = urlBuilder.mJumpTo?.toIntOrNull() ?: 0
                     val hint = getString(R.string.go_to_hint, page + 1, TOPLIST_PAGES)
                     val text = awaitInputText(title = gotoTitle, hint = hint, isNumber = true) { oriText ->
-                        when (oriText.trim().toIntOrNull()?.let { it - 1 }) {
-                            null -> invalidNum
-                            !in 0..<TOPLIST_PAGES -> outOfRange
-                            else -> null
-                        }
+                        val goto = ensureNotNull(oriText.trim().toIntOrNull()) { invalidNum } - 1
+                        ensure(goto in 0..<TOPLIST_PAGES) { outOfRange }
                     }.trim().toInt() - 1
                     urlBuilder.setJumpTo(text)
                 } else {

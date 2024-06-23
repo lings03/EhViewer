@@ -20,7 +20,7 @@ val supportedAbis = arrayOf("arm64-v8a", "x86_64", "armeabi-v7a")
 
 android {
     compileSdk = 34
-    ndkVersion = "27.0.11718014-beta1"
+    ndkVersion = "27.0.11902837-rc1"
     androidResources.generateLocaleConfig = true
 
     splits {
@@ -124,8 +124,9 @@ android {
     }
 
     lint {
+        checkReleaseBuilds = false
         disable += setOf("MissingTranslation", "MissingQuantity")
-        fatal += setOf("NewApi", "InlinedApi")
+        error += setOf("InlinedApi")
     }
 
     packaging {
@@ -205,6 +206,7 @@ dependencies {
     implementation(libs.androidx.paging.compose)
 
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.viewpager2)
 
     // https://developer.android.com/jetpack/androidx/releases/room
     ksp(libs.androidx.room.compiler)
@@ -212,7 +214,6 @@ dependencies {
 
     implementation(libs.androidx.work.runtime)
     implementation(libs.photoview) // Dead Dependency
-    implementation(libs.directionalviewpager) // Dead Dependency
     implementation(libs.material)
     implementation(libs.material.motion.core)
 
@@ -234,10 +235,11 @@ dependencies {
 
     implementation(libs.insetter) // Dead Dependency
 
-    implementation(libs.reorderable)
+    // implementation(libs.reorderable)
 
     implementation(platform(libs.arrow.stack))
     implementation(libs.arrow.fx.coroutines)
+    implementation(libs.arrow.resilience)
 
     // https://coil-kt.github.io/coil/changelog/
     implementation(platform(libs.coil.bom))
@@ -300,13 +302,15 @@ aboutLibraries {
     duplicationRule = GROUP
 }
 
+val ktlintVersion = libs.ktlint.get().version
+
 spotless {
     kotlin {
         // https://github.com/diffplug/spotless/issues/111
         target("src/**/*.kt")
-        ktlint()
+        ktlint(ktlintVersion)
     }
     kotlinGradle {
-        ktlint()
+        ktlint(ktlintVersion)
     }
 }

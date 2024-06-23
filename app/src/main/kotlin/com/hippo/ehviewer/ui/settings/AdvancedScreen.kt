@@ -58,6 +58,7 @@ import com.hippo.ehviewer.util.Crash
 import com.hippo.ehviewer.util.ReadableTime
 import com.hippo.ehviewer.util.getAppLanguage
 import com.hippo.ehviewer.util.getLanguages
+import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastV
 import com.hippo.ehviewer.util.isCronetAvailable
 import com.hippo.ehviewer.util.setAppLanguage
@@ -265,6 +266,15 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                         }
                     }
                 }
+            }
+            if (isAtLeastO) {
+                IntSliderPreference(
+                    maxValue = 16384,
+                    step = 3,
+                    title = stringResource(id = R.string.settings_advanced_hardware_bitmap_threshold),
+                    summary = stringResource(id = R.string.settings_advanced_hardware_bitmap_threshold_summary),
+                    value = Settings::hardwareBitmapThreshold,
+                )
             }
             SwitchPreference(
                 title = stringResource(id = R.string.preload_thumb_aggressively),
