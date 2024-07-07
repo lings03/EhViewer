@@ -19,8 +19,6 @@ import android.os.Build
 import android.os.Environment
 import com.hippo.ehviewer.BuildConfig
 import com.hippo.ehviewer.client.parser.ParserUtils
-import com.hippo.unifile.UniFile
-import com.hippo.unifile.asUniFile
 import java.io.File
 import splitties.init.appCtx
 
@@ -36,6 +34,8 @@ object AppConfig {
     private val abi = Build.SUPPORTED_ABIS[0].takeIf {
         it in setOf("arm64-v8a", "x86_64", "armeabi-v7a")
     } ?: "universal"
+
+    val isBenchmark = "nonMinified" in BuildConfig.BUILD_TYPE || "benchmark" in BuildConfig.BUILD_TYPE
 
     fun matchVariant(name: String) = name.contains(BuildConfig.FLAVOR) && name.contains(abi)
 
@@ -57,7 +57,7 @@ object AppConfig {
     val defaultDownloadDir: File?
         get() = getDirInExternalAppDir(DOWNLOAD, false)
 
-    fun getTempDir(filename: String): UniFile? = getDirInExternalAppDir(TEMP)?.run { File(this, filename).asUniFile() }
+    fun getTempDir(filename: String): File? = getDirInExternalAppDir(TEMP)?.run { File(this, filename) }
 
     val externalTempDir: File?
         get() = appCtx.externalCacheDir?.run { File(this, TEMP).takeIf { it.ensureDirectory() } }

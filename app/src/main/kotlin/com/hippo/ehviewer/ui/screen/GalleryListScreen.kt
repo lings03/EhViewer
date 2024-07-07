@@ -3,6 +3,7 @@ package com.hippo.ehviewer.ui.screen
 import android.content.Context
 import android.net.Uri
 import android.view.ViewConfiguration
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -78,6 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.viewModelScope
+import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
@@ -133,8 +135,8 @@ import com.hippo.ehviewer.ui.tools.rememberMutableStateInDataStore
 import com.hippo.ehviewer.ui.tools.snackBarPadding
 import com.hippo.ehviewer.util.FavouriteStatusRouter
 import com.hippo.ehviewer.util.pickVisualMedia
-import com.hippo.unifile.asUniFile
-import com.hippo.unifile.sha1
+import com.hippo.ehviewer.util.sha1
+import com.hippo.files.toOkioPath
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -252,6 +254,7 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
             }
         }.flow.cachedIn(viewModelScope)
     }.collectAsLazyPagingItems()
+    ReportDrawnWhen { data.loadState.refresh !is LoadState.Loading }
     FavouriteStatusRouter.Observe(data)
     val listMode by Settings.listMode.collectAsState()
 
@@ -261,6 +264,7 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
     val toplists = remember { entries zip values }
     val quickSearchName = getSuitableTitleForUrlBuilder(urlBuilder, false)
     var saveProgress by Settings.qSSaveProgress.asMutableState()
+    var languageFilter by Settings.languageFilter.asMutableState()
 
     fun getFirstVisibleItemIndex() = if (listMode == 0) {
         listState.firstVisibleItemIndex
@@ -415,10 +419,14 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
                                 ListItem(
                                     modifier = Modifier.clickable {
                                         if (urlBuilder.mode == MODE_WHATS_HOT) {
-                                            val builder = ListUrlBuilder(item)
+                                            val builder = ListUrlBuilder(item).apply {
+                                                language = languageFilter
+                                            }
                                             navigator.navigate(builder.asDst())
                                         } else {
-                                            urlBuilder = ListUrlBuilder(item)
+                                            urlBuilder = ListUrlBuilder(item).apply {
+                                                language = languageFilter
+                                            }
                                             data.refresh()
                                         }
                                         showSearchLayout = false
@@ -503,6 +511,7 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
             builder.mode = newMode
             builder.keyword = query
             builder.category = category
+            builder.language = languageFilter
             builder.advanceSearch = advancedSearchOption.advanceSearch
             builder.minRating = advancedSearchOption.minRating
             builder.pageFrom = advancedSearchOption.fromPage
@@ -513,7 +522,7 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
                 return@launchIO
             }
             builder.mode = MODE_IMAGE_SEARCH
-            builder.hash = imageUri!!.asUniFile().sha1()
+            builder.hash = imageUri!!.toOkioPath().sha1()
         }
         when (oldMode) {
             MODE_TOPLIST, MODE_WHATS_HOT -> {
@@ -566,11 +575,11 @@ fun GalleryListScreen(lub: ListUrlBuilder, navigator: DestinationsNavigator) = c
         filter = {
             SearchFilter(
                 category = category,
-                onCategoryChanged = { category = it },
+                onCategoryChange = { category = it },
+                language = languageFilter,
+                onLanguageChange = { languageFilter = it },
                 advancedOption = advancedSearchOption,
-                onAdvancedOptionChanged = {
-                    advancedSearchOption = it
-                },
+                onAdvancedOptionChange = { advancedSearchOption = it },
             )
         },
         floatingActionButton = {

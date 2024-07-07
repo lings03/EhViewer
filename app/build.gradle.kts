@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import com.mikepenz.aboutlibraries.plugin.DuplicateMode.MERGE
 import com.mikepenz.aboutlibraries.plugin.DuplicateRule.GROUP
 
@@ -14,12 +15,14 @@ plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.aboutlibrariesPlugin)
     alias(libs.plugins.composeCompilerReportGenerator)
+    alias(libs.plugins.baselineprofile)
 }
 
 val supportedAbis = arrayOf("arm64-v8a", "x86_64", "armeabi-v7a")
 
 android {
-    compileSdk = 34
+    compileSdk = if (isRelease) 35 else 34
+    buildToolsVersion = "35.0.0"
     ndkVersion = "27.0.11902837-rc1"
     androidResources.generateLocaleConfig = true
 
@@ -61,10 +64,13 @@ android {
     val chromeVersion = rootProject.layout.projectDirectory.file("chrome-for-testing/LATEST_RELEASE_STABLE").asFile
         .readText().substringBefore('.')
 
+    val githubToken = gradleLocalProperties(rootDir, providers)["GITHUB_TOKEN"] as? String
+        ?: System.getenv("GITHUB_TOKEN").orEmpty()
+
     defaultConfig {
         applicationId = "moe.tarsin.ehviewer"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 180056
         versionName = "1.11.6"
         versionNameSuffix = "-RC2-cc"
@@ -89,6 +95,7 @@ android {
         buildConfigField("long", "COMMIT_TIME", commitTime)
         buildConfigField("String", "REPO_NAME", "\"$repoName\"")
         buildConfigField("String", "CHROME_VERSION", "\"$chromeVersion\"")
+        buildConfigField("String", "GITHUB_TOKEN", "\"$githubToken\"")
         ndk {
             if (isRelease) {
                 abiFilters.addAll(supportedAbis)
@@ -150,6 +157,13 @@ android {
                 abortOnError = false
             }
         }
+        create("benchmarkRelease") {
+            initWith(buildTypes.getByName("release"))
+            matchingFallbacks += listOf("release")
+            applicationIdSuffix = ".benchmark"
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = false
+        }
     }
 
     buildFeatures {
@@ -175,6 +189,10 @@ androidComponents {
             "**.bin",
         )
     }
+}
+
+baselineProfile {
+    mergeIntoMain = true
 }
 
 dependencies {
@@ -260,6 +278,9 @@ dependencies {
     coreLibraryDesugaring(libs.desugar)
 
     implementation(libs.cronet.embedded)
+
+    implementation(libs.androidx.profileinstaller)
+    "baselineProfile"(project(":benchmark"))
 
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.compose.ui.tooling.preview)

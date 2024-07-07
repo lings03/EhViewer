@@ -42,6 +42,7 @@ data class ListUrlBuilder(
     var category: Int = EhUtils.NONE,
     private var mKeyword: String? = null,
     var hash: String? = null,
+    var language: Int = -1,
     var advanceSearch: Int = -1,
     var minRating: Int = -1,
     var pageFrom: Int = -1,
@@ -264,10 +265,16 @@ data class ListUrlBuilder(
                 addQueryParameter("f_cats", (category.inv() and EhUtils.ALL_CATEGORY).toString())
             }
             val query = mKeyword?.let { keyword ->
-                GalleryInfo.S_LANG_TAGS
-                    .takeUnless { keyword.startsWith("gid:", true) }
-                    ?.getOrNull(Settings.languageFilter.value)
-                    ?.plus(" $keyword") ?: keyword
+                if (language == -1 || "gid:" in keyword || "l:" in keyword || "language:" in keyword) {
+                    keyword
+                } else {
+                    val tag = GalleryInfo.S_LANG_TAGS[language]
+                    if (keyword.isNotEmpty()) {
+                        "$tag $keyword"
+                    } else {
+                        tag
+                    }
+                }
             }
             addQueryParameterIfNotBlank("f_search", query)
             addQueryParameterIfNotBlank("prev", mPrev)
