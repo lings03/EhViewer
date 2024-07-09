@@ -1,7 +1,7 @@
 [package]
 name = "ehviewer_rust"
 version = "0.0.0"
-resolver = "2"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 regex-lite = { version = "0.1" }
 jni = "0.21"
 jni_fn = "0.1"
-quick-xml = { default-features = false, version = "0.35" }
+quick-xml = { default-features = false, version = "0.36" }
 tl = "0.7"
 log = "0.4"
 android_logger = { default-features = false, version = "0.14" }

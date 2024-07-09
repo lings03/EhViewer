@@ -7,6 +7,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -23,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import arrow.fx.coroutines.parMap
 import arrow.fx.coroutines.parMapNotNull
 import com.hippo.ehviewer.EhDB
@@ -93,7 +96,9 @@ fun DownloadScreen(navigator: DestinationsNavigator) = composing(navigator) {
                     launchIO {
                         runCatching {
                             contentResolver.takePersistableUriPermission(treeUri, FLAG_GRANT_READ_URI_PERMISSION or FLAG_GRANT_WRITE_URI_PERMISSION)
-                            downloadLocationState = DocumentsContract.buildDocumentUriUsingTree(treeUri, DocumentsContract.getTreeDocumentId(treeUri)).toOkioPath()
+                            val path = DocumentsContract.buildDocumentUriUsingTree(treeUri, DocumentsContract.getTreeDocumentId(treeUri)).toOkioPath()
+                            check(path.isDirectory) { "$path is not a directory" }
+                            downloadLocationState = path
                             launchNonCancellable {
                                 keepNoMediaFileStatus(downloadLocationState)
                             }
@@ -258,7 +263,11 @@ fun DownloadScreen(navigator: DestinationsNavigator) = composing(navigator) {
                         confirmText = R.string.delete,
                         title = R.string.settings_download_clean_redundancy,
                     ) {
-                        Text(list.joinToString(separator = "\n") { it.name })
+                        LazyColumn {
+                            items(list) {
+                                Text(it.name, modifier = Modifier.padding(vertical = 8.dp))
+                            }
+                        }
                     }
                 }
                 val cnt = list.count { runCatching { it.delete() }.getOrNull() != null }
