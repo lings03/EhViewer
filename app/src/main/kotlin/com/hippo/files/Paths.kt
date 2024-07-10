@@ -38,14 +38,18 @@ fun Path.toUri(): Uri {
     }
 
     val uri = str.replaceFirst("content:/", "content://").toUri()
-    val paths = uri.pathSegments
-    return if (paths.size > 3 && paths[0] == "tree") {
+    val path = requireNotNull(uri.encodedPath) { "Invalid path: $str" }
+    val paths = path.split('/').dropWhile { it.isEmpty() }
+    return if (paths.size > 4 && paths[0] == "tree") {
         uri.buildUpon().apply {
             path(null)
             repeat(3) { i ->
-                appendPath(paths[i])
+                appendEncodedPath(paths[i])
             }
-            appendPath(paths.subList(3, paths.size).joinToString("/").replaceFirst(":/", ":"))
+            val root = Uri.decode(paths[3])
+            val prefix = if (root.endsWith(':')) root else "$root/"
+            val suffix = uri.encodedFragment?.let { "#$it" }.orEmpty()
+            appendPath(paths.subList(4, paths.size).joinToString("/", prefix, suffix))
         }.build()
     } else {
         uri
@@ -53,7 +57,7 @@ fun Path.toUri(): Uri {
 }
 
 fun Uri.toOkioPath() = if (scheme == ContentResolver.SCHEME_FILE) {
-    path!!
+    requireNotNull(path) { "Invalid URI: $this" }
 } else {
     toString()
 }.toPath()
