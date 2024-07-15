@@ -4,19 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -47,7 +49,9 @@ fun BottomReaderBar(onClickSettings: () -> Unit) {
         .copy(alpha = if (isSystemInDarkTheme()) 0.9f else 0.95f)
 
     Row(
-        modifier = Modifier.fillMaxWidth().background(backgroundColor).padding(8.dp).navigationBarsPadding(),
+        modifier = Modifier.fillMaxWidth().background(backgroundColor).padding(8.dp)
+            // navigationBarsPadding() does not work without SYSTEM_UI_FLAG_LAYOUT_STABLE on API < 28
+            .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -104,7 +108,7 @@ private fun DropdownIconButton(
     ) {
         IconButton(
             onClick = {},
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
         ) {
             Icon(
                 imageVector = selectedItem.icon,
@@ -115,7 +119,7 @@ private fun DropdownIconButton(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier.widthIn(min = minMenuWidth),
-            matchTextFieldWidth = false,
+            matchAnchorWidth = false,
         ) {
             menuItems.forEach {
                 DropdownMenuItem(

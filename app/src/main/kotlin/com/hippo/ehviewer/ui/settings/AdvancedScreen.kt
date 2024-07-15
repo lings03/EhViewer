@@ -36,18 +36,21 @@ import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.asMutableState
 import com.hippo.ehviewer.client.CHROME_USER_AGENT
-import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
+import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.Crash
 import com.hippo.ehviewer.util.ReadableTime
+import com.hippo.ehviewer.util.displayPath
 import com.hippo.ehviewer.util.getAppLanguage
 import com.hippo.ehviewer.util.getLanguages
+import com.hippo.ehviewer.util.isAtLeastO
+import com.hippo.ehviewer.util.isAtLeastV
 import com.hippo.ehviewer.util.setAppLanguage
-import com.hippo.unifile.asUniFile
+import com.hippo.files.toOkioPath
 import com.jamal.composeprefs3.ui.prefs.DropDownPref
 import com.jamal.composeprefs3.ui.prefs.SwitchPref
 import com.ramcosta.composedestinations.annotation.Destination
@@ -107,7 +110,7 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 title = stringResource(id = R.string.settings_advanced_dump_logcat),
                 summary = stringResource(id = R.string.settings_advanced_dump_logcat_summary),
                 contract = ActivityResultContracts.CreateDocument("application/zip"),
-                key = "log-" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".zip",
+                key = "log-" + ReadableTime.getFilenamableTime() + ".zip",
             ) { uri ->
                 uri?.run {
                     context.runCatching {
@@ -123,12 +126,12 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                                     zipOs.putNextEntry(entry)
                                     file.inputStream().use { it.copyTo(zipOs) }
                                 }
-                                val logcatEntry = ZipEntry("logcat-" + ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".txt")
+                                val logcatEntry = ZipEntry("logcat-" + ReadableTime.getFilenamableTime() + ".txt")
                                 zipOs.putNextEntry(logcatEntry)
                                 Crash.collectInfo(zipOs.writer())
                                 Runtime.getRuntime().exec("logcat -d").inputStream.use { it.copyTo(zipOs) }
                             }
-                            launchSnackBar(getString(R.string.settings_advanced_dump_logcat_to, uri.toString()))
+                            launchSnackBar(getString(R.string.settings_advanced_dump_logcat_to, uri.displayPath))
                         }
                     }.onFailure {
                         launchSnackBar(dumpLogError)
@@ -154,6 +157,15 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 useSelectedAsSummary = true,
                 entries = languages,
             )
+            if (isAtLeastO) {
+                IntSliderPreference(
+                    maxValue = 16384,
+                    step = 3,
+                    title = stringResource(id = R.string.settings_advanced_hardware_bitmap_threshold),
+                    summary = stringResource(id = R.string.settings_advanced_hardware_bitmap_threshold_summary),
+                    value = Settings::hardwareBitmapThreshold,
+                )
+            }
             SwitchPreference(
                 title = stringResource(id = R.string.preload_thumb_aggressively),
                 value = Settings::preloadThumbAggressively,
@@ -179,17 +191,18 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 }
             }
             val exportFailed = stringResource(id = R.string.settings_advanced_export_data_failed)
+            val now = ReadableTime.getFilenamableTime()
             LauncherPreference(
                 title = stringResource(id = R.string.settings_advanced_export_data),
                 summary = stringResource(id = R.string.settings_advanced_export_data_summary),
                 contract = ActivityResultContracts.CreateDocument("application/vnd.sqlite3"),
-                key = ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".db",
+                key = if (isAtLeastV) now else "$now.db",
             ) { uri ->
                 uri?.let {
                     context.runCatching {
                         grantUriPermission(BuildConfig.APPLICATION_ID, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                        EhDB.exportDB(context, uri.asUniFile())
-                        launchSnackBar(getString(R.string.settings_advanced_export_data_to, uri.toString()))
+                        EhDB.exportDB(context, uri.toOkioPath())
+                        launchSnackBar(getString(R.string.settings_advanced_export_data_to, uri.displayPath))
                     }.onFailure {
                         logcat(it)
                         launchSnackBar(exportFailed)
@@ -202,7 +215,7 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 title = stringResource(id = R.string.settings_advanced_import_data),
                 summary = stringResource(id = R.string.settings_advanced_import_data_summary),
                 contract = ActivityResultContracts.GetContent(),
-                key = "application/octet-stream",
+                key = if (isAtLeastV) "application/vnd.sqlite3" else "application/octet-stream",
             ) { uri ->
                 uri?.let {
                     context.runCatching {
@@ -215,7 +228,8 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                     }
                 }
             }
-            if (EhCookieStore.hasSignedIn()) {
+            val hasSignedIn by Settings.hasSignedIn.collectAsState()
+            if (hasSignedIn) {
                 val backupNothing = stringResource(id = R.string.settings_advanced_backup_favorite_nothing)
                 val backupFailed = stringResource(id = R.string.settings_advanced_backup_favorite_failed)
                 val backupSucceed = stringResource(id = R.string.settings_advanced_backup_favorite_success)

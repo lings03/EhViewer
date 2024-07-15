@@ -74,7 +74,6 @@ import androidx.core.text.parseAsHtml
 import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
-import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.EhFilter.remember
 import com.hippo.ehviewer.client.EhUrl
@@ -83,7 +82,6 @@ import com.hippo.ehviewer.client.data.ListUrlBuilder
 import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.dao.Filter
 import com.hippo.ehviewer.dao.FilterMode
-import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.composing
 import com.hippo.ehviewer.ui.jumpToReaderByPage
 import com.hippo.ehviewer.ui.legacy.CoilImageGetter
@@ -150,7 +148,6 @@ private val MinimumContentPaddingEditText = 88.dp
 @Destination<RootGraph>
 @Composable
 fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composing(navigator) {
-    LockDrawer(true)
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var commenting by rememberSaveable { mutableStateOf(false) }
     val animationProgress by animateFloatMergePredictiveBackAsState(enable = commenting) { commenting = false }
@@ -244,7 +241,7 @@ fun GalleryCommentsScreen(gid: Long, navigator: DestinationsNavigator) = composi
             }
         }
     }
-    val hasSignedIn = remember { EhCookieStore.hasSignedIn() }
+    val hasSignedIn by Settings.hasSignedIn.collectAsState()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {

@@ -86,7 +86,7 @@ private const val REQUEST_INTERVAL = 5000L
 
 fun Either<String, ByteBuffer>.saveParseError(e: Throwable) {
     val dir = AppConfig.externalParseErrorDir ?: return
-    val file = File(dir, ReadableTime.getFilenamableTime(System.currentTimeMillis()) + ".txt")
+    val file = File(dir, ReadableTime.getFilenamableTime() + ".txt")
     file.sink().buffer().use { sink ->
         with(sink) {
             writeUtf8(e.message + "\n")
@@ -296,6 +296,10 @@ object EhEngine {
             }
         }.executeSafely { }
     }
+
+    suspend fun getFavoriteNote(gid: Long, token: String) =
+        ehRequest(EhUrl.getAddFavorites(gid, token), EhUrl.getGalleryDetailUrl(gid, token))
+            .fetchUsingAsText(FavoritesParser::parseNote)
 
     suspend fun downloadArchive(gid: Long, token: String, or: String, res: String, isHAtH: Boolean): String? {
         val url = EhUrl.getDownloadArchive(gid, token, or)

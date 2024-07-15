@@ -13,7 +13,6 @@ import com.google.accompanist.web.rememberWebViewState
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
-import com.hippo.ehviewer.ui.LockDrawer
 import com.hippo.ehviewer.ui.StartDestination
 import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.util.setDefaultSettings
@@ -23,12 +22,10 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
-import io.ktor.http.Url
 
 @Destination<RootGraph>
 @Composable
 fun WebViewSignInScreen(navigator: DestinationsNavigator) {
-    LockDrawer(true)
     val coroutineScope = rememberCoroutineScope()
     val state = rememberWebViewState(url = EhUrl.URL_SIGN_IN)
     val client = remember {
@@ -39,16 +36,7 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
                     view.destroy()
                     return
                 }
-                var getId = false
-                var getHash = false
-                EhCookieStore.load(Url(EhUrl.HOST_E)).forEach {
-                    if (EhCookieStore.KEY_IPB_MEMBER_ID == it.name) {
-                        getId = true
-                    } else if (EhCookieStore.KEY_IPB_PASS_HASH == it.name) {
-                        getHash = true
-                    }
-                }
-                if (getId && getHash) {
+                if (EhCookieStore.hasSignedIn()) {
                     present = true
                     coroutineScope.launchIO {
                         withNonCancellableContext { postLogin() }
