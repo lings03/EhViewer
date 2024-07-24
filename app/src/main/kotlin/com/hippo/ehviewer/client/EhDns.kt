@@ -29,5 +29,8 @@ fun HostsMap.hosts(vararg hosts: String, builder: HostMapBuilder.() -> Unit) = a
 val systemDns = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6) else Dns.SYSTEM
 
 object EhDns : Dns {
-    override fun lookup(hostname: String): List<InetAddress> = builtInHosts[hostname] ?: EhDoH.lookup(hostname) ?: systemDns.lookup(hostname)
+    override fun lookup(hostname: String): List<InetAddress> {
+        val inetAddresses = builtInHosts[hostname] ?: EhDoH.lookup(hostname) ?: systemDns.lookup(hostname)
+        return inetAddresses.shuffled()
+    }
 }
