@@ -48,8 +48,8 @@ fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
             "HostResolverRules",
             JSONObject().put(
                 "host_resolver_rules",
-                "MAP e-hentai.org ${randomIP("e-hentai.org")}," +
-                    "MAP *.e-hentai.org ${randomIP("e-hentai.org")}," +
+                "MAP e-hentai.org e-hentai.org$CFSUFFIX," +
+                    "MAP *.e-hentai.org e-hentai.org$CFSUFFIX," +
                     "MAP exhentai.org exhentai.org$CFSUFFIX," +
                     "MAP *.exhentai.org exhentai.org$CFSUFFIX," +
                     "MAP testingcf.jsdelivr.net testingcf.jsdelivr.net$CFSUFFIX," +
