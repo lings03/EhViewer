@@ -59,17 +59,18 @@ val builtInHosts = hostsDsl {
         "94.100.18.247" blockedInCN false
         "94.100.18.249" blockedInCN false
     }
-    hosts("exhentai.org") {
+    hosts("exhentai.org", "s.exhentai.org") {
+        "178.175.128.251" blockedInCN false
         "178.175.128.252" blockedInCN false
+        "178.175.128.253" blockedInCN false
         "178.175.128.254" blockedInCN false
+        "178.175.129.251" blockedInCN false
         "178.175.129.252" blockedInCN false
+        "178.175.129.253" blockedInCN false
         "178.175.129.254" blockedInCN false
+        "178.175.132.19" blockedInCN false
         "178.175.132.20" blockedInCN false
-        "178.175.132.22" blockedInCN false
-    }
-    hosts("s.exhentai.org") {
-        "178.175.128.254" blockedInCN false
-        "178.175.129.254" blockedInCN false
+        "178.175.132.21" blockedInCN false
         "178.175.132.22" blockedInCN false
     }
     hosts("api.github.com") {
