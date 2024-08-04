@@ -7,12 +7,12 @@ import com.hippo.ehviewer.util.OSUtils
 import com.hippo.ehviewer.util.isAtLeastO
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
+import eu.kanade.tachiyomi.util.lang.withIOContext
 
 private const val MAX_CACHE_SIZE = 512 * 1024 * 1024
 private const val MIN_CACHE_SIZE = 128 * 1024 * 1024
 
 abstract class PageLoader {
-
     private val cache by lazy {
         lruCache<Int, Image>(
             maxSize = if (isAtLeastO) {
@@ -27,6 +27,7 @@ abstract class PageLoader {
             },
         )
     }
+
     val pages by lazy {
         check(size > 0)
         (0 until size).map { ReaderPage(it) }
@@ -34,13 +35,16 @@ abstract class PageLoader {
 
     private val preloads = com.hippo.ehviewer.Settings.preloadImage.coerceIn(0, 100)
 
-    abstract suspend fun awaitReady(): Boolean
+    @CallSuper
+    open suspend fun awaitReady(): Boolean {
+        withIOContext { cache }
+        return true
+    }
+
     abstract val isReady: Boolean
 
     @CallSuper
-    open fun start() {
-        cache
-    }
+    abstract fun start()
 
     @CallSuper
     open fun stop() {

@@ -183,9 +183,7 @@ object Settings : DataStorePreferences(null) {
     var cloudflareIpOverride by boolPref("cloudflare_ip_override", false)
     var lastUpdateTime by longPref("last_update_time", BuildConfig.COMMIT_TIME)
 
-    // Tachiyomi Reader
-    var newReader by boolPref("new_compose_reader", false)
-
+    // Reader
     val cropBorder = boolPref("crop_borders", false)
     val colorFilter = boolPref("pref_color_filter_key", false)
     val colorFilterValue = intPref("color_filter_value", 0)
@@ -217,6 +215,8 @@ object Settings : DataStorePreferences(null) {
     val imageScaleType = intPref("pref_image_scale_type_key", 1)
     val landscapeZoom = boolPref("landscape_zoom", false)
     val zoomStart = intPref("pref_zoom_start_key", 1)
+    val showNavigationOverlayNewUser = boolPref("reader_navigation_overlay_new_user", true)
+    val showNavigationOverlayOnStart = boolPref("reader_navigation_overlay_on_start", false)
 
     init {
         if ("CN" == Locale.getDefault().country) {
