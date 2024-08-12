@@ -74,14 +74,32 @@ val builtInHosts = hostsDsl {
         "178.175.132.22" blockedInCN false
     }
     hosts("api.github.com") {
+        "140.82.114.5" blockedInCN false
+        "140.82.114.6" blockedInCN false
         "140.82.116.5" blockedInCN false
         "140.82.116.6" blockedInCN false
+        "140.82.121.5" blockedInCN false
+        "140.82.121.6" blockedInCN false
+        "20.200.245.245" blockedInCN false
+        "20.201.28.148" blockedInCN false
         "20.205.243.168" blockedInCN false
+        "20.26.156.210" blockedInCN false
         "20.27.177.116" blockedInCN false
+        "20.87.245.6" blockedInCN false
+        "4.237.22.34" blockedInCN false
     }
     hosts("github.com") {
+        "140.82.113.4" blockedInCN false
+        "140.82.114.3" blockedInCN false
+        "140.82.116.4" blockedInCN false
+        "140.82.121.3" blockedInCN false
+        "140.82.121.4" blockedInCN false
         "20.200.245.247" blockedInCN false
         "20.201.28.151" blockedInCN false
         "20.205.243.166" blockedInCN false
+        "20.26.156.215" blockedInCN false
+        "20.27.177.113" blockedInCN false
+        "20.87.245.0" blockedInCN false
+        "4.237.22.38" blockedInCN false
     }
 }
