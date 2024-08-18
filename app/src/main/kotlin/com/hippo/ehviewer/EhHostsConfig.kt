@@ -28,16 +28,20 @@ val builtInHosts = hostsDsl {
         "178.162.145.152" blockedInCN false
     }
     hosts("forums.e-hentai.org") {
-        "94.100.18.243" blockedInCN false
         "104.20.18.168" blockedInCN false
         "104.20.19.168" blockedInCN false
         "172.67.2.238" blockedInCN false
+        "94.100.18.243" blockedInCN false
     }
     hosts("api.e-hentai.org") {
-        "37.48.89.16" blockedInCN false
-        "81.171.10.55" blockedInCN false
-        "178.162.139.18" blockedInCN false
-        "178.162.147.246" blockedInCN false
+        "104.20.18.168" blockedInCN false
+        "104.20.19.168" blockedInCN false
+        "172.67.2.238" blockedInCN false
+        "212.7.200.104" blockedInCN false
+        "212.7.202.51" blockedInCN false
+        "37.48.81.204" blockedInCN false
+        "37.48.92.161" blockedInCN false
+        "5.79.104.110" blockedInCN false
     }
     hosts("upload.e-hentai.org") {
         "94.100.18.247" blockedInCN false
