@@ -5,10 +5,16 @@ import com.hippo.ehviewer.client.hostsDsl
 
 val builtInHosts = hostsDsl {
     hosts("ehgt.org", "gt0.ehgt.org", "gt1.ehgt.org", "gt2.ehgt.org", "gt3.ehgt.org", "ul.ehgt.org") {
-        "37.48.89.44" blockedInCN false
-        "81.171.10.48" blockedInCN false
+        "109.236.85.28" blockedInCN false
         "178.162.139.24" blockedInCN false
         "2001:1af8:4700:a062:8::47de" blockedInCN false
+        "2a00:7c80:0:123::3a85" blockedInCN false
+        "2a00:7c80:0:12d::38a1" blockedInCN false
+        "2a00:7c80:0:13b::37a4" blockedInCN false
+        "37.48.89.44" blockedInCN false
+        "62.112.8.21" blockedInCN false
+        "81.171.10.48" blockedInCN false
+        "89.39.106.43" blockedInCN false
     }
     hosts("e-hentai.org", "repo.e-hentai.org") {
         "104.20.18.168" blockedInCN false
