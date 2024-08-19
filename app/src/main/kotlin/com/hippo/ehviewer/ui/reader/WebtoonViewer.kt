@@ -34,7 +34,6 @@ fun WebtoonViewer(
     withGaps: Boolean,
     pageLoader: PageLoader2,
     navigator: () -> NavigationRegions,
-    onClick: () -> Unit,
     onSelectPage: (ReaderPage) -> Unit,
     onMenuRegionClick: () -> Unit,
     contentPadding: PaddingValues,
@@ -42,7 +41,7 @@ fun WebtoonViewer(
 ) {
     val scope = rememberCoroutineScope()
     val items = pageLoader.pages
-    val zoomableState = rememberZoomableState(zoomSpec = ZoomSpec)
+    val zoomableState = rememberZoomableState(zoomSpec = WebtoonZoomSpec)
     val density = LocalDensity.current
     val paddingPercent by Settings.webtoonSidePadding.collectAsState()
     val sidePadding by remember(density) {
@@ -56,10 +55,9 @@ fun WebtoonViewer(
         modifier = modifier.zoomable(
             state = zoomableState,
             onClick = {
-                onClick()
                 scope.launch {
                     with(lazyListState) {
-                        val size = lazyListState.layoutInfo.viewportSize
+                        val size = layoutInfo.viewportSize
                         val x = it.x / size.width
                         val y = it.y / size.height
                         when (navigator().getAction(x, y)) {
@@ -97,4 +95,4 @@ fun WebtoonViewer(
     }
 }
 
-private val ZoomSpec = ZoomSpec(maxZoomFactor = 3f)
+private val WebtoonZoomSpec = ZoomSpec(maxZoomFactor = 3f)
