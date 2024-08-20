@@ -8,54 +8,76 @@ import org.json.JSONObject
 import splitties.init.appCtx
 
 val CloudflareIP = Settings.cloudflareIp
+const val CFSUFFIX = ".cdn.cloudflare.net"
+fun randomIP(host: String): String? = builtInHosts[host]?.random()?.hostAddress
 
 val cronetHttpClient: ExperimentalCronetEngine = ExperimentalCronetEngine.Builder(appCtx).apply {
     configureCronetEngineBuilder(this)
 }.build()
-var experimentalOptions = JSONObject()
-const val CFSUFFIX = ".cdn.cloudflare.net"
-fun randomIP(host: String): String? = builtInHosts[host]?.random()?.hostAddress
 
 fun configureCronetEngineBuilder(builder: ExperimentalCronetEngine.Builder) {
-    builder.enableBrotli(true)
-        .enableQuic(true)
-        .addQuicHint("e-hentai.org", 443, 443)
-        .addQuicHint("api.e-hentai.org", 443, 443)
-        .addQuicHint("upload.e-hentai.org", 443, 443)
-        .addQuicHint("forums.e-hentai.org", 443, 443)
-        .addQuicHint("exhentai.org", 443, 443)
-        .addQuicHint("s.exhentai.org", 443, 443)
-        .addQuicHint("testingcf.jsdelivr.net", 443, 443)
-    val cache = File(appCtx.cacheDir, "http_cache").apply { mkdirs() }
-    builder.setStoragePath(cache.path)
-        .enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 4096)
-        .setUserAgent(Settings.userAgent)
-    if (Settings.cloudflareIpOverride) {
-        experimentalOptions = JSONObject().put(
-            "HostResolverRules",
-            JSONObject().put(
-                "host_resolver_rules",
-                "MAP e-hentai.org $CloudflareIP," +
-                    "MAP *.e-hentai.org $CloudflareIP," +
-                    "MAP exhentai.org $CloudflareIP," +
-                    "MAP *.exhentai.org $CloudflareIP," +
-                    "MAP testingcf.jsdelivr.net $CloudflareIP," +
-                    "MAP api.github.com ${randomIP("api.github.com")}",
-            ),
-        )
-    } else {
-        experimentalOptions = JSONObject().put(
-            "HostResolverRules",
-            JSONObject().put(
-                "host_resolver_rules",
-                "MAP e-hentai.org e-hentai.org$CFSUFFIX," +
-                    "MAP *.e-hentai.org e-hentai.org$CFSUFFIX," +
-                    "MAP exhentai.org exhentai.org$CFSUFFIX," +
-                    "MAP *.exhentai.org exhentai.org$CFSUFFIX," +
-                    "MAP testingcf.jsdelivr.net testingcf.jsdelivr.net$CFSUFFIX," +
-                    "MAP api.github.com ${randomIP("api.github.com")}",
-            ),
-        )
+    builder.apply {
+        enableBrotli(true)
+        enableQuic(true)
+        setQuicHints()
+        setCacheSettings()
+        setUserAgent(Settings.userAgent)
+        setExperimentalOptions(buildExperimentalOptions().toString())
     }
-    builder.setExperimentalOptions(experimentalOptions.toString())
+}
+
+private fun ExperimentalCronetEngine.Builder.setQuicHints() {
+    val quicHosts = listOf(
+        "e-hentai.org",
+        "api.e-hentai.org",
+        "upload.e-hentai.org",
+        "forums.e-hentai.org",
+        "exhentai.org",
+        "s.exhentai.org",
+        "testingcf.jsdelivr.net"
+    )
+    quicHosts.forEach { addQuicHint(it, 443, 443) }
+}
+
+private fun ExperimentalCronetEngine.Builder.setCacheSettings() {
+    val cacheDir = File(appCtx.cacheDir, "http_cache").apply { mkdirs() }
+    setStoragePath(cacheDir.path)
+    enableHttpCache(ExperimentalCronetEngine.Builder.HTTP_CACHE_DISK_NO_HTTP, 4096)
+}
+
+private fun buildExperimentalOptions(): JSONObject {
+
+    val hostResolverParams = JSONObject().put(
+        "host_resolver_rules", buildHostResolverRules()
+    )
+
+    return JSONObject().apply {
+        put("HostResolverRules", hostResolverParams)
+    }
+}
+
+private fun buildHostResolverRules(): String {
+    val cloudflareMapping = listOf(
+        "e-hentai.org",
+        "*.e-hentai.org",
+        "exhentai.org",
+        "*.exhentai.org",
+        "testingcf.jsdelivr.net"
+    ).joinToString(",") { "MAP $it $CloudflareIP" }
+
+    val defaultMapping = listOf(
+        "e-hentai.org" to "e-hentai.org$CFSUFFIX",
+        "*.e-hentai.org" to "e-hentai.org$CFSUFFIX",
+        "exhentai.org" to "exhentai.org$CFSUFFIX",
+        "*.exhentai.org" to "exhentai.org$CFSUFFIX",
+        "testingcf.jsdelivr.net" to "testingcf.jsdelivr.net$CFSUFFIX"
+    ).joinToString(",") { "MAP ${it.first} ${it.second}" }
+
+    val githubMapping = "MAP api.github.com ${randomIP("api.github.com")}"
+
+    return if (Settings.cloudflareIpOverride) {
+        "$cloudflareMapping,$githubMapping"
+    } else {
+        "$defaultMapping,$githubMapping"
+    }
 }
