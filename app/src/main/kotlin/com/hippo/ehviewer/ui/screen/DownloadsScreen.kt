@@ -107,6 +107,7 @@ import com.hippo.ehviewer.ui.main.plus
 import com.hippo.ehviewer.ui.navToReader
 import com.hippo.ehviewer.ui.showMoveDownloadLabelList
 import com.hippo.ehviewer.ui.tools.Await
+import com.hippo.ehviewer.ui.tools.EmptyWindowInsets
 import com.hippo.ehviewer.ui.tools.FastScrollLazyColumn
 import com.hippo.ehviewer.ui.tools.FastScrollLazyVerticalStaggeredGrid
 import com.hippo.ehviewer.ui.tools.HapticFeedbackType
@@ -215,7 +216,7 @@ fun AnimatedVisibilityScope.DownloadsScreen(navigator: DestinationsNavigator) = 
         fun closeSheet() = launch { drawerState.close() }
         TopAppBar(
             title = { Text(text = labelsStr) },
-            windowInsets = WindowInsets(0, 0, 0, 0),
+            windowInsets = EmptyWindowInsets,
             actions = {
                 if (DownloadsFilterMode.CUSTOM == filterMode) {
                     IconButton(
@@ -648,7 +649,9 @@ fun AnimatedVisibilityScope.DownloadsScreen(navigator: DestinationsNavigator) = 
     ) {
         if (!selectMode) {
             onClick(Icons.Default.Shuffle) {
-                withUIContext { navToReader(list.random().galleryInfo) }
+                if (list.isNotEmpty()) {
+                    withUIContext { navToReader(list.random().galleryInfo) }
+                }
             }
             onClick(Icons.AutoMirrored.Default.Sort) {
                 val oldMode = SortMode.from(sortMode)

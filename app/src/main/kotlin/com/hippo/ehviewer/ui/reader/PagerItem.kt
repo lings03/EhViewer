@@ -20,8 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -37,6 +35,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.loader.PageLoader
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader.viewer.CombinedCircularProgressIndicator
+import kotlinx.coroutines.flow.drop
 import moe.tarsin.kt.unreachable
 
 @Composable
@@ -49,6 +48,11 @@ fun PagerItem(
 ) {
     LaunchedEffect(Unit) {
         pageLoader.request(page.index)
+        page.status.drop(1).collect {
+            if (page.status.value == Page.State.QUEUE) {
+                pageLoader.request(page.index)
+            }
+        }
     }
     val defaultError = stringResource(id = R.string.decode_image_error)
     val state by page.status.collectAsState()
@@ -113,11 +117,7 @@ fun PagerItem(
 }
 
 private fun Image.toPainter() = when (val image = innerImage) {
-    is BitmapImage -> BitmapPainter(
-        image = image.bitmap.asImageBitmap(),
-        srcOffset = rect.topLeft,
-        srcSize = rect.size,
-    )
+    is BitmapImage -> BitmapPainter(image.bitmap, rect)
     is DrawableImage -> DrawablePainter(image.drawable)
     else -> unreachable()
 }
