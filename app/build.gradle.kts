@@ -69,8 +69,8 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 180059
-        versionName = "1.13.0"
-        versionNameSuffix = "-SNAPSHOT"
+        versionName = "1.12.0"
+        versionNameSuffix = "-cc"
         resourceConfigurations.addAll(
             listOf(
                 "zh",
@@ -222,9 +222,14 @@ dependencies {
     implementation(libs.androidx.room.paging)
 
     implementation(libs.androidx.work.runtime)
+    implementation(libs.material)
     implementation(libs.material.motion.core)
 
     implementation(libs.bundles.splitties)
+
+    // https://square.github.io/okhttp/changelogs/changelog/
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.bundles.okhttp)
 
     implementation(libs.okio.jvm)
 
@@ -248,7 +253,9 @@ dependencies {
 
     implementation(libs.telephoto.zoomable)
 
-    implementation(libs.ktor.client.core)
+    implementation(libs.bundles.ktor)
+
+    implementation("com.google.guava:guava:32.0.1-android")
 
     implementation(libs.bundles.kotlinx.serialization)
 
