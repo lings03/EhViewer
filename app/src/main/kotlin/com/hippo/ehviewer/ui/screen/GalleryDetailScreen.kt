@@ -148,7 +148,6 @@ import com.hippo.ehviewer.util.addTextToClipboard
 import com.hippo.ehviewer.util.awaitActivityResult
 import com.hippo.ehviewer.util.bgWork
 import com.hippo.ehviewer.util.displayString
-import com.hippo.ehviewer.util.findActivity
 import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.requestPermission
 import com.hippo.files.delete
@@ -214,18 +213,17 @@ private fun List<GalleryTagGroup>.getArtistTag(): String? {
 @Destination<RootGraph>
 @Composable
 fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNavigator) = composing(navigator) {
-    var galleryInfo by remember {
+    var galleryInfo by rememberInVM {
         val casted = args as? GalleryInfoArgs
         mutableStateOf<GalleryInfo?>(casted?.galleryInfo)
     }
     val (gid, token) = remember {
         when (args) {
-            is GalleryInfoArgs -> args.galleryInfo.run { gid to token }
+            is GalleryInfoArgs -> with(args.galleryInfo) { gid to token }
             is TokenArgs -> args.gid to args.token
         }
     }
     val galleryDetailUrl = remember { EhUrl.getGalleryDetailUrl(gid, token, 0, false) }
-    val activity = remember { findActivity<MainActivity>() }
     var showReadAction by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(args, galleryInfo) {
         if (showReadAction) {
@@ -244,9 +242,7 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
             }
         }
     }
-    with(activity) {
-        ProvideAssistContent(galleryDetailUrl)
-    }
+    ProvideAssistContent(galleryDetailUrl)
     var getDetailError by rememberSaveable { mutableStateOf("") }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -330,7 +326,7 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                             }
                             val name = "$gid-${EhUtils.getSuitableTitle(galleryDetail)}.zip"
                             try {
-                                activity.startActivity(intent)
+                                startActivity(intent)
                                 withUIContext { addTextToClipboard(name, true) }
                             } catch (_: ActivityNotFoundException) {
                                 val r = DownloadManager.Request(uri)
@@ -374,14 +370,18 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
 
     fun LazyGridScope.galleryDetailPreview(gd: GalleryDetail) {
         val previewList = gd.previewList
-        items(previewList) {
+        items(previewList, key = { it.position }, contentType = { "preview" }) {
             EhPreviewItem(
                 galleryPreview = it,
                 position = it.position,
                 onClick = { navToReader(gd.galleryInfo, it.position) },
             )
         }
-        item(span = { GridItemSpan(maxLineSpan) }) {
+        item(
+            key = "footer",
+            span = { GridItemSpan(maxLineSpan) },
+            contentType = "footer",
+        ) {
             val footerText = if (gd.previewPages <= 0 || previewList.isEmpty()) {
                 stringResource(R.string.no_previews)
             } else if (gd.previewPages == 1) {
@@ -712,27 +712,25 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                     }
                     launchIO {
                         awaitSelectAction {
-                            with(activity) {
-                                onSelect(copy) {
-                                    addTextToClipboard(tag)
+                            onSelect(copy) {
+                                addTextToClipboard(tag)
+                            }
+                            if (temp != translated) {
+                                onSelect(copyTrans) {
+                                    addTextToClipboard(translated)
                                 }
-                                if (temp != translated) {
-                                    onSelect(copyTrans) {
-                                        addTextToClipboard(translated)
-                                    }
-                                }
-                                onSelect(showDefine) {
-                                    openBrowser(EhUrl.getTagDefinitionUrl(temp))
-                                }
-                                onSelect(addFilter) {
-                                    awaitPermissionOrCancel { Text(text = stringResource(R.string.filter_the_tag, tag)) }
-                                    Filter(FilterMode.TAG, tag).remember()
-                                    showSnackbar(filterAdded)
-                                }
-                                if (galleryDetail.apiUid >= 0) {
-                                    onSelect(upTag) { galleryDetail.voteTag(tag, 1) }
-                                    onSelect(downTag) { galleryDetail.voteTag(tag, -1) }
-                                }
+                            }
+                            onSelect(showDefine) {
+                                openBrowser(EhUrl.getTagDefinitionUrl(temp))
+                            }
+                            onSelect(addFilter) {
+                                awaitPermissionOrCancel { Text(text = stringResource(R.string.filter_the_tag, tag)) }
+                                Filter(FilterMode.TAG, tag).remember()
+                                showSnackbar(filterAdded)
+                            }
+                            if (galleryDetail.apiUid >= 0) {
+                                onSelect(upTag) { galleryDetail.voteTag(tag, 1) }
+                                onSelect(downTag) { galleryDetail.voteTag(tag, -1) }
                             }
                         }()
                     }
@@ -832,7 +830,7 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
         val onDownloadButtonClick = rememberLambda(galleryInfo) {
             galleryDetail ?: return@rememberLambda
             if (EhDownloadManager.getDownloadState(galleryDetail.gid) == DownloadInfo.STATE_INVALID) {
-                launchUI { startDownload(activity, false, galleryDetail.galleryInfo) }
+                launchUI { startDownload(implicit<MainActivity>(), false, galleryDetail.galleryInfo) }
             } else {
                 launch { confirmRemoveDownload(galleryDetail) }
             }
@@ -846,7 +844,11 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                 horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.strip_item_padding)),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.strip_item_padding_v)),
             ) {
-                item(span = { GridItemSpan(maxCurrentLineSpan) }) {
+                item(
+                    key = "header",
+                    span = { GridItemSpan(maxCurrentLineSpan) },
+                    contentType = "header",
+                ) {
                     GalleryDetailHeaderCard(
                         info = galleryInfo,
                         onInfoCardClick = ::onGalleryInfoCardClick,
@@ -856,7 +858,11 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                         modifier = Modifier.fillMaxWidth().padding(vertical = keylineMargin),
                     )
                 }
-                item(span = { GridItemSpan(maxCurrentLineSpan) }) {
+                item(
+                    key = "body",
+                    span = { GridItemSpan(maxCurrentLineSpan) },
+                    contentType = "body",
+                ) {
                     LocalPinnableContainer.current!!.run { remember { pin() } }
                     Column {
                         Row {
@@ -899,7 +905,11 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                 horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.strip_item_padding)),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.strip_item_padding_v)),
             ) {
-                item(span = { GridItemSpan(maxCurrentLineSpan) }) {
+                item(
+                    key = "header",
+                    span = { GridItemSpan(maxCurrentLineSpan) },
+                    contentType = "header",
+                ) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         GalleryDetailHeaderCard(
                             info = galleryInfo,
@@ -930,7 +940,11 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                         }
                     }
                 }
-                item(span = { GridItemSpan(maxCurrentLineSpan) }) {
+                item(
+                    key = "body",
+                    span = { GridItemSpan(maxCurrentLineSpan) },
+                    contentType = "body",
+                ) {
                     LocalPinnableContainer.current!!.run { remember { pin() } }
                     Column {
                         if (getDetailError.isNotBlank()) {
@@ -984,7 +998,7 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                     }
                     IconButton(
                         onClick = {
-                            AppHelper.share(activity, galleryDetailUrl)
+                            AppHelper.share(implicit<MainActivity>(), galleryDetailUrl)
                             // In case the link is copied to the clipboard
                             Settings.clipboardTextHashCode = galleryDetailUrl.hashCode()
                         },
