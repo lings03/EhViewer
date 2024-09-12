@@ -429,6 +429,8 @@
     <string name="insufficient_funds">余额不足</string>
     <string name="image_limits">图片配额</string>
     <string name="image_limits_summary">已用：%1$d / %2$d</string>
+    <string name="image_limits_normal">无限制</string>
+    <string name="image_limits_restricted">图片分辨率限制为 1280x</string>
     <string name="reset_cost">重置花费：%d GP</string>
     <string name="reset_limits_succeed">成功重置图片配额</string>
     <string name="reset">重置</string>
@@ -501,6 +503,8 @@
     <string name="preload_thumb_aggressively">激进地预载缩略图</string>
     <string name="animate_items">列表项目动画</string>
     <string name="animate_items_summary">如遇崩溃/掉帧请尝试禁用此项</string>
+    <string name="desktop_site">桌面版网站</string>
+    <string name="desktop_site_summary">更高的默认图片分辨率</string>
     <string name="auto_updates">自动检查更新</string>
     <string name="update_frequency_never">从不</string>
     <string name="update_frequency_daily">每天</string>

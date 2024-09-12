@@ -30,7 +30,7 @@ import coil3.SingletonImageLoader
 import coil3.asImage
 import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
-import coil3.network.ktor2.KtorNetworkFetcherFactory
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -62,6 +62,7 @@ import com.hippo.ehviewer.legacy.cleanObsoleteCache
 import com.hippo.ehviewer.ui.keepNoMediaFileStatus
 import com.hippo.ehviewer.ui.lockObserver
 import com.hippo.ehviewer.ui.tools.dataStateFlow
+import com.hippo.ehviewer.ui.tools.initSETConnection
 import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.Crash
 import com.hippo.ehviewer.util.FavouriteStatusRouter
@@ -97,6 +98,7 @@ class EhApplication :
     Application(),
     SingletonImageLoader.Factory {
     override fun onCreate() {
+        initSETConnection()
         // Initialize Settings on first access
         lifecycleScope.launchIO {
             val mode = Settings.theme

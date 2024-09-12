@@ -9,6 +9,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import com.hippo.ehviewer.client.CHROME_MOBILE_USER_AGENT
 import com.hippo.ehviewer.client.CHROME_USER_AGENT
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
@@ -125,7 +126,7 @@ object Settings : DataStorePreferences(null) {
     val security = boolPref("require_unlock", false)
     val animateItems = boolPref("animate_items", true)
     val displayName = stringOrNullPref("display_name", null)
-    val recentDownloadLabel = stringOrNullPref("recent_download_label", "")
+    val recentDownloadLabel = stringOrNullPref("recent_download_label", null)
 
     var downloadScheme by stringOrNullPref("image_scheme", null)
     var downloadAuthority by stringOrNullPref("image_authority", null)
@@ -167,6 +168,7 @@ object Settings : DataStorePreferences(null) {
     var enableQuic by boolPref("enable_quic", false)
     var saveAsCbz by boolPref("save_as_cbz", false)
     var archiveMetadata by boolPref("archive_metadata", true)
+    var desktopSite by boolPref("desktop_site", false)
     var recentFavCat by intPref("recent_fav_cat", FavListUrlBuilder.FAV_CAT_LOCAL)
     var defaultFavSlot by intPref("default_favorite_slot", -2)
     var securityDelay by intPref("require_unlock_delay", 0)
@@ -175,7 +177,6 @@ object Settings : DataStorePreferences(null) {
     var updateIntervalDays by intPref("update_interval_days", 7)
     var lastDawnDays by intPref("last_dawn_days", 0)
     var recentToplist by stringPref("recent_toplist", "11")
-    var userAgent by stringPref("user_agent", CHROME_USER_AGENT)
     var defaultDownloadLabel by stringOrNullPref("default_download_label", null)
     var dohUrl by stringPref("doh_url", "https://dns.opendns.com/dns-query")
     var cloudflareIp by stringOrNullPref("cloudflare_ip", "cdn.sstatic.net")
@@ -217,11 +218,17 @@ object Settings : DataStorePreferences(null) {
     val showNavigationOverlayNewUser = boolPref("reader_navigation_overlay_new_user", true)
     val showNavigationOverlayOnStart = boolPref("reader_navigation_overlay_on_start", false)
 
+    val userAgent
+        get() = if (desktopSite) CHROME_USER_AGENT else CHROME_MOBILE_USER_AGENT
+
     init {
         if ("CN" == Locale.getDefault().country) {
             edit {
                 if (KEY_SHOW_TAG_TRANSLATIONS !in prefs) showTagTranslations = true
             }
+        }
+        if (downloadFilterMode.value == DownloadsFilterMode.ARTIST.flag && recentDownloadLabel.value == null) {
+            recentDownloadLabel.value = ""
         }
     }
 
