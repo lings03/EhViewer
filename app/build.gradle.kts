@@ -68,9 +68,9 @@ android {
         applicationId = "moe.tarsin.ehviewer"
         minSdk = 26
         targetSdk = 35
-        versionCode = 180059
-        versionName = "1.12.0"
-        versionNameSuffix = "-cc"
+        versionCode = 180060
+        versionName = "1.13.0"
+        versionNameSuffix = "-test"
         resourceConfigurations.addAll(
             listOf(
                 "zh",
