@@ -6,7 +6,9 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.provider.Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,13 +63,16 @@ import com.hippo.ehviewer.util.getLanguages
 import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastV
 import com.hippo.ehviewer.util.isCronetAvailable
+import com.hippo.ehviewer.util.sendTo
 import com.hippo.ehviewer.util.setAppLanguage
+import com.hippo.files.delete
 import com.hippo.files.toOkioPath
 import com.jamal.composeprefs3.ui.prefs.DropDownPref
 import com.jamal.composeprefs3.ui.prefs.SwitchPref
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import eu.kanade.tachiyomi.util.lang.withIOContext
 import eu.kanade.tachiyomi.util.system.logcat
 import java.io.File
 import java.net.InetAddress
@@ -79,6 +84,8 @@ import kotlinx.coroutines.launch
 import moe.tarsin.coroutines.runSuspendCatching
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.dnsoverhttps.DnsOverHttps
+import okio.Path.Companion.toOkioPath
+import splitties.init.appCtx
 
 @Destination<RootGraph>
 @Composable
@@ -111,6 +118,26 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 summary = stringResource(id = R.string.settings_advanced_save_parse_error_body_summary),
                 value = Settings::saveParseErrorBody,
             )
+            val stripAds = Settings.stripExtraneousAds.asMutableState()
+            SwitchPreference(
+                title = stringResource(id = R.string.settings_strip_extraneous_ads),
+                value = stripAds.rememberedAccessor,
+            )
+            AnimatedVisibility(visible = stripAds.value) {
+                LauncherPreference(
+                    title = stringResource(id = R.string.settings_ads_placeholder),
+                    contract = ActivityResultContracts.PickVisualMedia(),
+                    key = PickVisualMediaRequest(mediaType = ImageOnly),
+                ) { uri ->
+                    withIOContext {
+                        if (uri != null) {
+                            uri.toOkioPath() sendTo AdsPlaceholderFile
+                        } else {
+                            AdsPlaceholderFile.delete()
+                        }
+                    }
+                }
+            }
             SwitchPreference(
                 title = stringResource(id = R.string.settings_advanced_save_crash_log),
                 summary = stringResource(id = R.string.settings_advanced_save_crash_log_summary),
@@ -399,3 +426,4 @@ private var doh: DnsOverHttps? = Settings.dohUrl.runCatching { buildDoHDNS(this)
 object EhDoH {
     fun lookup(hostname: String): List<InetAddress>? = doh?.runCatching { lookup(hostname).takeIf { it.isNotEmpty() } }?.onFailure { it.printStackTrace() }?.getOrNull()
 }
+val AdsPlaceholderFile = appCtx.filesDir.toOkioPath() / "AdsPlaceholder"

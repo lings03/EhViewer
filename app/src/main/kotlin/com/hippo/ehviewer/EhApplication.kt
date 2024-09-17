@@ -22,7 +22,6 @@ import android.os.StrictMode
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.collection.LruCache
-import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.coroutineScope
 import coil3.EventListener
@@ -46,7 +45,9 @@ import com.hippo.ehviewer.client.install
 import com.hippo.ehviewer.coil.CropBorderInterceptor
 import com.hippo.ehviewer.coil.DownloadThumbInterceptor
 import com.hippo.ehviewer.coil.HardwareBitmapInterceptor
+import com.hippo.ehviewer.coil.MapExtraInfoInterceptor
 import com.hippo.ehviewer.coil.MergeInterceptor
+import com.hippo.ehviewer.coil.QrCodeInterceptor
 import com.hippo.ehviewer.cronet.cronetHttpClient
 import com.hippo.ehviewer.dailycheck.checkDawn
 import com.hippo.ehviewer.dao.SearchDatabase
@@ -79,6 +80,7 @@ import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import logcat.AndroidLogcatLogger
 import logcat.LogPriority
@@ -152,9 +154,6 @@ class EhApplication :
         }
         if (BuildConfig.DEBUG) {
             StrictMode.enableDefaults()
-            Snapshot.registerApplyObserver { anies, _ ->
-                logcat(LogPriority.VERBOSE) { anies.toString() }
-            }
         }
     }
 
@@ -183,6 +182,7 @@ class EhApplication :
     }
 
     override fun newImageLoader(context: Context) = context.imageLoader {
+        interceptorCoroutineContext(Dispatchers.Default)
         components {
             serviceLoaderEnabled(false)
             add(KtorNetworkFetcherFactory { ktorClient })
@@ -192,6 +192,8 @@ class EhApplication :
                 add(HardwareBitmapInterceptor)
             }
             add(CropBorderInterceptor)
+            add(QrCodeInterceptor)
+            add(MapExtraInfoInterceptor)
             if (isAtLeastP) {
                 add(AnimatedImageDecoder.Factory(false))
             } else {

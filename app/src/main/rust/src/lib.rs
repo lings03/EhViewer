@@ -1,15 +1,18 @@
+mod img;
 mod parser;
 
 use android_logger::Config;
 use anyhow::{anyhow, ensure, Result};
+use image::{ImageBuffer, Rgba};
 use jni::objects::JByteBuffer;
-use jni::sys::{jint, jobject, JavaVM, JNI_VERSION_1_6};
+use jni::sys::{jboolean, jint, jobject, JavaVM, JNI_VERSION_1_6};
 use jni::JNIEnv;
 use log::LevelFilter;
+use ndk::bitmap::Bitmap;
 use serde::Serialize;
 use std::ffi::c_void;
 use std::io::Cursor;
-use std::ptr::slice_from_raw_parts_mut;
+use std::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
 use std::str::from_utf8_unchecked;
 use tl::ParserOptions;
 use tl::{Bytes, Node, NodeHandle, Parser, VDom};
@@ -54,14 +57,25 @@ where
     handle.get(parser)
 }
 
-fn deref_mut_direct_bytebuffer(env: &JNIEnv, buffer: JByteBuffer) -> Result<&'static mut [u8]> {
+fn deref_mut_direct_bytebuffer<'local>(
+    env: &JNIEnv,
+    buffer: JByteBuffer<'local>,
+) -> Result<&'local mut [u8]> {
     let ptr = env.get_direct_buffer_address(&buffer)?;
     let cap = env.get_direct_buffer_capacity(&buffer)?;
+
+    // SAFETY: jni contract, buffer must alive through native call.
     Ok(unsafe { &mut *slice_from_raw_parts_mut(ptr, cap) })
 }
 
 trait ThrowingHasDefault {
     fn default() -> Self;
+}
+
+impl ThrowingHasDefault for jboolean {
+    fn default() -> Self {
+        0 as jboolean
+    }
 }
 
 impl ThrowingHasDefault for jobject {
@@ -99,7 +113,9 @@ where
     jni_throwing(env, |env| {
         let buffer = deref_mut_direct_bytebuffer(env, str)?;
         let value = {
+            // SAFETY: ktor client ensure html content is valid utf-8.
             let html = unsafe { from_utf8_unchecked(&buffer[..limit as usize]) };
+
             let dom = tl::parse(html, ParserOptions::default()).map_err(|e| anyhow!(e))?;
             ensure!(dom.version().is_some(), "{html}");
             f(&dom, html)?
@@ -131,6 +147,28 @@ fn query_childs_first_match_attr<'a>(
     let selector = format!("[{}]", attr);
     let mut iter = node.as_tag()?.query_selector(parser, &selector)?;
     get_node_handle_attr(&iter.next()?, parser, attr)
+}
+
+fn with_bitmap_content<F, R>(env: &mut JNIEnv, bitmap: jobject, f: F) -> Result<R>
+where
+    F: FnOnce(ImageBuffer<Rgba<u8>, &[u8]>) -> Result<R>,
+{
+    // SAFETY: kotlin caller must ensure bitmap is valid.
+    let handle = unsafe { Bitmap::from_jni(env.get_raw(), bitmap) };
+
+    let info = handle.info()?;
+    let (width, height) = (info.width(), info.height());
+    let ptr = handle.lock_pixels()? as *const u8;
+
+    // SAFETY: maybe unsafe if bitmap buffer not RGBA8888 format.
+    let buffer = unsafe { &*slice_from_raw_parts(ptr, (width * height * 4) as usize) };
+
+    let image = ImageBuffer::from_raw(width, height, buffer);
+    let result = image
+        .ok_or(anyhow!("Image buffer not RGBA8888!!!"))
+        .and_then(f);
+    handle.unlock_pixels()?;
+    result
 }
 
 #[no_mangle]

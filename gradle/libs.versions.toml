@@ -1,7 +1,7 @@
 [versions]
 aboutlibraries = "11.2.3"
 accompanist = "0.36.0"
-agp = "8.8.0-alpha01"
+agp = "8.8.0-alpha02"
 androidx-activity = "1.10.0-alpha02"
 androidx-appcompat = "1.7.0"
 androidx-biometric = "1.4.0-alpha02"
@@ -21,13 +21,13 @@ compose-bom = "2024.09.00-alpha"
 compose-destinations = "2.1.0-beta12"
 google-android-material = "1.12.0"
 kotlin = "2.0.20"
-kotlinx-coroutines = "1.8.1"
+kotlinx-coroutines = "1.9.0"
 kotlinx-datetime = "0.6.1"
 kotlinx-serialization = "1.7.2"
 ksp = "2.0.20-1.0.25"
 ktor = "3.0.0-rc-1"
 okhttp3 = "5.0.0-alpha.12"
-okio = "3.9.0"
+okio = "3.9.1"
 splitties = "3.0.0"
 telephoto = "0.13.0"
 xmlutil = "0.90.1"
@@ -107,7 +107,7 @@ okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp
 okhttp-dnsoverhttps = { module = "com.squareup.okhttp3:okhttp-dnsoverhttps" }
 okio-jvm = { module = "com.squareup.okio:okio-jvm", version.ref = "okio" }
 
-reorderable = "sh.calvin.reorderable:reorderable:2.4.0-alpha02"
+reorderable = "sh.calvin.reorderable:reorderable:2.4.0-beta01"
 
 serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor", version.ref = "kotlinx-serialization" }
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
