@@ -1,4 +1,12 @@
-从 FooIbar 的 EhViewer 修改而来，加回了内置的 cronet 以使用 host_resolver_rules 规避 DNS 污染，以及使用 QUIC 实现直连。
+FooIbar/EhViewer的分叉。
+
+变更：
+
+
+- 在 Cronet 使用 host\_resolver\_rules 规避 DNS 污染
+- 恢复 OkHttp 引擎、内置 Hosts、域前置和 DoH (https://github.com/FooIbar/EhViewer/issues/12#issuecomment-1713695222)
+- 恢复 Cookie 登录 (https://github.com/FooIbar/EhViewer/issues/692#issuecomment-1929373085)
+- 支持登月账号登录 (https://github.com/FooIbar/EhViewer/issues/134#issuecomment-1784012743)
 
 ## 下载
 
