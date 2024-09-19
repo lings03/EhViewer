@@ -1,48 +1,58 @@
 package com.hippo.ehviewer.coil
 
-import androidx.compose.ui.unit.IntRect
-import coil3.Extras
-import coil3.getExtra
+import android.graphics.Bitmap
+import android.hardware.HardwareBuffer
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.toIntRect
+import arrow.fx.coroutines.autoCloseable
+import arrow.fx.coroutines.resourceScope
+import coil3.asImage
 import coil3.intercept.Interceptor
-import coil3.intercept.Interceptor.Chain
-import coil3.request.ImageRequest
 import coil3.request.ImageResult
 import coil3.request.SuccessResult
-import com.hippo.ehviewer.image.detectBorder
+import com.hippo.ehviewer.image.copyBitmapToAHB
+import com.hippo.ehviewer.util.isAtLeastQ
+import eu.kanade.tachiyomi.util.system.logcat
+import moe.tarsin.coroutines.runSuspendCatching
 
-private const val CROP_THRESHOLD = 0.75f
-private const val RATIO_THRESHOLD = 2
+@RequiresApi(Build.VERSION_CODES.O)
+private const val FORMAT = HardwareBuffer.RGBA_8888
 
-private val maybeCropBorderKey = Extras.Key(default = false)
-
-fun ImageRequest.Builder.maybeCropBorder(enable: Boolean) = apply {
-    extras[maybeCropBorderKey] = enable
-}
-
-val ImageRequest.maybeCropBorder: Boolean
-    get() = getExtra(maybeCropBorderKey)
+@RequiresApi(Build.VERSION_CODES.O)
+private const val USAGE = HardwareBuffer.USAGE_CPU_WRITE_RARELY or HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE
 
 object CropBorderInterceptor : Interceptor {
-    override suspend fun intercept(chain: Chain): ImageResult {
+    override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
         val result = chain.proceed()
-        if (chain.request.maybeCropBorder && result is SuccessResult) {
+        if (result is SuccessResult) {
             val image = result.image
-            if (image is BitmapImageWithExtraInfo && !image.hasQrCode) {
-                val bitmap = image.image.bitmap
-                val ratio = if (image.height > image.width) {
-                    image.height / image.width
-                } else {
-                    image.width / image.height
-                }
-                if (ratio < RATIO_THRESHOLD) {
-                    val array = detectBorder(bitmap)
-                    val minWidth = image.width * CROP_THRESHOLD
-                    val minHeight = image.height * CROP_THRESHOLD
-                    val rect = IntRect(array[0], array[1], array[2], array[3])
-                    if (rect.width > minWidth && rect.height > minHeight) {
-                        val new = image.copy(rect = rect)
-                        return result.copy(image = new)
-                    }
+            if (image is BitmapImageWithExtraInfo) {
+                // Copy with cropped region
+                val srcSize = IntSize(image.width, image.height)
+                if (image.rect.size != srcSize) {
+                    val (x, y) = image.rect.topLeft
+                    val (w, h) = image.rect.size
+                    val src = image.image.bitmap
+
+                    // Large hardware bitmaps have rendering issues (e.g. crash, empty) on some devices.
+                    // This is not ideal but I haven't figured out how to probe the threshold.
+                    // All we know is that it's less than the maximum texture size.
+                    val meetHardwareThreshold = maxOf(w, h) <= chain.request.hardwareThreshold
+                    val bitmap = when {
+                        isAtLeastQ && meetHardwareThreshold -> runSuspendCatching {
+                            resourceScope {
+                                val buffer = autoCloseable { HardwareBuffer.create(w, h, FORMAT, 1, USAGE) }
+                                copyBitmapToAHB(src, buffer, x, y)
+                                Bitmap.wrapHardwareBuffer(buffer, src.colorSpace)
+                            }
+                        }.onFailure { logcat(it) }.getOrNull()
+                        else -> null
+                    } ?: Bitmap.createBitmap(src, x, y, w, h)
+
+                    src.recycle()
+                    return result.copy(image = image.copy(image = bitmap.asImage(), rect = image.rect.size.toIntRect()))
                 }
             }
         }

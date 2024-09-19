@@ -18,7 +18,8 @@
 package com.hippo.ehviewer.image
 
 import android.graphics.Bitmap
-import androidx.compose.ui.unit.IntRect
+import android.hardware.HardwareBuffer
+import androidx.compose.ui.unit.IntSize
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
@@ -52,11 +53,8 @@ import okio.Path
 import splitties.init.appCtx
 
 class Image private constructor(image: CoilImage, private val src: ImageSource) {
-    val size = image.size
-    val rect = when (image) {
-        is BitmapImageWithExtraInfo -> image.rect
-        else -> with(image) { IntRect(0, 0, width, height) }
-    }
+    val intrinsicSize = with(image) { IntSize(width, height) }
+    val allocationSize = image.size
     val hasQrCode = when (image) {
         is BitmapImageWithExtraInfo -> image.hasQrCode
         else -> false
@@ -153,3 +151,4 @@ interface ByteBufferSource : ImageSource {
 
 external fun detectBorder(bitmap: Bitmap): IntArray
 external fun hasQrCode(bitmap: Bitmap): Boolean
+external fun copyBitmapToAHB(src: Bitmap, dst: HardwareBuffer, x: Int, y: Int)
