@@ -207,7 +207,7 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 summary = if (enableCronet) "Cronet" else "OkHttp",
             ) {
                 coroutineScope.launch {
-                    dialogState.awaitPermissionOrCancel(
+                    dialogState.awaitConfirmationOrCancel(
                         title = R.string.settings_advanced_http_engine,
                         showCancelButton = false,
                     ) {
