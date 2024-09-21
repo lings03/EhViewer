@@ -1,6 +1,5 @@
 package com.hippo.ehviewer.ui.screen
 
-import com.hippo.ehviewer.download.DownloadManager as EhDownloadManager
 import android.app.DownloadManager
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -58,6 +57,7 @@ import com.hippo.ehviewer.client.exception.NoHAtHClientException
 import com.hippo.ehviewer.client.getImageKey
 import com.hippo.ehviewer.coil.justDownload
 import com.hippo.ehviewer.dao.DownloadInfo
+import com.hippo.ehviewer.download.DownloadManager as EhDownloadManager
 import com.hippo.ehviewer.ktbuilder.imageRequest
 import com.hippo.ehviewer.spider.SpiderDen
 import com.hippo.ehviewer.ui.MainActivity
@@ -109,7 +109,7 @@ data class TokenArgs(
 @Composable
 fun AnimatedVisibilityScope.GalleryDetailScreen(
     args: GalleryDetailScreenArgs,
-    navigator: DestinationsNavigator
+    navigator: DestinationsNavigator,
 ) = composing(navigator) {
     var galleryInfo by rememberInVM {
         val casted = args as? GalleryInfoArgs
@@ -232,7 +232,7 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(
                                     r.setDestinationInExternalPublicDir(
                                         Environment.DIRECTORY_DOWNLOADS,
                                         AppConfig.APP_DIRNAME + "/" + FileUtils.sanitizeFilename(
-                                            name
+                                            name,
                                         ),
                                     )
                                     r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
