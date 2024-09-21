@@ -31,9 +31,10 @@ import androidx.compose.ui.unit.toSize
 import arrow.core.partially1
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.collectAsState
+import com.hippo.ehviewer.gallery.Page
 import com.hippo.ehviewer.gallery.PageLoader2
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
+import com.hippo.ehviewer.gallery.PageStatus
+import com.hippo.ehviewer.gallery.statusObserved
 import eu.kanade.tachiyomi.ui.reader.viewer.NavigationRegions
 import eu.kanade.tachiyomi.ui.reader.viewer.ViewerNavigation.NavigationRegion
 import eu.kanade.tachiyomi.ui.reader.viewer.getAction
@@ -55,7 +56,7 @@ fun PagerViewer(
     isVertical: Boolean,
     pageLoader: PageLoader2,
     navigator: () -> NavigationRegions,
-    onSelectPage: (ReaderPage) -> Unit,
+    onSelectPage: (Page) -> Unit,
     onMenuRegionClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -121,7 +122,7 @@ fun PagerViewer(
 
 @Composable
 private fun PageContainer(
-    page: ReaderPage,
+    page: Page,
     pageLoader: PageLoader2,
     isRtl: Boolean,
     scaleType: Int,
@@ -130,16 +131,16 @@ private fun PageContainer(
     layoutSize: Size,
     navigator: () -> NavigationRegions,
     pagerState: PagerState,
-    onSelectPage: (ReaderPage) -> Unit,
+    onSelectPage: (Page) -> Unit,
     onMenuRegionClick: () -> Unit,
     scope: CoroutineScope,
 ) {
     @Suppress("NAME_SHADOWING")
     val isRtl by rememberUpdatedState(isRtl)
     val zoomableState = rememberZoomableState(zoomSpec = PagerZoomSpec)
-    val status by page.status.collectAsState()
-    if (status == Page.State.READY && layoutSize != Size.Zero) {
-        val size = page.image!!.intrinsicSize.toSize()
+    val status = page.statusObserved
+    if (status is PageStatus.Ready && layoutSize != Size.Zero) {
+        val size = status.image.intrinsicSize.toSize()
         val contentScale = ContentScale.fromPreferences(scaleType, size, layoutSize)
         zoomableState.contentScale = contentScale
         LaunchedEffect(size, contentScale, alignment) {
@@ -184,11 +185,11 @@ private fun PageContainer(
             with(pagerState) {
                 // Don't use `layoutSize` as it may capture outdated value
                 val size = layoutInfo.viewportSize.toSize()
-                val x = offset.x / size.width
-                val y = offset.y / size.height
+                val (w, h) = size
+                val (x, y) = offset
                 val distance = size.width
                 val bounds = size.toRect()
-                when (navigator().getAction(x, y)) {
+                when (navigator().getAction(Offset(x / w, y / h))) {
                     NavigationRegion.MENU -> onMenuRegionClick()
                     NavigationRegion.NEXT -> {
                         val canPan = if (isRtl) panRight(distance, bounds) else panLeft(distance, bounds)

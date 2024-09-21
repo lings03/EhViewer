@@ -249,7 +249,7 @@ class MainActivity : EhActivity() {
             suspend fun DialogState.checkDownloadLocation() {
                 val valid = withIOContext { downloadLocation.isDirectory }
                 if (!valid) {
-                    awaitPermissionOrCancel(
+                    awaitConfirmationOrCancel(
                         confirmText = R.string.open_settings,
                         title = R.string.waring,
                         showCancelButton = false,
@@ -510,7 +510,7 @@ class MainActivity : EhActivity() {
             val hasUnverified = userState.hostToStateMap.values.any { it == DOMAIN_STATE_NONE }
             if (hasUnverified) {
                 var checked by mutableStateOf(false)
-                awaitPermissionOrCancel(
+                awaitConfirmationOrCancel(
                     confirmText = R.string.open_settings,
                     title = R.string.app_link_not_verified_title,
                     onCancelButtonClick = {

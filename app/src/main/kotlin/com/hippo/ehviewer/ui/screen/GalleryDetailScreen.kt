@@ -3,6 +3,7 @@ package com.hippo.ehviewer.ui.screen
 import android.Manifest
 import android.app.DownloadManager
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
@@ -52,6 +53,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -1060,7 +1062,7 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                                 dropdown = false
                                 val gd = galleryInfo as? GalleryDetail ?: return@DropdownMenuItem
                                 launchIO {
-                                    awaitPermissionOrCancel(
+                                    awaitConfirmationOrCancel(
                                         confirmText = R.string.clear_all,
                                         title = R.string.clear_image_cache,
                                     ) {
@@ -1091,7 +1093,7 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                                     val downloadInfo = EhDownloadManager.getDownloadInfo(gid)
                                     val canExport = downloadInfo?.state == DownloadInfo.STATE_FINISH
                                     if (!canExport) {
-                                        awaitPermissionOrCancel(
+                                        awaitConfirmationOrCancel(
                                             showCancelButton = false,
                                             text = { Text(text = stringResource(id = R.string.download_gallery_first)) },
                                         )
@@ -1132,6 +1134,8 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
             GalleryDetailContent(
                 galleryInfo = gi,
                 contentPadding = it,
+                getDetailError = getDetailError,
+                onRetry = { getDetailError = "" },
                 modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             )
         } else if (getDetailError.isNotBlank()) {
@@ -1144,5 +1148,20 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                 CircularProgressIndicator()
             }
         }
+    }
+}
+
+context(Context, SnackbarHostState)
+suspend fun GalleryDetail.voteTag(tag: String, vote: Int) {
+    runSuspendCatching {
+        EhEngine.voteTag(apiUid, apiKey, gid, token, tag, vote)
+    }.onSuccess { result ->
+        if (result != null) {
+            showSnackbar(result)
+        } else {
+            showSnackbar(getString(R.string.tag_vote_successfully))
+        }
+    }.onFailure {
+        showSnackbar(getString(R.string.vote_failed))
     }
 }
