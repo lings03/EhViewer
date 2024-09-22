@@ -235,12 +235,6 @@ class EhApplication :
                         preconfigured = nonCacheOkHttpClient
                     }
                 }
-                // Not using Apache5 for preversing domain fronting
-                // HttpClient(Apache5) {
-                //    install(HttpCookies) {
-                //        storage = EhCookieStore
-                //    }
-                // }
             }
         }
 
