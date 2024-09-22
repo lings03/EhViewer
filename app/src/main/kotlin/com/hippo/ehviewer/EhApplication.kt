@@ -35,7 +35,6 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.serviceLoaderEnabled
 import coil3.util.DebugLogger
-import com.google.net.cronet.okhttptransport.RedirectStrategy.withoutRedirects
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhDns
 import com.hippo.ehviewer.client.EhSSLSocketFactory
@@ -54,7 +53,6 @@ import com.hippo.ehviewer.dao.SearchDatabase
 import com.hippo.ehviewer.download.DownloadManager
 import com.hippo.ehviewer.download.DownloadsFilterMode
 import com.hippo.ehviewer.ktbuilder.cache
-import com.hippo.ehviewer.ktbuilder.cronet
 import com.hippo.ehviewer.ktbuilder.diskCache
 import com.hippo.ehviewer.ktbuilder.httpClient
 import com.hippo.ehviewer.ktbuilder.imageLoader
@@ -267,10 +265,6 @@ class EhApplication :
 
         val nonCacheOkHttpClient by lazy {
             httpClient(baseOkHttpClient) {
-                // TODO: Rewrite CronetInterceptor to use android.net.http.HttpEngine and make it Android 14 only when released
-                // if (isCronetAvailable) {
-                //    cronet(cronetHttpClient)
-                // } else if (Settings.dF) {
                 dns(EhDns)
                 install(EhSSLSocketFactory)
             }
@@ -280,17 +274,6 @@ class EhApplication :
             .protocols(listOf(Protocol.HTTP_3, Protocol.HTTP_1_1))
             .build()
 
-        val noRedirectOkHttpClient by lazy {
-            httpClient(baseOkHttpClient) {
-                followRedirects(false)
-                if (isCronetAvailable) {
-                    cronet(cronetHttpClient) {
-                        setRedirectStrategy(withoutRedirects())
-                    }
-                }
-            }
-        }
-
         // Never use this okhttp client to download large blobs!!!
         val okHttpClient by lazy {
             httpClient(nonCacheOkHttpClient) {
@@ -298,19 +281,6 @@ class EhApplication :
                     appCtx.cacheDir.toOkioPath() / "http_cache",
                     20L * 1024L * 1024L,
                 )
-            }
-        }
-
-        // Use KtorClient directly when coil 3.0 released
-        private val coilClient by lazy {
-            httpClient(nonCacheOkHttpClient) {
-                addInterceptor {
-                    val req = it.request()
-                    val newReq = req.newBuilder().apply {
-                        // addHeader(HttpHeaders.Cookie, EhCookieStore.getCookieHeader(req.url.toString()))
-                    }.build()
-                    it.proceed(newReq)
-                }
             }
         }
 
