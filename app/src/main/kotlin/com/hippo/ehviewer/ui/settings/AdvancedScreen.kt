@@ -61,7 +61,6 @@ import com.hippo.ehviewer.util.displayPath
 import com.hippo.ehviewer.util.getAppLanguage
 import com.hippo.ehviewer.util.getLanguages
 import com.hippo.ehviewer.util.isAtLeastO
-import com.hippo.ehviewer.util.isAtLeastV
 import com.hippo.ehviewer.util.isCronetAvailable
 import com.hippo.ehviewer.util.sendTo
 import com.hippo.ehviewer.util.setAppLanguage
@@ -207,7 +206,7 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 summary = if (enableCronet) "Cronet" else "OkHttp",
             ) {
                 coroutineScope.launch {
-                    dialogState.awaitPermissionOrCancel(
+                    dialogState.awaitConfirmationOrCancel(
                         title = R.string.settings_advanced_http_engine,
                         showCancelButton = false,
                     ) {
@@ -314,12 +313,11 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 value = Settings::desktopSite,
             )
             val exportFailed = stringResource(id = R.string.settings_advanced_export_data_failed)
-            val now = ReadableTime.getFilenamableTime()
             LauncherPreference(
                 title = stringResource(id = R.string.settings_advanced_export_data),
                 summary = stringResource(id = R.string.settings_advanced_export_data_summary),
-                contract = ActivityResultContracts.CreateDocument("application/vnd.sqlite3"),
-                key = if (isAtLeastV) now else "$now.db",
+                contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
+                key = ReadableTime.getFilenamableTime() + ".db",
             ) { uri ->
                 uri?.let {
                     context.runCatching {
@@ -338,7 +336,7 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 title = stringResource(id = R.string.settings_advanced_import_data),
                 summary = stringResource(id = R.string.settings_advanced_import_data_summary),
                 contract = ActivityResultContracts.GetContent(),
-                key = if (isAtLeastV) "application/vnd.sqlite3" else "application/octet-stream",
+                key = "application/octet-stream",
             ) { uri ->
                 uri?.let {
                     context.runCatching {

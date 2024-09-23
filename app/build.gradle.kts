@@ -150,9 +150,6 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
-            lint {
-                abortOnError = false
-            }
         }
         create("benchmarkRelease") {
             initWith(buildTypes.getByName("release"))
@@ -283,6 +280,8 @@ kotlin {
             "-progressive",
             "-Xjvm-default=all",
             "-Xcontext-receivers",
+            "-Xwhen-guards",
+            "-Xsuppress-warning=CONTEXT_RECEIVERS_DEPRECATED",
 
             "-opt-in=coil3.annotation.ExperimentalCoilApi",
             "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi",

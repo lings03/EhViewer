@@ -44,8 +44,9 @@ set(NDK_VERSION "${ANDROID_NDK_MAJOR}.${ANDROID_NDK_MINOR}.${ANDROID_NDK_BUILD}"
 ExternalProject_Add(
         nettle
         PREFIX nettle
-        URL https://ftp.gnu.org/gnu/nettle/nettle-3.10.tar.gz
-        URL_MD5 c61453139d5fb44e9cdcc5b684b26e55
+        GIT_REPOSITORY https://gitlab.com/gnutls/nettle.git
+        GIT_TAG nettle_3.10_release_20240616
+        GIT_CONFIG core.autocrlf=input
         CONFIGURE_COMMAND bash ${CURRENT_DIR}/configure_nettle.sh ${NDK_VERSION} ${CMAKE_C_COMPILER_TARGET}
         BUILD_COMMAND bash -c "make libnettle.a CFLAGS='${CMAKE_C_FLAGS}'"
         INSTALL_COMMAND ""
@@ -89,7 +90,7 @@ set(LIBARCHIVE_PATCH ${CMAKE_CURRENT_LIST_DIR}/0001-Insert-link-libs.patch)
 FetchContent_Declare(
         libarchive
         GIT_REPOSITORY https://github.com/libarchive/libarchive.git
-        GIT_TAG v3.7.4
+        GIT_TAG v3.7.6
         PATCH_COMMAND git apply --check -R ${LIBARCHIVE_PATCH} || git apply ${LIBARCHIVE_PATCH}
 )
 
@@ -105,6 +106,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Corrosion)
 corrosion_import_crate(MANIFEST_PATH ../rust/Cargo.toml)
 corrosion_add_target_local_rustflags(ehviewer_rust "-Clink-args=-Wl,-z,max-page-size=16384")
+if (ANDROID_NATIVE_API_LEVEL GREATER_EQUAL 26)
+    corrosion_set_features(ehviewer_rust FEATURES api-level-26)
+endif ()
 
 # Build and link our app's native lib
 add_library(${PROJECT_NAME} SHARED archive.c gifutils.c hash.c natsort/strnatcmp.c)

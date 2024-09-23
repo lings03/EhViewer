@@ -2,7 +2,7 @@ mod img;
 mod parser;
 
 use android_logger::Config;
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{ensure, Context, Result};
 use image::{ImageBuffer, Rgba};
 use jni::objects::JByteBuffer;
 use jni::sys::{jboolean, jint, jobject, JavaVM, JNI_VERSION_1_6};
@@ -90,6 +90,10 @@ impl ThrowingHasDefault for i32 {
     }
 }
 
+impl ThrowingHasDefault for () {
+    fn default() -> Self {}
+}
+
 fn jni_throwing<F, R>(env: &mut JNIEnv, f: F) -> R
 where
     F: FnOnce(&mut JNIEnv) -> Result<R>,
@@ -116,7 +120,7 @@ where
             // SAFETY: ktor client ensure html content is valid utf-8.
             let html = unsafe { from_utf8_unchecked(&buffer[..limit as usize]) };
 
-            let dom = tl::parse(html, ParserOptions::default()).map_err(|e| anyhow!(e))?;
+            let dom = tl::parse(html, ParserOptions::default())?;
             ensure!(dom.version().is_some(), "{html}");
             f(&dom, html)?
         };
@@ -164,9 +168,7 @@ where
     let buffer = unsafe { &*slice_from_raw_parts(ptr, (width * height * 4) as usize) };
 
     let image = ImageBuffer::from_raw(width, height, buffer);
-    let result = image
-        .ok_or(anyhow!("Image buffer not RGBA8888!!!"))
-        .and_then(f);
+    let result = image.context("Image buffer not RGBA8888!!!").and_then(f);
     handle.unlock_pixels()?;
     result
 }
