@@ -16,7 +16,9 @@
 package com.hippo.ehviewer
 
 import android.content.Context
+import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
+import android.util.Log
 import arrow.fx.coroutines.release
 import arrow.fx.coroutines.resource
 import com.hippo.ehviewer.client.data.BaseGalleryInfo
@@ -147,10 +149,29 @@ object EhDB {
     }
 
     suspend fun putDownloadArtist(gid: Long, artists: List<DownloadArtist>) {
+        Log.d("putDownloadArtist", "Inserting GID: $gid, Artist count: ${artists.size}")
+
         if (artists.isNotEmpty()) {
-            val dao = db.downloadArtistDao()
-            dao.deleteByGid(gid)
-            dao.insert(artists)
+            try {
+                val dao = db.downloadArtistDao()
+
+                Log.d("putDownloadArtist", "Deleting previous records for GID: $gid")
+                dao.deleteByGid(gid)
+
+                val distinctArtists = artists.distinctBy { it.artist }
+                Log.d("putDownloadArtist", "Artist count: ${artists.size}")
+                Log.d("putDownloadArtist", "Distinct artist count: ${distinctArtists.size}")
+                for (artist in artists) {
+                    Log.d("putDownloadArtist", "Inserting artist: ${artist.artist} with GID: $gid")
+                }
+                dao.insert(artists)
+            } catch (e: SQLiteConstraintException) {
+                Log.e("putDownloadArtist", "SQLite constraint failed: ${e.message}")
+                throw e
+            } catch (e: Exception) {
+                Log.e("putDownloadArtist", "Unexpected error: ${e.message}")
+                throw e
+            }
         }
     }
 
