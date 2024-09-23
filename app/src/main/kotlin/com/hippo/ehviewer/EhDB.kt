@@ -18,7 +18,6 @@ package com.hippo.ehviewer
 import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
-import android.util.Log
 import arrow.fx.coroutines.release
 import arrow.fx.coroutines.resource
 import com.hippo.ehviewer.client.data.BaseGalleryInfo
@@ -34,8 +33,11 @@ import com.hippo.ehviewer.dao.ProgressInfo
 import com.hippo.ehviewer.dao.QuickSearch
 import com.hippo.ehviewer.dao.Schema17to18
 import com.hippo.ehviewer.download.DownloadManager
+import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.sendTo
+import java.io.File
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Clock
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import splitties.arch.room.roomDb
@@ -148,28 +150,34 @@ object EhDB {
         dao.fill(raw.position)
     }
 
+    fun logcat(message: String) {
+        AppConfig.externalCrashDir?.let {
+            File(it, "log.txt").appendText("${Clock.System.now()}\t$message\n\n")
+        }
+    }
+
     suspend fun putDownloadArtist(gid: Long, artists: List<DownloadArtist>) {
-        Log.d("putDownloadArtist", "Inserting GID: $gid, Artist count: ${artists.size}")
+        logcat("Inserting GID: $gid, Artist count: ${artists.size}")
 
         if (artists.isNotEmpty()) {
             try {
                 val dao = db.downloadArtistDao()
 
-                Log.d("putDownloadArtist", "Deleting previous records for GID: $gid")
+                logcat("Deleting previous records for GID: $gid")
                 dao.deleteByGid(gid)
 
                 val distinctArtists = artists.distinctBy { it.artist }
-                Log.d("putDownloadArtist", "Artist count: ${artists.size}")
-                Log.d("putDownloadArtist", "Distinct artist count: ${distinctArtists.size}")
+                logcat("Artist count: ${artists.size}")
+                logcat("Distinct artist count: ${distinctArtists.size}")
                 for (artist in artists) {
-                    Log.d("putDownloadArtist", "Inserting artist: ${artist.artist} with GID: $gid")
+                    logcat("Inserting artist: ${artist.artist} with GID: $gid")
                 }
                 dao.insert(artists)
             } catch (e: SQLiteConstraintException) {
-                Log.e("putDownloadArtist", "SQLite constraint failed: ${e.message}")
+                logcat("SQLite constraint failed: ${e.message}")
                 throw e
             } catch (e: Exception) {
-                Log.e("putDownloadArtist", "Unexpected error: ${e.message}")
+                logcat("Unexpected error: ${e.message}")
                 throw e
             }
         }
