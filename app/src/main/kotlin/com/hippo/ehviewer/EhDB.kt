@@ -163,12 +163,15 @@ object EhDB {
             try {
                 val dao = db.downloadArtistDao()
 
-                logcat("Deleting previous records for GID: $gid")
+                // logcat("Deleting previous records for GID: $gid")
                 dao.deleteByGid(gid)
 
                 val distinctArtists = artists.distinctBy { it.artist }
-                logcat("Artist count: ${artists.size}")
-                logcat("Distinct artist count: ${distinctArtists.size}")
+                if (artists.size != distinctArtists.size) {
+                    logcat("Detected, GID: $gid, Artist count: ${artists.size}, Distinct artist count: ${distinctArtists.size}")
+                }
+                // logcat("Artist count: ${artists.size}")
+                // logcat("Distinct artist count: ${distinctArtists.size}")
                 for (artist in artists) {
                     logcat("Inserting artist: ${artist.artist} with GID: $gid")
                 }
