@@ -61,7 +61,6 @@ import com.hippo.ehviewer.util.displayPath
 import com.hippo.ehviewer.util.getAppLanguage
 import com.hippo.ehviewer.util.getLanguages
 import com.hippo.ehviewer.util.isAtLeastO
-import com.hippo.ehviewer.util.isAtLeastV
 import com.hippo.ehviewer.util.isCronetAvailable
 import com.hippo.ehviewer.util.sendTo
 import com.hippo.ehviewer.util.setAppLanguage
