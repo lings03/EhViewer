@@ -264,6 +264,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar)
 
     implementation(libs.cronet.embedded)
+    implementation(libs.conscrypt)
 
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":benchmark"))

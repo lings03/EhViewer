@@ -23,27 +23,47 @@ import com.hippo.ehviewer.builtInHosts
 import java.net.InetAddress
 import java.net.Socket
 import java.security.KeyStore
+import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
+import org.conscrypt.Conscrypt
 
 private const val EXCEPTIONAL_DOMAIN = "hath.network"
-private val sslSocketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
+private val sslSocketFactory: SSLSocketFactory = SSLContext.getInstance("TLS", Conscrypt.newProvider()).apply {
+    init(null, null, null)
+}.socketFactory
 
 object EhSSLSocketFactory : SSLSocketFactory() {
     override fun getDefaultCipherSuites(): Array<String> = sslSocketFactory.defaultCipherSuites
     override fun getSupportedCipherSuites(): Array<String> = sslSocketFactory.supportedCipherSuites
-    override fun createSocket(s: Socket, host: String, port: Int, autoClose: Boolean): Socket {
-        val address = s.inetAddress.hostAddress.takeIf { host in builtInHosts || EXCEPTIONAL_DOMAIN in host || host in Settings.dohUrl }
-        Log.d("EhSSLSocketFactory", "Host: $host Address: $address")
-        return sslSocketFactory.createSocket(s, address ?: host, port, autoClose) as SSLSocket
+    override fun createSocket(s: Socket, host: String, port: Int, autoClose: Boolean): Socket = createConfiguredSocket(sslSocketFactory.createSocket(s, resolveHost(s, host), port, autoClose) as SSLSocket)
+    override fun createSocket(host: String, port: Int): Socket = createConfiguredSocket(sslSocketFactory.createSocket(host, port) as SSLSocket)
+    override fun createSocket(host: String, port: Int, localHost: InetAddress, localPort: Int): Socket = createConfiguredSocket(sslSocketFactory.createSocket(host, port, localHost, localPort) as SSLSocket)
+    override fun createSocket(host: InetAddress, port: Int): Socket = createConfiguredSocket(sslSocketFactory.createSocket(host, port) as SSLSocket)
+    override fun createSocket(address: InetAddress, port: Int, localAddress: InetAddress, localPort: Int): Socket = createConfiguredSocket(sslSocketFactory.createSocket(address, port, localAddress, localPort) as SSLSocket)
+
+    private fun createConfiguredSocket(socket: SSLSocket): SSLSocket {
+        Conscrypt.setCheckDnsForEch(socket, true)
+        logEchConfigList(socket)
+        return socket
     }
-    override fun createSocket(host: String, port: Int): Socket = sslSocketFactory.createSocket(host, port)
-    override fun createSocket(host: String, port: Int, localHost: InetAddress, localPort: Int): Socket = sslSocketFactory.createSocket(host, port, localHost, localPort)
-    override fun createSocket(host: InetAddress, port: Int): Socket = sslSocketFactory.createSocket(host, port)
-    override fun createSocket(address: InetAddress, port: Int, localAddress: InetAddress, localPort: Int): Socket = sslSocketFactory.createSocket(address, port, localAddress, localPort)
+
+    private fun logEchConfigList(socket: SSLSocket) {
+        Conscrypt.getEchConfigList(socket)?.let { echConfigList ->
+            Log.d("ECHConfigList", "ECH Config List (${echConfigList.size} bytes):")
+            logHex(echConfigList)
+        }
+    }
+
+    private fun logHex(buf: ByteArray) {
+        val hexString = buf.joinToString(":") { String.format("%02x", it.toInt() and 0xFF) }
+        Log.d("ECHConfigList", hexString)
+    }
+
+    private fun resolveHost(socket: Socket, host: String): String = socket.inetAddress.hostAddress.takeIf { host in builtInHosts || EXCEPTIONAL_DOMAIN in host || host in Settings.dohUrl } ?: host
 }
 
 fun OkHttpClient.Builder.install(sslSocketFactory: SSLSocketFactory) = apply {

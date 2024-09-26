@@ -79,6 +79,7 @@ import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
+import java.security.Security
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import logcat.AndroidLogcatLogger
@@ -89,6 +90,7 @@ import okhttp3.AsyncDns
 import okhttp3.Protocol
 import okhttp3.android.AndroidAsyncDns
 import okio.Path.Companion.toOkioPath
+import org.conscrypt.Conscrypt
 import splitties.arch.room.roomDb
 import splitties.init.appCtx
 
@@ -219,6 +221,7 @@ class EhApplication :
 
     companion object {
         val ktorClient by lazy {
+            Security.insertProviderAt(Conscrypt.newProvider(), 1)
             if (Settings.enableQuic && isCronetAvailable) {
                 HttpClient(Cronet) {
                     engine {
