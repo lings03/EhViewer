@@ -326,8 +326,8 @@
     <string name="settings_read_volume_page_fast">快</string>
     <string name="settings_read_volume_page_slow">慢</string>
     <string name="settings_read_reverse_volume">翻转音量键</string>
-    <string name="settings_strip_extraneous_ads">移除外部广告</string>
-    <string name="settings_ads_placeholder">选择替换外部广告的图片</string>
+    <string name="settings_block_extraneous_ads">[实验性] 屏蔽外部广告</string>
+    <string name="settings_ads_placeholder">[可选] 选择替换外部广告的图片</string>
     <string name="settings_download">下载</string>
     <string name="settings_download_download_location">下载路径</string>
     <string name="settings_download_cant_get_download_location">无法获取下载路径</string>
@@ -480,6 +480,7 @@
     <string name="action_add_tag">添加标签</string>
     <string name="action_add_tag_tip">添加新标签，用逗号「，」分割</string>
     <string name="comment_user_uploader">%s （上传者）</string>
+    <string name="no_network">无网络</string>
     <string name="settings_eh_metered_network_warning">流量计费网络警告</string>
     <string name="metered_network_warning">正在使用流量计费网络</string>
     <string name="read_from">从第 %d 页阅读</string>
