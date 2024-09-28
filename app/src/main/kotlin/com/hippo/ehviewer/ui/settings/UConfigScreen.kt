@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.ui.settings
 
+import android.annotation.SuppressLint
 import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceResponse
@@ -87,6 +88,7 @@ private val jsCode = """
 val url = EhUrl.uConfigUrl
 val cookieHeader = EhCookieStore.getCookieHeader(url)
 
+@SuppressLint("JavascriptInterface")
 @Destination<RootGraph>
 @Composable
 fun UConfigScreen(navigator: DestinationsNavigator) {

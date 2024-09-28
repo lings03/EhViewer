@@ -424,5 +424,4 @@ private var doh: DnsOverHttps? = Settings.dohUrl.runCatching { buildDoHDNS(this)
 object EhDoH {
     fun lookup(hostname: String): List<InetAddress>? = doh?.runCatching { lookup(hostname).takeIf { it.isNotEmpty() } }?.onFailure { it.printStackTrace() }?.getOrNull()
 }
-
 val AdsPlaceholderFile = appCtx.filesDir.toOkioPath() / "AdsPlaceholder"

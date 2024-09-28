@@ -563,7 +563,11 @@ fun BelowHeader(galleryDetail: GalleryDetail) {
                 }
                 val url = selected.url
                 val name = "${selected.name}.torrent"
-                val r = android.app.DownloadManager.Request(url.toUri())
+                val r = android.app.DownloadManager.Request(
+                    url
+                        .replace("exhentai.org", "ehtracker.org")
+                        .toUri(),
+                )
                 r.setDestinationInExternalPublicDir(
                     Environment.DIRECTORY_DOWNLOADS,
                     AppConfig.APP_DIRNAME + "/" + FileUtils.sanitizeFilename(name),

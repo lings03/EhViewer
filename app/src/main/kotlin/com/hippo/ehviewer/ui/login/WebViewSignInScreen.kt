@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.ui.login
 
+import android.annotation.SuppressLint
 import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceResponse
@@ -72,6 +73,7 @@ private val jsCode = """
 })();
 """
 
+@SuppressLint("JavascriptInterface")
 @Destination<RootGraph>
 @Composable
 fun WebViewSignInScreen(navigator: DestinationsNavigator) {

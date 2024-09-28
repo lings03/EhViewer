@@ -19,8 +19,8 @@ arrow = "1.2.4"
 coil = "3.0.0-alpha10"
 compose-bom = "2024.09.02"
 compose-destinations = "2.1.0-beta12"
-kotlin = "2.1.0-Beta1"
 google-android-material = "1.12.0"
+kotlin = "2.1.0-Beta1"
 kotlinx-coroutines = "1.9.0"
 kotlinx-datetime = "0.6.1"
 kotlinx-serialization = "1.7.3"
@@ -83,7 +83,8 @@ compose-destinations-compiler = { module = "io.github.raamcosta.compose-destinat
 
 material-motion-core = "io.github.fornewid:material-motion-compose-core:2.0.1"
 
-cronet-embedded = "org.chromium.net:cronet-embedded:119.6045.31"
+cronet-embedded = "org.greatfire.envoy:cronet:107.0.5304.150-1"
+conscrypt = "info.guardianproject.conscrypt:conscrypt-android:2.6.alpha1647601986.job2220801545"
 
 desugar = "com.android.tools:desugar_jdk_libs_nio:2.1.2"
 
@@ -96,7 +97,6 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 ktlint = "com.pinterest:ktlint:1.3.0"
 
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 
 logcat = "com.squareup.logcat:logcat:0.1"
 

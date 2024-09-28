@@ -260,7 +260,6 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(
             }
         }
     }
-
     Scaffold(
         topBar = {
             LargeTopAppBar(

@@ -2,6 +2,7 @@ package com.hippo.ehviewer.client
 
 import android.os.Build
 import com.hippo.ehviewer.builtInHosts
+import com.hippo.ehviewer.echEnabledDomains
 import com.hippo.ehviewer.ui.settings.EhDoH
 import java.net.InetAddress
 import okhttp3.AsyncDns
@@ -30,7 +31,11 @@ val systemDns = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) AsyncDns.toD
 
 object EhDns : Dns {
     override fun lookup(hostname: String): List<InetAddress> {
-        val inetAddresses = builtInHosts[hostname] ?: EhDoH.lookup(hostname) ?: systemDns.lookup(hostname)
-        return inetAddresses.shuffled()
+        return when {
+            hostname in echEnabledDomains ->
+                EhDoH.lookup(hostname) ?: systemDns.lookup(hostname)
+            else ->
+                builtInHosts[hostname] ?: EhDoH.lookup(hostname) ?: systemDns.lookup(hostname)
+        }.shuffled()
     }
 }
