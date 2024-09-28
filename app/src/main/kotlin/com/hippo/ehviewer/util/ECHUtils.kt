@@ -1,11 +1,12 @@
 package com.hippo.ehviewer.util
 
 import android.util.Log
-import com.hippo.ehviewer.ui.settings.DoHClient
+import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.updateEchConfig
 import java.util.Base64
 import javax.net.ssl.SSLSocket
 import org.conscrypt.Conscrypt
+import tech.relaycorp.doh.DoHClient
 
 fun logEchConfigList(socket: SSLSocket, host: String) {
     Conscrypt.getEchConfigList(socket)?.let { echConfigList ->
@@ -20,8 +21,9 @@ fun logBase64(buf: ByteArray) {
 }
 
 suspend fun echUpdater(domain: String) {
-    DoHClient.use {
-        val result = DoHClient.lookUp(domain, "HTTPS").data
+    val doh = DoHClient(Settings.dohUrl)
+    doh.use {
+        val result = doh.lookUp(domain, "HTTPS").data
         if (result.isNotEmpty()) {
             Log.d("echUpdater", result[0])
             val echRegex = "ech=([A-Za-z0-9+/=]+)".toRegex()
@@ -34,6 +36,6 @@ suspend fun echUpdater(domain: String) {
                 Log.d("echUpdater", "ECH value not found in DNS response")
             }
         }
-        DoHClient.close()
     }
+    doh.close()
 }
