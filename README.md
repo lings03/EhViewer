@@ -7,6 +7,7 @@ FooIbar/EhViewer的分叉。
 - 恢复 OkHttp 引擎、内置 Hosts、域前置和 DoH (https://github.com/FooIbar/EhViewer/issues/12#issuecomment-1713695222)
 - 恢复 Cookie 登录 (https://github.com/FooIbar/EhViewer/issues/692#issuecomment-1929373085)
 - 支持登月账号登录 (https://github.com/FooIbar/EhViewer/issues/134#issuecomment-1784012743)
+- 在 OkHttp 支持 ECH
 
 ## 下载
 
