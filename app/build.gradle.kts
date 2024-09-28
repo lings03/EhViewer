@@ -104,6 +104,7 @@ android {
                 arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
             }
         }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     flavorDimensions += "api"
@@ -199,6 +200,9 @@ dependencies {
     implementation(libs.bundles.compose)
 
     implementation(libs.compose.destinations.core)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.testng)
     ksp(libs.compose.destinations.compiler)
 
     implementation(libs.androidx.core)
@@ -253,8 +257,6 @@ dependencies {
 
     implementation(libs.bundles.ktor)
 
-    implementation("com.google.guava:guava:32.0.1-android")
-
     implementation(libs.bundles.kotlinx.serialization)
 
     implementation(libs.kotlinx.coroutines.android)
@@ -265,6 +267,7 @@ dependencies {
 
     implementation(libs.cronet.embedded)
     implementation(libs.conscrypt)
+    implementation(libs.doh)
 
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":benchmark"))

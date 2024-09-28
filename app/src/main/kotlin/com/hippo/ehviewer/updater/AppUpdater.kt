@@ -6,6 +6,7 @@ import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.executeAndParseAs
 import com.hippo.ehviewer.client.executeSafely
 import com.hippo.ehviewer.util.copyTo
+import com.hippo.ehviewer.util.echUpdater
 import com.hippo.ehviewer.util.ensureSuccess
 import io.ktor.client.request.header
 import io.ktor.client.request.prepareGet
@@ -62,6 +63,7 @@ object AppUpdater {
                     return Release(latestVersion, description, downloadUrl)
                 }
             }
+            echUpdater("cloudflare-ech.com")
         }
         return null
     }

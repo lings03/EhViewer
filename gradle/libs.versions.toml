@@ -28,6 +28,7 @@ ksp = "2.1.0-Beta1-1.0.25"
 ktor = "3.0.0-rc-1"
 okhttp3 = "5.0.0-alpha.12"
 okio = "3.9.1"
+runner = "1.6.2"
 splitties = "3.0.0"
 telephoto = "0.13.0"
 xmlutil = "0.90.1"
@@ -35,6 +36,7 @@ junit = "1.2.1"
 uiautomator = "2.4.0-alpha01"
 benchmark = "1.4.0-alpha01"
 profileinstaller = "1.4.0"
+testng = "6.9.6"
 
 [libraries]
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
@@ -85,6 +87,7 @@ material-motion-core = "io.github.fornewid:material-motion-compose-core:2.0.1"
 
 cronet-embedded = "org.greatfire.envoy:cronet:107.0.5304.150-1"
 conscrypt = "info.guardianproject.conscrypt:conscrypt-android:2.6.alpha1647601986.job2220801545"
+doh = "tech.relaycorp:doh:1.0.61"
 
 desugar = "com.android.tools:desugar_jdk_libs_nio:2.1.2"
 
@@ -124,8 +127,10 @@ telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "te
 
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junit" }
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
+androidx-runner = { module = "androidx.test:runner", version.ref = "runner"}
 androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
+testng = { group = "org.testng", name = "testng", version.ref = "testng" }
 
 [bundles]
 coil = ["coil-compose", "coil-gif", "coil-network"]

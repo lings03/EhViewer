@@ -1,16 +1,21 @@
 package com.hippo.ehviewer
 
+import android.util.Log
 import com.hippo.ehviewer.client.hosts
 import com.hippo.ehviewer.client.hostsDsl
-import com.hippo.ehviewer.util.hexStringToByteArray
+
+var echConfig = "AEX+DQBBrAAgACDPVFgaFJ36ftPpSp+DrfOH3qPYYgrwUvaj96M61ZTvdAAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA="
+fun updateEchConfig(newEch: String) {
+    Log.d("updateEchConfig", "echConfig set to $newEch")
+    echConfig = newEch
+}
 
 val echEnabledDomains = listOf(
     "exhentai.org",
     "e-hentai.org",
     "forums.e-hentai.org",
-    "testingcf.jsdelivr.net"
+    "testingcf.jsdelivr.net",
 )
-val echConfig = hexStringToByteArray("0045fe0d00415800200020ac0228faf086a9710ff521d72a7366df19be521fc23350fd2554c76e8cb66d4f0004000100010012636c6f7564666c6172652d6563682e636f6d0000")
 
 val builtInHosts = hostsDsl {
     hosts("ehgt.org", "gt0.ehgt.org", "gt1.ehgt.org", "gt2.ehgt.org", "gt3.ehgt.org", "ul.ehgt.org") {

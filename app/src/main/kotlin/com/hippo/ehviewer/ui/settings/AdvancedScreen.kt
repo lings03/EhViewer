@@ -85,6 +85,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okio.Path.Companion.toOkioPath
 import splitties.init.appCtx
+import tech.relaycorp.doh.DoHClient
 
 @Destination<RootGraph>
 @Composable
@@ -419,6 +420,7 @@ private fun buildDoHDNS(url: String): DnsOverHttps = DnsOverHttps.Builder().appl
     systemDns(systemDns)
 }.build()
 
+val DoHClient = DoHClient(Settings.dohUrl)
 private var doh: DnsOverHttps? = Settings.dohUrl.runCatching { buildDoHDNS(this) }.getOrNull()
 
 object EhDoH {

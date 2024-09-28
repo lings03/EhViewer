@@ -25,6 +25,7 @@ import com.hippo.ehviewer.util.logEchConfigList
 import java.net.InetAddress
 import java.net.Socket
 import java.security.KeyStore
+import java.util.Base64
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -50,20 +51,18 @@ object EhSSLSocketFactory : SSLSocketFactory() {
     private fun createConfiguredSocket(socket: SSLSocket, host: String): SSLSocket {
         Conscrypt.setCheckDnsForEch(socket, true)
         if (host in echEnabledDomains) {
-            Conscrypt.setEchConfigList(socket, echConfig)
+            Conscrypt.setEchConfigList(socket, Base64.getDecoder().decode(echConfig))
         }
         logEchConfigList(socket, host)
         return socket
     }
 
-    private fun resolveHost(socket: Socket, host: String): String {
-        return if (host in echEnabledDomains) {
-            host
-        } else {
-            socket.inetAddress.hostAddress.takeIf {
-                host in builtInHosts || EXCEPTIONAL_DOMAIN in host || host in Settings.dohUrl
-            } ?: host
-        }
+    private fun resolveHost(socket: Socket, host: String): String = if (host in echEnabledDomains) {
+        host
+    } else {
+        socket.inetAddress.hostAddress.takeIf {
+            host in builtInHosts || EXCEPTIONAL_DOMAIN in host || host in Settings.dohUrl
+        } ?: host
     }
 }
 

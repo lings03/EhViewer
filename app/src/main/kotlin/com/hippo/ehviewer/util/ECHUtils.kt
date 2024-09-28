@@ -1,24 +1,39 @@
 package com.hippo.ehviewer.util
 
 import android.util.Log
-import org.conscrypt.Conscrypt
+import com.hippo.ehviewer.ui.settings.DoHClient
+import com.hippo.ehviewer.updateEchConfig
+import java.util.Base64
 import javax.net.ssl.SSLSocket
+import org.conscrypt.Conscrypt
 
 fun logEchConfigList(socket: SSLSocket, host: String) {
     Conscrypt.getEchConfigList(socket)?.let { echConfigList ->
         Log.d("ECHConfigList", "ECH Config List (${echConfigList.size} bytes) for $host:")
-        logHex(echConfigList)
+        logBase64(echConfigList)
     }
 }
 
-fun logHex(buf: ByteArray) {
-    val hexString = buf.joinToString("") { String.format("%02x", it.toInt() and 0xFF) }
-    Log.d("ECHConfigList", hexString)
+fun logBase64(buf: ByteArray) {
+    val base64String = Base64.getEncoder().encodeToString(buf)
+    Log.d("ECHConfigList", base64String)
 }
 
-fun hexStringToByteArray(hexString: String): ByteArray {
-    require(hexString.length % 2 == 0) { "Invalid hex string length." }
-    return ByteArray(hexString.length / 2) { i ->
-        hexString.substring(i * 2, i * 2 + 2).toInt(16).toByte()
+suspend fun echUpdater(domain: String) {
+    DoHClient.use {
+        val result = DoHClient.lookUp(domain, "HTTPS").data
+        if (result.isNotEmpty()) {
+            Log.d("echUpdater", result[0])
+            val echRegex = "ech=([A-Za-z0-9+/=]+)".toRegex()
+            val echMatch = echRegex.find(result[0])
+            if (echMatch != null) {
+                val echValue = echMatch.groupValues[1]
+                Log.d("echUpdater", "Extracted ECH: $echValue")
+                updateEchConfig(echValue)
+            } else {
+                Log.d("echUpdater", "ECH value not found in DNS response")
+            }
+        }
+        DoHClient.close()
     }
 }
