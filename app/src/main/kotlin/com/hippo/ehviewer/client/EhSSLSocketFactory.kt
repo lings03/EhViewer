@@ -56,14 +56,12 @@ object EhSSLSocketFactory : SSLSocketFactory() {
         return socket
     }
 
-    private fun resolveHost(socket: Socket, host: String): String {
-        return if (host in echEnabledDomains) {
-            host
-        } else {
-            socket.inetAddress.hostAddress.takeIf {
-                host in builtInHosts || EXCEPTIONAL_DOMAIN in host || host in Settings.dohUrl
-            } ?: host
-        }
+    private fun resolveHost(socket: Socket, host: String): String = if (host in echEnabledDomains) {
+        host
+    } else {
+        socket.inetAddress.hostAddress.takeIf {
+            host in builtInHosts || EXCEPTIONAL_DOMAIN in host || host in Settings.dohUrl
+        } ?: host
     }
 }
 

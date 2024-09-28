@@ -1,8 +1,8 @@
 package com.hippo.ehviewer.util
 
 import android.util.Log
-import org.conscrypt.Conscrypt
 import javax.net.ssl.SSLSocket
+import org.conscrypt.Conscrypt
 
 fun logEchConfigList(socket: SSLSocket, host: String) {
     Conscrypt.getEchConfigList(socket)?.let { echConfigList ->
