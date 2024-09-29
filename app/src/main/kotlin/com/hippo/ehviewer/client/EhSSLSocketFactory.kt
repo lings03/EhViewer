@@ -19,18 +19,15 @@ package com.hippo.ehviewer.client
 
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.builtInHosts
-import com.hippo.ehviewer.echConfig
-import com.hippo.ehviewer.echEnabledDomains
-import com.hippo.ehviewer.util.logEchConfigList
 import java.net.InetAddress
 import java.net.Socket
 import java.security.KeyStore
-import java.util.Base64
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.conscrypt.Conscrypt
 
@@ -50,10 +47,16 @@ object EhSSLSocketFactory : SSLSocketFactory() {
 
     private fun createConfiguredSocket(socket: SSLSocket, host: String): SSLSocket {
         Conscrypt.setCheckDnsForEch(socket, true)
+        var cachedEchConfig = getCachedEchConfig()
         if (host in echEnabledDomains) {
-            Conscrypt.setEchConfigList(socket, Base64.getDecoder().decode(echConfig))
+            if (cachedEchConfig == null) {
+                runBlocking {
+                    fetchAndCacheEchConfig(dohClient)
+                }
+            }
+            Conscrypt.setEchConfigList(socket, cachedEchConfig)
+            logEchConfigList(socket, host)
         }
-        logEchConfigList(socket, host)
         return socket
     }
 
