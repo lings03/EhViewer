@@ -48,15 +48,15 @@ object EhSSLSocketFactory : SSLSocketFactory() {
     private fun createConfiguredSocket(socket: SSLSocket, host: String): SSLSocket {
         Conscrypt.setCheckDnsForEch(socket, true)
         var cachedEchConfig = getCachedEchConfig()
-        if (host in echEnabledDomains) {
+        if (host in echEnabledDomains && Conscrypt.getEchConfigList(socket) == null) {
             if (cachedEchConfig == null) {
                 runBlocking {
                     fetchAndCacheEchConfig(dohClient)
                 }
             }
             Conscrypt.setEchConfigList(socket, cachedEchConfig)
-            logEchConfigList(socket, host)
         }
+        logEchConfigList(socket, host)
         return socket
     }
 
