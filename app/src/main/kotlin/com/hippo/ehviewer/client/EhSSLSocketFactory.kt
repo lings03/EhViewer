@@ -46,25 +46,27 @@ object EhSSLSocketFactory : SSLSocketFactory() {
     override fun createSocket(address: InetAddress, port: Int, localAddress: InetAddress, localPort: Int): Socket = sslSocketFactory.createSocket(address, port, localAddress, localPort)
 
     private fun createConfiguredSocket(socket: SSLSocket, host: String): SSLSocket {
-        Conscrypt.setCheckDnsForEch(socket, true)
-        var cachedEchConfig = getCachedEchConfig()
-        if (host in echEnabledDomains && Conscrypt.getEchConfigList(socket) == null) {
-            if (cachedEchConfig == null) {
-                runBlocking {
-                    fetchAndCacheEchConfig(dohClient)
+        if (Settings.enableECH) {
+            Conscrypt.setCheckDnsForEch(socket, true)
+            var cachedEchConfig = getCachedEchConfig()
+            if (host in echEnabledDomains && Conscrypt.getEchConfigList(socket) == null) {
+                if (cachedEchConfig == null) {
+                    runBlocking {
+                        fetchAndCacheEchConfig(dohClient)
+                    }
                 }
+                Conscrypt.setEchConfigList(socket, cachedEchConfig)
             }
-            Conscrypt.setEchConfigList(socket, cachedEchConfig)
+            logEchConfigList(socket, host)
         }
-        logEchConfigList(socket, host)
         return socket
     }
 
-    private fun resolveHost(socket: Socket, host: String): String = if (host in echEnabledDomains) {
+    private fun resolveHost(socket: Socket, host: String): String = if (host in echEnabledDomains && Settings.enableECH) {
         host
     } else {
         socket.inetAddress.hostAddress.takeIf {
-            host in builtInHosts || EXCEPTIONAL_DOMAIN in host || host in Settings.dohUrl
+            host in builtInHosts || EXCEPTIONAL_DOMAIN in host || Settings.dohUrl?.contains(host) == true
         } ?: host
     }
 }

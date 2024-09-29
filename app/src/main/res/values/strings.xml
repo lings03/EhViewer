@@ -638,10 +638,11 @@
     <string name="dark_theme_follow_system">Follow system</string>
     <string name="dark_theme_off">Always off</string>
     <string name="dark_theme_on">Always on</string>
+    <string name="settings_advanced_ech_title">Encrypted Client Hello</string>
     <string name="settings_advanced_bypass_vpn_title">Bypass VPN</string>
     <string name="settings_advanced_bypass_vpn_summary">Try to bypass VPN (Restart required)</string>
     <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
-    <string name="settings_advanced_dns_over_http_hint">Server URL, blank: disable</string>
+    <string name="settings_advanced_dns_over_http_hint">Custom server URL, blank: builtin</string>
     <string name="blocked_image">Blocked image</string>
     <string name="show_blocked_image">Show blocked image</string>
     <!-- Tachiyomi Reader End-->
