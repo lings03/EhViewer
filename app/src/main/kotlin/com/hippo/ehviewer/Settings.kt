@@ -178,9 +178,10 @@ object Settings : DataStorePreferences(null) {
     var lastDawnDays by intPref("last_dawn_days", 0)
     var recentToplist by stringPref("recent_toplist", "11")
     var defaultDownloadLabel by stringOrNullPref("default_download_label", null)
-    var dohUrl by stringPref("doh_url", "https://dns.opendns.com/dns-query")
+    var dohUrl by stringOrNullPref("doh_url", null)
     var cloudflareIp by stringOrNullPref("cloudflare_ip", "cdn.sstatic.net")
     var cloudflareIpOverride by boolPref("cloudflare_ip_override", false)
+    var enableECH by boolPref("enable_ech", false)
     var lastUpdateTime by longPref("last_update_time", BuildConfig.COMMIT_TIME)
 
     // Reader

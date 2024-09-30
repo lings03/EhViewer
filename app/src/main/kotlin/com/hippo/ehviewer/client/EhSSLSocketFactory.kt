@@ -19,9 +19,6 @@ package com.hippo.ehviewer.client
 
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.builtInHosts
-import com.hippo.ehviewer.echConfig
-import com.hippo.ehviewer.echEnabledDomains
-import com.hippo.ehviewer.util.logEchConfigList
 import java.net.InetAddress
 import java.net.Socket
 import java.security.KeyStore
@@ -30,6 +27,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.conscrypt.Conscrypt
 
@@ -48,19 +46,27 @@ object EhSSLSocketFactory : SSLSocketFactory() {
     override fun createSocket(address: InetAddress, port: Int, localAddress: InetAddress, localPort: Int): Socket = sslSocketFactory.createSocket(address, port, localAddress, localPort)
 
     private fun createConfiguredSocket(socket: SSLSocket, host: String): SSLSocket {
-        Conscrypt.setCheckDnsForEch(socket, true)
-        if (host in echEnabledDomains) {
-            Conscrypt.setEchConfigList(socket, echConfig)
+        if (Settings.enableECH) {
+            Conscrypt.setCheckDnsForEch(socket, true)
+            var cachedEchConfig = getCachedEchConfig()
+            if (host in echEnabledDomains && Conscrypt.getEchConfigList(socket) == null) {
+                if (cachedEchConfig == null) {
+                    runBlocking {
+                        fetchAndCacheEchConfig(dohClient)
+                    }
+                }
+                Conscrypt.setEchConfigList(socket, cachedEchConfig)
+            }
+            logEchConfigList(socket, host)
         }
-        logEchConfigList(socket, host)
         return socket
     }
 
-    private fun resolveHost(socket: Socket, host: String): String = if (host in echEnabledDomains) {
+    private fun resolveHost(socket: Socket, host: String): String = if (host in echEnabledDomains && Settings.enableECH) {
         host
     } else {
         socket.inetAddress.hostAddress.takeIf {
-            host in builtInHosts || EXCEPTIONAL_DOMAIN in host || host in Settings.dohUrl
+            host in builtInHosts || EXCEPTIONAL_DOMAIN in host || Settings.dohUrl?.contains(host) == true
         } ?: host
     }
 }

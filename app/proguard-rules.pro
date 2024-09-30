@@ -25,7 +25,7 @@
 -allowaccessmodification
 -repackageclasses
 
-# A resource is loaded with a relative path so the package of this class must be preserved.
+# okhttp3.dnsoverhttps
 -keeppackagenames okhttp3.internal.publicsuffix.*
 -adaptresourcefilenames okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz
 
@@ -33,3 +33,9 @@
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
+
+# tech.relaycorp.doh
+
+-dontwarn lombok.Generated
+-dontwarn org.xbill.DNS.spi.DnsjavaInetAddressResolverProvider
+-dontwarn sun.net.spi.nameservice.NameServiceDescriptor

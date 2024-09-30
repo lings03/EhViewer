@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.provider.Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS
+import android.util.Log
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
@@ -48,6 +49,7 @@ import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.asMutableState
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
+import com.hippo.ehviewer.client.getEffectiveDoHUrl
 import com.hippo.ehviewer.client.systemDns
 import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.ui.legacy.EditTextDialogBuilder
@@ -287,6 +289,12 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                     }
                 }
             }
+            AnimatedVisibility(visible = enableDf) {
+                SwitchPreference(
+                    title = stringResource(id = R.string.settings_advanced_ech_title),
+                    value = Settings::enableECH,
+                )
+            }
             if (isAtLeastO) {
                 IntSliderPreference(
                     maxValue = 16384,
@@ -419,7 +427,10 @@ private fun buildDoHDNS(url: String): DnsOverHttps = DnsOverHttps.Builder().appl
     systemDns(systemDns)
 }.build()
 
-private var doh: DnsOverHttps? = Settings.dohUrl.runCatching { buildDoHDNS(this) }.getOrNull()
+private var doh: DnsOverHttps? = getEffectiveDoHUrl().runCatching {
+    Log.d("doh", "EffectiveDoHUrl is $this")
+    buildDoHDNS(this)
+}.getOrNull()
 
 object EhDoH {
     fun lookup(hostname: String): List<InetAddress>? = doh?.runCatching { lookup(hostname).takeIf { it.isNotEmpty() } }?.onFailure { it.printStackTrace() }?.getOrNull()
