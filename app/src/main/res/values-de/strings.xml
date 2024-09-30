@@ -28,9 +28,12 @@
     <string name="sign_in">Anmelden</string>
     <string name="register">Konto erstellen</string>
     <string name="sign_in_via_webview">Mit WebView anmelden</string>
+    <string name="sign_in_via_cookies">Mit den Cookies anmelden</string>
     <string name="sign_in_first">Melde dich zunächst an</string>
+    <string name="cookie_explain">Die Cookies speichern in Browser deine Informationen. Falls du nicht wisst, was die Cookie sind, suche online darüber.</string>
     <string name="text_is_empty">Der Text wird nicht eingegeben</string>
     <string name="waring">Achtung</string>
+    <string name="wrong_cookie_warning">Die eingegebenen Cookies sehen korrekt nicht aus. Überprüfe sie.</string>
     <string name="invalid_download_location">Der Downloadpfad ist nicht verfügbar. Geh zu die Einstellungen und stelle einen neue Pfad fest.</string>
     <string name="error_timeout">Timeout</string>
     <string name="error_unknown_host">Unbekannter Hostcomputer</string>

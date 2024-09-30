@@ -1,108 +1,24 @@
-<p align="right">
-  <strong>English</strong>
-  <span> | </span>
-  <a href="/docs/README/zh-cn.md">
-  简体中文
-  </a>
-  <span> | </span>
-  <a href="/docs/README/zh-tw.md">
-  正體中文
-  </a>
-</p>
+从 FooIbar 的 EhViewer 修改而来，加回了内置的 cronet 以使用 host_resolver_rules 规避 DNS 污染，以及使用 QUIC 实现直连。
 
-<h1 align="center">
-  <img src="https://github.com/Ehviewer-Overhauled/Art/blob/master/launcher_icon-web.svg" width="200" alt="EhViewer">
-  <br>EhViewer<br>
-</h1>
+由于部分魔改系统对预测性返回手势的阉割，可能会导致本应用产生闪退，此闪退与本应用无关且无法修复，请克隆back分支自行编译不支持预测性返回手势的应用。
 
-<p align="center">
-  <a href="https://github.com/FooIbar/EhViewer/actions/workflows/ci.yml">
-    <img src="https://github.com/FooIbar/EhViewer/actions/workflows/ci.yml/badge.svg" alt="Github Actions">
-  </a>
-  <a href="/LICENSE">
-    <img src="https://img.shields.io/github/license/FooIbar/EhViewer" alt="LICENSE">
-  </a>
-  <a href="https://www.codefactor.io/repository/github/FooIbar/EhViewer">
-    <img src="https://www.codefactor.io/repository/github/FooIbar/EhViewer/badge" alt="CodeFactor">
-  </a>
-  <a href="https://github.com/FooIbar/EhViewer/releases">
-    <img src="https://img.shields.io/github/v/release/FooIbar/EhViewer" alt="Release">
-  </a>
-  <a href="https://github.com/FooIbar/EhViewer/issues">
-    <img src="https://img.shields.io/github/issues/FooIbar/EhViewer" alt="Issues">
-  </a>
-</p>
+- 在 Cronet 使用 host\_resolver\_rules 规避 DNS 污染
+- 恢复 OkHttp 引擎、内置 Hosts、域前置和 DoH (https://github.com/FooIbar/EhViewer/issues/12#issuecomment-1713695222)
+- 恢复 Cookie 登录 (https://github.com/FooIbar/EhViewer/issues/692#issuecomment-1929373085)
+- 支持登月账号登录 (https://github.com/FooIbar/EhViewer/issues/134#issuecomment-1784012743)
+- 在 OkHttp 支持 ECH
 
-<div align="center">
-  <h3>
-    <a href="#description">
-    Description
-    </a>
-    <span> | </span>
-    <a href="#download">
-    Download
-    </a>
-    <span> | </span>
-    <a href="#screenshot">
-    Screenshot
-    </a>
-    <span> | </span>
-    <a href="#thanks">
-    Thanks
-    </a>
-    <span> | </span>
-    <a href="#license">
-    License
-    </a>
-  </h3>
-</div>
+## 下载
 
-# Description
+本分支不提供Release版本下载。
 
-EhViewer fork dedicated to lightweight and high-performance
+请自行编译或前往 [Actions](//github.com/lings03/EhViewer/actions/workflows/ci.yml) 下载最新 CI 版本。
 
-with [Material Design 3](https://m3.material.io/)
-and [Dynamic Color](https://m3.material.io/styles/color/dynamic-color/overview) Support
+| 变种          | 功能                    |
+|-------------|-----------------------|
+| Default     | Android 9+, 完全支持      |
+| Marshmallow | Android 6.0-8.1, 有限支持 |
 
-# Download
+## 缺陷和功能请求
 
-| Flavor      | Feature                          |
-|-------------|----------------------------------|
-| Default     | Android 8.0+, full support       |
-| Marshmallow | Android 6.0-7.1, limited support |
-
-<a href="https://github.com/FooIbar/EhViewer/releases">
-<img alt="Get it on GitHub" src="https://github.com/Ehviewer-Overhauled/Art/blob/master/get-it-on-github.svg" width="200px"/>
-</a>
-
-# Screenshot
-
-![screenshot-01](https://github.com/Ehviewer-Overhauled/Art/blob/master/screenshot-01.png)
-![screenshot-02](https://github.com/Ehviewer-Overhauled/Art/blob/master/screenshot-02.png)
-
-# Thanks
-
-Here is the libraries
-
-- [Arrow](https://arrow-kt.io/)
-- [AOSP & AndroidX](https://source.android.com/)
-- [Kotlin & KotlinX](https://kotlinlang.org/)
-- [Material Icons](https://github.com/google/material-design-icons)
-- [Ktor](https://ktor.io/)
-- [Coil](https://coil-kt.github.io/coil/)
-- [Compose Destinations](https://composedestinations.rafaelcosta.xyz/)
-- [libarchive](https://www.libarchive.org/)
-- [jsoup](https://jsoup.org/)
-
-# License
-
-    Copyright 2014-2019 Hippo Seven
-    Copyright 2020-2022 NekoInverter
-    Copyright 2022-2023 Tarsin Norbin
-    Copyright 2023-2024 Foolbar
-
-    EhViewer is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-    EhViewer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License along with EhViewer. If not, see <https://www.gnu.org/licenses/>.
+**本分支为自用类型，不接受除bug以外的任何功能请求。**

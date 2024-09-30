@@ -27,9 +27,12 @@
     <string name="sign_in">登入</string>
     <string name="register">註冊</string>
     <string name="sign_in_via_webview">透過網頁登入</string>
+    <string name="sign_in_via_cookies">透過 Cookie 登入</string>
     <string name="sign_in_first">請先登入</string>
+    <string name="cookie_explain">Cookie 是儲存在瀏覽器裡的一小塊資料。如果您不清楚 Cookie 是什麼或者如何取得 Cookie，最好去查一下。\n\n請輸入特定的 Cookie 來登入。</string>
     <string name="text_is_empty">文字是空的</string>
     <string name="waring">警告</string>
+    <string name="wrong_cookie_warning">看來您輸入的 Cookie 是錯誤的，最好再檢查一下。</string>
     <string name="invalid_download_location">看來下載路徑似乎沒辦法使用。請至設定重新設定下載路徑。</string>
     <string name="clipboard_gallery_url_snack_message">剪貼簿裡有圖庫連結</string>
     <string name="clipboard_gallery_url_snack_action">檢視</string>
@@ -57,6 +60,8 @@
     <string name="sign_in_failed">登入失敗</string>
     <string name="sign_in_failed_tip">若持續出錯，請嘗試“%s”。</string>
     <string name="get_it">知道了</string>
+    <!-- Select scene -->
+    <!-- Update -->
     <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">在 ExHentai 搜尋</string>
     <string name="gallery_list_search_bar_hint_e_hentai">在 E-Hentai 搜尋</string>
@@ -360,6 +365,7 @@
     <string name="settings_advanced_dump_logcat_to">已將紀錄檔儲存至 %s</string>
     <string name="settings_advanced_read_cache_size">閱讀快取大小</string>
     <string name="settings_advanced_app_language_title">應用程式介面語言</string>
+    <string name="settings_advanced_http_engine">Http 引擎 (需重新啟動)</string>
     <string name="settings_advanced_export_data">匯出檔案</string>
     <string name="settings_advanced_export_data_summary">儲存資料至外接儲存裝置，例如下載列表，快速搜尋列表</string>
     <string name="settings_advanced_export_data_to">已匯出資料至 %s</string>
@@ -462,6 +468,8 @@
     <string name="tag_vote_down">不，這不是</string>
     <string name="tag_vote_up">是的，這很正確</string>
     <string name="tag_vote_successfully">投票成功</string>
+    <string name="from_clipboard">從剪貼簿匯入</string>
+    <string name="from_clipboard_error">未在剪貼簿中發現 Cookies。</string>
     <string name="delete_search_history">從搜尋記錄中刪除“%s”？</string>
     <string name="action_add_tag">增加標籤</string>
     <string name="action_add_tag_tip">增加新標籤，用逗號「，」分割</string>

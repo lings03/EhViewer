@@ -1,15 +1,19 @@
 package com.hippo.ehviewer.ui.settings
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.provider.Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS
+import android.util.Log
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +22,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -29,18 +36,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.hippo.ehviewer.BuildConfig
+import com.hippo.ehviewer.EhApplication
 import com.hippo.ehviewer.EhDB
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.asMutableState
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
+import com.hippo.ehviewer.client.getEffectiveDoHUrl
+import com.hippo.ehviewer.client.systemDns
 import com.hippo.ehviewer.collectAsState
+import com.hippo.ehviewer.ui.legacy.EditTextDialogBuilder
+import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.ui.tools.rememberedAccessor
 import com.hippo.ehviewer.util.AppConfig
@@ -50,6 +63,7 @@ import com.hippo.ehviewer.util.displayPath
 import com.hippo.ehviewer.util.getAppLanguage
 import com.hippo.ehviewer.util.getLanguages
 import com.hippo.ehviewer.util.isAtLeastO
+import com.hippo.ehviewer.util.isCronetAvailable
 import com.hippo.ehviewer.util.sendTo
 import com.hippo.ehviewer.util.setAppLanguage
 import com.hippo.files.delete
@@ -62,12 +76,15 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.withIOContext
 import eu.kanade.tachiyomi.util.system.logcat
 import java.io.File
+import java.net.InetAddress
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import moe.tarsin.coroutines.runSuspendCatching
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.dnsoverhttps.DnsOverHttps
 import okio.Path.Companion.toOkioPath
 import splitties.init.appCtx
 
@@ -78,7 +95,10 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope { Dispatchers.IO }
+    val cloudflareIPhint = stringResource(id = R.string.settings_advanced_cloudflare_ip_hint)
+    val cloudflareIPtitle = stringResource(id = R.string.settings_advanced_cloudflare_ip)
     fun launchSnackBar(content: String) = coroutineScope.launch { snackbarHostState.showSnackbar(content) }
+    val dialogState = LocalDialogState.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -176,6 +196,105 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                 useSelectedAsSummary = true,
                 entries = languages,
             )
+            var enableCronet by Settings::enableQuic.observed
+            var enableDf by Settings::dF.observed
+            SwitchPreference(
+                title = stringResource(id = R.string.settings_advanced_bypass_vpn_title),
+                summary = stringResource(id = R.string.settings_advanced_bypass_vpn_summary),
+                value = Settings::bypassVpn,
+            )
+            Preference(
+                title = stringResource(id = R.string.settings_advanced_http_engine),
+                summary = if (enableCronet) "Cronet" else "OkHttp",
+            ) {
+                coroutineScope.launch {
+                    dialogState.awaitConfirmationOrCancel(
+                        title = R.string.settings_advanced_http_engine,
+                        showCancelButton = false,
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.Center)) {
+                                SegmentedButton(
+                                    selected = !enableCronet,
+                                    onClick = {
+                                        enableCronet = false
+                                        enableDf = true
+                                    },
+                                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                                ) {
+                                    Text("OkHttp")
+                                }
+                                SegmentedButton(
+                                    selected = enableCronet,
+                                    onClick = {
+                                        enableCronet = true
+                                        enableDf = false
+                                    },
+                                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                                    enabled = isCronetAvailable,
+                                ) {
+                                    Text("Cronet")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            val ifCloudflareIPOverride = Settings::cloudflareIpOverride.observed
+            AnimatedVisibility(visible = enableCronet) {
+                SwitchPreference(
+                    title = stringResource(id = R.string.settings_advanced_cloudflare_ip_override),
+                    summary = stringResource(id = R.string.settings_advanced_cloudflare_ip_override_summary),
+                    value = ifCloudflareIPOverride.rememberedAccessor,
+                )
+            }
+            var cloudflareIp by Settings::cloudflareIp.observed
+            AnimatedVisibility(visible = ifCloudflareIPOverride.value && enableCronet) {
+                Preference(
+                    title = cloudflareIPtitle,
+                    summary = cloudflareIp,
+                ) {
+                    coroutineScope.launch {
+                        val newCloudflareIP = dialogState.awaitInputText(
+                            initial = Settings.cloudflareIp.toString(),
+                            title = cloudflareIPtitle,
+                            hint = cloudflareIPhint,
+                        )
+                        if (newCloudflareIP.isNotEmpty()) {
+                            cloudflareIp = newCloudflareIP
+                        }
+                    }
+                }
+            }
+            AnimatedVisibility(visible = enableDf) {
+                Preference(title = stringResource(id = R.string.settings_advanced_dns_over_http_title)) {
+                    val builder = EditTextDialogBuilder(
+                        context,
+                        Settings.dohUrl,
+                        context.getString(R.string.settings_advanced_dns_over_http_hint),
+                    )
+                    builder.setTitle(R.string.settings_advanced_dns_over_http_title)
+                    builder.setPositiveButton(android.R.string.ok, null)
+                    val dialog = builder.create().apply { show() }
+                    dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+                        val text = builder.text.trim()
+                        runCatching {
+                            doh = if (text.isNotBlank()) buildDoHDNS(text) else null
+                        }.onFailure {
+                            builder.setError("Invalid URL!")
+                        }.onSuccess {
+                            Settings.dohUrl = text
+                            dialog.dismiss()
+                        }
+                    }
+                }
+            }
+            AnimatedVisibility(visible = enableDf) {
+                SwitchPreference(
+                    title = stringResource(id = R.string.settings_advanced_ech_title),
+                    value = Settings::enableECH,
+                )
+            }
             if (isAtLeastO) {
                 IntSliderPreference(
                     maxValue = 16384,
@@ -301,4 +420,19 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
     }
 }
 
+private fun buildDoHDNS(url: String): DnsOverHttps = DnsOverHttps.Builder().apply {
+    client(EhApplication.okHttpClient)
+    url(url.toHttpUrl())
+    post(true)
+    systemDns(systemDns)
+}.build()
+
+private var doh: DnsOverHttps? = getEffectiveDoHUrl().runCatching {
+    Log.d("doh", "EffectiveDoHUrl is $this")
+    buildDoHDNS(this)
+}.getOrNull()
+
+object EhDoH {
+    fun lookup(hostname: String): List<InetAddress>? = doh?.runCatching { lookup(hostname).takeIf { it.isNotEmpty() } }?.onFailure { it.printStackTrace() }?.getOrNull()
+}
 val AdsPlaceholderFile = appCtx.filesDir.toOkioPath() / "AdsPlaceholder"

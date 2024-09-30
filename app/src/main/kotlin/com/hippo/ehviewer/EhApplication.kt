@@ -36,8 +36,11 @@ import coil3.request.crossfade
 import coil3.serviceLoaderEnabled
 import coil3.util.DebugLogger
 import com.hippo.ehviewer.client.EhCookieStore
+import com.hippo.ehviewer.client.EhDns
+import com.hippo.ehviewer.client.EhSSLSocketFactory
 import com.hippo.ehviewer.client.EhTagDatabase
 import com.hippo.ehviewer.client.data.GalleryDetail
+import com.hippo.ehviewer.client.install
 import com.hippo.ehviewer.coil.CropBorderInterceptor
 import com.hippo.ehviewer.coil.DetectBorderInterceptor
 import com.hippo.ehviewer.coil.DownloadThumbInterceptor
@@ -50,7 +53,9 @@ import com.hippo.ehviewer.dailycheck.checkDawn
 import com.hippo.ehviewer.dao.SearchDatabase
 import com.hippo.ehviewer.download.DownloadManager
 import com.hippo.ehviewer.download.DownloadsFilterMode
+import com.hippo.ehviewer.ktbuilder.cache
 import com.hippo.ehviewer.ktbuilder.diskCache
+import com.hippo.ehviewer.ktbuilder.httpClient
 import com.hippo.ehviewer.ktbuilder.imageLoader
 import com.hippo.ehviewer.ktor.Cronet
 import com.hippo.ehviewer.legacy.cleanObsoleteCache
@@ -64,19 +69,28 @@ import com.hippo.ehviewer.util.FavouriteStatusRouter
 import com.hippo.ehviewer.util.FileUtils
 import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastP
+import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
+import com.hippo.ehviewer.util.isCronetAvailable
+import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
+import java.security.Security
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import logcat.AndroidLogcatLogger
 import logcat.LogPriority
 import logcat.LogcatLogger
 import logcat.asLog
+import okhttp3.AsyncDns
+import okhttp3.Protocol
+import okhttp3.android.AndroidAsyncDns
 import okio.Path.Companion.toOkioPath
+import org.conscrypt.Conscrypt
 import splitties.arch.room.roomDb
 import splitties.init.appCtx
 
@@ -207,12 +221,24 @@ class EhApplication :
 
     companion object {
         val ktorClient by lazy {
-            HttpClient(Cronet) {
-                engine {
-                    client = cronetHttpClient
+            Security.insertProviderAt(Conscrypt.newProvider(), 1)
+            if (Settings.enableQuic && isCronetAvailable) {
+                HttpClient(Cronet) {
+                    engine {
+                        client = cronetHttpClient
+                    }
+                    install(HttpCookies) {
+                        storage = EhCookieStore
+                    }
                 }
-                install(HttpCookies) {
-                    storage = EhCookieStore
+            } else {
+                HttpClient(OkHttp) {
+                    install(HttpCookies) {
+                        storage = EhCookieStore
+                    }
+                    engine {
+                        preconfigured = nonCacheOkHttpClient
+                    }
                 }
             }
         }
@@ -223,6 +249,37 @@ class EhApplication :
                 install(HttpCookies) {
                     storage = EhCookieStore
                 }
+            }
+        }
+
+        // Fallback to CIO when cronet unavailable after coil 3.0 release
+        private val baseOkHttpClient by lazy {
+            httpClient {
+                if (isAtLeastQ) {
+                    dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
+                }
+                addInterceptor(UncaughtExceptionInterceptor())
+            }
+        }
+
+        val nonCacheOkHttpClient by lazy {
+            httpClient(baseOkHttpClient) {
+                dns(EhDns)
+                install(EhSSLSocketFactory)
+            }
+        }
+
+        val nonH2OkHttpClient = nonCacheOkHttpClient.newBuilder()
+            .protocols(listOf(Protocol.HTTP_3, Protocol.HTTP_1_1))
+            .build()
+
+        // Never use this okhttp client to download large blobs!!!
+        val okHttpClient by lazy {
+            httpClient(nonCacheOkHttpClient) {
+                cache(
+                    appCtx.cacheDir.toOkioPath() / "http_cache",
+                    20L * 1024L * 1024L,
+                )
             }
         }
 

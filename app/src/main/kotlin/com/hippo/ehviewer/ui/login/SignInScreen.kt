@@ -61,6 +61,7 @@ import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.ui.StartDestination
+import com.hippo.ehviewer.ui.destinations.CookieSignInSceneDestination
 import com.hippo.ehviewer.ui.destinations.WebViewSignInScreenDestination
 import com.hippo.ehviewer.ui.openBrowser
 import com.hippo.ehviewer.ui.screen.popNavigate
@@ -196,7 +197,8 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                     UsernameAndPasswordTextField()
                     Text(
                         text = stringResource(id = R.string.app_waring),
-                        modifier = Modifier.widthIn(max = dimensionResource(id = R.dimen.single_max_width)).padding(top = 24.dp),
+                        modifier = Modifier.widthIn(max = dimensionResource(id = R.dimen.single_max_width))
+                            .padding(top = 24.dp),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
@@ -219,10 +221,10 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                             Text(text = stringResource(id = R.string.sign_in))
                         }
                     }
-                    Row(modifier = Modifier.padding(horizontal = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(modifier = Modifier.padding(horizontal = 4.dp)) {
                         TextButton(
                             onClick = { navigator.navigate(WebViewSignInScreenDestination) },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.padding(horizontal = 8.dp),
                         ) {
                             Text(
                                 text = buildAnnotatedString {
@@ -235,23 +237,37 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                             )
                         }
                         TextButton(
-                            onClick = {
-                                Settings.needSignIn = false
-                                Settings.gallerySite = EhUrl.SITE_E
-                                navigator.popNavigate(StartDestination)
-                            },
-                            modifier = Modifier.weight(1f),
+                            onClick = { navigator.navigate(CookieSignInSceneDestination) },
+                            modifier = Modifier.padding(horizontal = 8.dp),
                         ) {
                             Text(
                                 text = buildAnnotatedString {
                                     withStyle(
                                         style = SpanStyle(textDecoration = TextDecoration.Underline),
                                     ) {
-                                        append(stringResource(id = R.string.guest_mode))
+                                        append(stringResource(id = R.string.sign_in_via_cookies))
                                     }
                                 },
                             )
                         }
+                    }
+
+                    TextButton(
+                        onClick = {
+                            Settings.needSignIn = false
+                            Settings.gallerySite = EhUrl.SITE_E
+                            navigator.popNavigate(StartDestination)
+                        },
+                    ) {
+                        Text(
+                            text = buildAnnotatedString {
+                                withStyle(
+                                    style = SpanStyle(textDecoration = TextDecoration.Underline),
+                                ) {
+                                    append(stringResource(id = R.string.guest_mode))
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -304,8 +320,22 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.Center) {
                             TextButton(
+                                onClick = { navigator.navigate(CookieSignInSceneDestination) },
+                                modifier = Modifier.padding(horizontal = 4.dp),
+                            ) {
+                                Text(
+                                    text = buildAnnotatedString {
+                                        withStyle(
+                                            style = SpanStyle(textDecoration = TextDecoration.Underline),
+                                        ) {
+                                            append(stringResource(id = R.string.sign_in_via_cookies))
+                                        }
+                                    },
+                                )
+                            }
+                            TextButton(
                                 onClick = { navigator.navigate(WebViewSignInScreenDestination) },
-                                modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
+                                modifier = Modifier.padding(horizontal = 4.dp),
                             ) {
                                 Text(
                                     text = buildAnnotatedString {
@@ -317,24 +347,24 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                                     },
                                 )
                             }
-                            TextButton(
-                                onClick = {
-                                    Settings.needSignIn = false
-                                    Settings.gallerySite = EhUrl.SITE_E
-                                    navigator.popNavigate(StartDestination)
+                        }
+                        TextButton(
+                            onClick = {
+                                Settings.needSignIn = false
+                                Settings.gallerySite = EhUrl.SITE_E
+                                navigator.popNavigate(StartDestination)
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        ) {
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(
+                                        style = SpanStyle(textDecoration = TextDecoration.Underline),
+                                    ) {
+                                        append(stringResource(id = R.string.guest_mode))
+                                    }
                                 },
-                                modifier = Modifier.padding(horizontal = 4.dp).width(128.dp),
-                            ) {
-                                Text(
-                                    text = buildAnnotatedString {
-                                        withStyle(
-                                            style = SpanStyle(textDecoration = TextDecoration.Underline),
-                                        ) {
-                                            append(stringResource(id = R.string.guest_mode))
-                                        }
-                                    },
-                                )
-                            }
+                            )
                         }
                     }
                 }

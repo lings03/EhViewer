@@ -91,8 +91,8 @@ private suspend inline fun ghStatement(url: String) = ktorClient.prepareGet(url)
 private val GithubTokenParts = arrayOf(
     "github",
     "pat",
-    "11A4H2ACI0XXTRsYkt1Mps",
-    "uJ5n8UbLv20j6Ue4k1x25Z7u63EaCdDNYooxSeI4GJaQYKXWDZEtTmDVwnh",
+    "11AVRG2CI0xhx40HAQMNuw",
+    "MmfFdpgOTmN2ZnKVwKDMvJ5ADbUwA5dqYZTTAkwEdQUDS3RGKDJ8f5Kc03O",
 )
 
 data class Release(

@@ -104,6 +104,7 @@ android {
                 arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
             }
         }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     flavorDimensions += "api"
@@ -150,6 +151,9 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
+            lint {
+                abortOnError = false
+            }
         }
         create("benchmarkRelease") {
             initWith(buildTypes.getByName("release"))
@@ -199,6 +203,9 @@ dependencies {
     implementation(libs.bundles.compose)
 
     implementation(libs.compose.destinations.core)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.runner)
+    androidTestImplementation(libs.testng)
     ksp(libs.compose.destinations.compiler)
 
     implementation(libs.androidx.core)
@@ -220,9 +227,14 @@ dependencies {
     implementation(libs.androidx.room.paging)
 
     implementation(libs.androidx.work.runtime)
+    implementation(libs.material)
     implementation(libs.material.motion.core)
 
     implementation(libs.bundles.splitties)
+
+    // https://square.github.io/okhttp/changelogs/changelog/
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.bundles.okhttp)
 
     implementation(libs.okio.jvm)
 
@@ -246,7 +258,9 @@ dependencies {
 
     implementation(libs.telephoto.zoomable)
 
-    implementation(libs.ktor.client.core)
+    implementation(libs.bundles.ktor)
+
+    implementation("com.google.guava:guava:32.0.1-android")
 
     implementation(libs.bundles.kotlinx.serialization)
 
@@ -257,6 +271,8 @@ dependencies {
     coreLibraryDesugaring(libs.desugar)
 
     implementation(libs.cronet.embedded)
+    implementation(libs.conscrypt)
+    implementation(libs.doh)
 
     implementation(libs.androidx.profileinstaller)
     "baselineProfile"(project(":benchmark"))

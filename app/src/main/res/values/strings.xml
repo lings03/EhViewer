@@ -41,9 +41,12 @@
     <string name="sign_in">Sign in</string>
     <string name="register">Register</string>
     <string name="sign_in_via_webview">Sign in via WebView</string>
+    <string name="sign_in_via_cookies">Sign in via cookies</string>
     <string name="sign_in_first">Please sign in first</string>
+    <string name="cookie_explain">A cookie is a small piece of data stored in web browser. Google it if you don\'t know what it is or how to get it.\n\nPlease enter special cookies to sign in.</string>
     <string name="text_is_empty">Text is empty</string>
     <string name="waring">Warning</string>
+    <string name="wrong_cookie_warning">It seems that the cookies you entered are wrong. You\'d better check them.</string>
     <string name="invalid_download_location">It seems download location is not available. Please set it in Settings.</string>
     <string name="clipboard_gallery_url_snack_message">There is a gallery URL in the clipboard</string>
     <string name="clipboard_gallery_url_snack_action">View</string>
@@ -71,6 +74,7 @@
     <string name="sign_in_failed">Sign in failed</string>
     <string name="sign_in_failed_tip">If this issue continues, try \"%s\".</string>
     <string name="get_it">Got it</string>
+    <!-- Update -->
     <!-- Gallery List -->
     <string name="gallery_list_search_bar_hint_exhentai">Search ExHentai</string>
     <string name="gallery_list_search_bar_hint_e_hentai">Search E-Hentai</string>
@@ -381,6 +385,7 @@
     <string name="settings_advanced_dump_logcat_to">Logcat dumped to %s</string>
     <string name="settings_advanced_read_cache_size">Read cache size</string>
     <string name="settings_advanced_app_language_title">App language</string>
+    <string name="settings_advanced_http_engine">Http Engine (Restart required)</string>
     <string name="settings_advanced_hardware_bitmap_threshold">Hardware bitmap (better performance) threshold</string>
     <string name="settings_advanced_hardware_bitmap_threshold_summary">Try decreasing this if long images fail to load</string>
     <string name="settings_advanced_export_data">Export data</string>
@@ -485,6 +490,8 @@
     <string name="tag_vote_down">Vote down</string>
     <string name="tag_vote_up">Vote up</string>
     <string name="tag_vote_successfully">Vote successfully</string>
+    <string name="from_clipboard">From clipboard</string>
+    <string name="from_clipboard_error">No cookies found in clipboard.</string>
     <string name="delete_search_history">Delete \"%s\" from search history?</string>
     <string name="action_add_tag">Add tag</string>
     <string name="action_add_tag_tip">Enter new tags, separated with comma</string>
@@ -624,9 +631,18 @@
     <string name="action_save_to">Save to…</string>
     <string name="wide_color_gamut">Use Display P3 color space</string>
     <string name="settings_eh_request_news_timepicker">Set time to request news</string>
+    <string name="settings_advanced_cloudflare_ip">Cloudflare IP</string>
+    <string name="settings_advanced_cloudflare_ip_hint">Select which IP to MAP</string>
+    <string name="settings_advanced_cloudflare_ip_override">Cloudflare IP Override</string>
+    <string name="settings_advanced_cloudflare_ip_override_summary">Whether to MAP them to selected IP</string>
     <string name="dark_theme_follow_system">Follow system</string>
     <string name="dark_theme_off">Always off</string>
     <string name="dark_theme_on">Always on</string>
+    <string name="settings_advanced_ech_title">Encrypted Client Hello</string>
+    <string name="settings_advanced_bypass_vpn_title">Bypass VPN</string>
+    <string name="settings_advanced_bypass_vpn_summary">Try to bypass VPN (Restart required)</string>
+    <string name="settings_advanced_dns_over_http_title">DNS Over HTTPS</string>
+    <string name="settings_advanced_dns_over_http_hint">Custom server URL, blank: builtin</string>
     <string name="blocked_image">Blocked image</string>
     <string name="show_blocked_image">Show blocked image</string>
     <!-- Tachiyomi Reader End-->

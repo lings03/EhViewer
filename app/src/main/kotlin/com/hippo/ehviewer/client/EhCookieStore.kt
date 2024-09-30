@@ -1,6 +1,8 @@
 package com.hippo.ehviewer.client
 
+import android.util.Log
 import android.webkit.CookieManager
+import androidx.compose.ui.util.fastForEach
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.http.Cookie
 import io.ktor.http.Url
@@ -18,6 +20,7 @@ object EhCookieStore : CookiesStorage {
     const val KEY_IPB_MEMBER_ID = "ipb_member_id"
     const val KEY_IPB_PASS_HASH = "ipb_pass_hash"
     const val KEY_IGNEOUS = "igneous"
+    private const val KEY_STAR = "star"
     private const val KEY_CONTENT_WARNING = "nw"
     private const val CONTENT_WARNING_NOT_SHOW = "1"
     private const val KEY_UTMP_NAME = "__utmp"
@@ -46,13 +49,31 @@ object EhCookieStore : CookiesStorage {
         )
     }
 
+    fun copyNecessaryCookies() {
+        val cookies = load(Url(EhUrl.HOST_E))
+        cookies.fastForEach {
+            if (it.name == KEY_STAR || it.name == KEY_IPB_MEMBER_ID || it.name == KEY_IPB_PASS_HASH) {
+                manager.setCookie(EhUrl.HOST_EX, it.copy(maxAge = Int.MAX_VALUE).toString())
+            }
+        }
+    }
+
+    fun addCookie(k: String, v: String, domain: String) {
+        val cookie = Cookie(name = k, value = v, domain = domain, maxAge = Int.MAX_VALUE)
+        val url = if (EhUrl.DOMAIN_E == cookie.domain) EhUrl.HOST_E else EhUrl.HOST_EX
+        manager.setCookie(url, renderSetCookieHeader(cookie))
+    }
+
     fun flush() = manager.flush()
 
     fun getCookieHeader(url: String): String? = manager.getCookie(url)
 
     // See https://github.com/Ehviewer-Overhauled/Ehviewer/issues/873
     override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
-        if (cookie.name != KEY_UTMP_NAME) {
+        val shouldIgnore = cookie.value == "0" || (cookie.name == "igneous" && cookie.value == "deleted") || cookie.name == KEY_UTMP_NAME
+        if (shouldIgnore) {
+            Log.d("EhCookieStore", "Ignoring cookie: ${cookie.name} with value ${cookie.value} because it meets the ignore criteria.")
+        } else {
             manager.setCookie(requestUrl.toString(), renderSetCookieHeader(cookie))
         }
     }

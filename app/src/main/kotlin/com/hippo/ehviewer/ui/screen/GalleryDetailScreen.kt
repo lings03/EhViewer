@@ -107,7 +107,10 @@ data class TokenArgs(
 
 @Destination<RootGraph>
 @Composable
-fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNavigator) = composing(navigator) {
+fun AnimatedVisibilityScope.GalleryDetailScreen(
+    args: GalleryDetailScreenArgs,
+    navigator: DestinationsNavigator,
+) = composing(navigator) {
     var galleryInfo by rememberInVM {
         val casted = args as? GalleryInfoArgs
         mutableStateOf<GalleryInfo?>(casted?.galleryInfo)
@@ -141,6 +144,9 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
     var getDetailError by rememberSaveable { mutableStateOf("") }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
+    val voteSuccess = stringResource(R.string.tag_vote_successfully)
+    val voteFailed = stringResource(R.string.vote_failed)
+
     if (galleryInfo !is GalleryDetail && getDetailError.isBlank()) {
         LaunchedEffect(Unit) {
             val galleryDetail = galleryDetailCache[gid]
@@ -165,6 +171,20 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                 EhDB.putHistoryInfo(it.galleryInfo)
                 galleryInfo = it
             }
+        }
+    }
+
+    suspend fun GalleryDetail.voteTag(tag: String, vote: Int) {
+        runSuspendCatching {
+            EhEngine.voteTag(apiUid, apiKey, gid, token, tag, vote)
+        }.onSuccess { result ->
+            if (result != null) {
+                showSnackbar(result)
+            } else {
+                showSnackbar(voteSuccess)
+            }
+        }.onFailure {
+            showSnackbar(voteFailed)
         }
     }
 
@@ -198,32 +218,35 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                                 onItemClick = { dismissWith(it) },
                             )
                         }
-                        EhEngine.downloadArchive(gid, token, paramOr, selected.res, selected.isHAtH)?.let {
-                            val uri = Uri.parse(it)
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_VIEW
-                                setDataAndType(uri, "application/zip")
-                            }
-                            val name = "$gid-${EhUtils.getSuitableTitle(galleryDetail)}.zip"
-                            try {
-                                startActivity(intent)
-                                withUIContext { addTextToClipboard(name, true) }
-                            } catch (_: ActivityNotFoundException) {
-                                val r = DownloadManager.Request(uri)
-                                r.setDestinationInExternalPublicDir(
-                                    Environment.DIRECTORY_DOWNLOADS,
-                                    AppConfig.APP_DIRNAME + "/" + FileUtils.sanitizeFilename(name),
-                                )
-                                r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                                downloadManager.enqueue(r)
-                            }
-                            if (Settings.archiveMetadata) {
-                                SpiderDen(galleryDetail).apply {
-                                    initDownloadDir()
-                                    writeComicInfo()
+                        EhEngine.downloadArchive(gid, token, paramOr, selected.res, selected.isHAtH)
+                            ?.let {
+                                val uri = Uri.parse(it)
+                                val intent = Intent().apply {
+                                    action = Intent.ACTION_VIEW
+                                    setDataAndType(uri, "application/zip")
+                                }
+                                val name = "$gid-${EhUtils.getSuitableTitle(galleryDetail)}.zip"
+                                try {
+                                    startActivity(intent)
+                                    withUIContext { addTextToClipboard(name, true) }
+                                } catch (_: ActivityNotFoundException) {
+                                    val r = DownloadManager.Request(uri)
+                                    r.setDestinationInExternalPublicDir(
+                                        Environment.DIRECTORY_DOWNLOADS,
+                                        AppConfig.APP_DIRNAME + "/" + FileUtils.sanitizeFilename(
+                                            name,
+                                        ),
+                                    )
+                                    r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                    downloadManager.enqueue(r)
+                                }
+                                if (Settings.archiveMetadata) {
+                                    SpiderDen(galleryDetail).apply {
+                                        initDownloadDir()
+                                        writeComicInfo()
+                                    }
                                 }
                             }
-                        }
                         showSnackbar(downloadStarted)
                     }
                 }.onFailure {
@@ -239,7 +262,6 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
             }
         }
     }
-
     Scaffold(
         topBar = {
             LargeTopAppBar(
@@ -297,7 +319,8 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                             text = { Text(text = stringResource(id = R.string.action_add_tag)) },
                             onClick = {
                                 dropdown = false
-                                val detail = galleryInfo as? GalleryDetail ?: return@DropdownMenuItem
+                                val detail =
+                                    galleryInfo as? GalleryDetail ?: return@DropdownMenuItem
                                 launchIO {
                                     if (detail.apiUid < 0) {
                                         showSnackbar(signInFirst)
@@ -371,7 +394,7 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, n
                                             CreateDocument("application/vnd.comicbook+zip"),
                                             EhUtils.getSuitableTitle(info) + ".cbz",
                                         )
-                                        val dirname = downloadInfo?.dirname
+                                        val dirname = downloadInfo.dirname
                                         if (uri != null && dirname != null) {
                                             val file = uri.toOkioPath()
                                             val msg = runCatching {

@@ -22,8 +22,14 @@ import android.content.ContentResolver.SCHEME_FILE
 import android.content.Intent
 import android.content.pm.verify.domain.DomainVerificationManager
 import android.content.pm.verify.domain.DomainVerificationUserState.DOMAIN_STATE_NONE
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.animation.SharedTransitionScope
@@ -107,6 +113,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
@@ -159,6 +166,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -181,7 +189,11 @@ val StartDestination
     get() = navItems[Settings.launchPage].first
 
 class MainActivity : EhActivity() {
-    private val sideSheet = mutableStateListOf<@Composable ColumnScope.(DrawerState2) -> Unit>()
+    private lateinit var navController: NavController
+    private val availableNetworks = mutableListOf<Network>()
+    private val isInitializedFlow = MutableStateFlow(false)
+
+    private var sideSheet = mutableStateListOf<@Composable ColumnScope.(DrawerState2) -> Unit>()
 
     @Composable
     fun ProvideSideSheetContent(content: @Composable ColumnScope.(DrawerState2) -> Unit) {
@@ -215,6 +227,9 @@ class MainActivity : EhActivity() {
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (Settings.bypassVpn) {
+            bypassVpn()
+        }
         installSplashScreen()
         super.onCreate(savedInstanceState)
         setMD3Content {
@@ -548,6 +563,24 @@ class MainActivity : EhActivity() {
         }
     }
 
+    private fun bypassVpn() {
+        val network = connectivityManager.activeNetwork
+        val capabilities = connectivityManager.getNetworkCapabilities(network)
+        capabilities?.let {
+            if (it.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    NetworkRequest.Builder()
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_FOREGROUND)
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                } else {
+                    NetworkRequest.Builder()
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                }
+                connectivityManager.registerNetworkCallback(builder.build(), mNetworkCallback)
+            }
+        }
+    }
+
     fun showTip(@StringRes id: Int, useToast: Boolean = false) {
         val message = getString(id)
         if (useToast || !tipFlow.tryEmit(message)) {
@@ -558,6 +591,27 @@ class MainActivity : EhActivity() {
     override fun onProvideAssistContent(outContent: AssistContent?) {
         super.onProvideAssistContent(outContent)
         shareUrl?.let { outContent?.webUri = Uri.parse(shareUrl) }
+    }
+
+    private val mNetworkCallback = object : ConnectivityManager.NetworkCallback() {
+        private val TAG = "mNetworkCallback"
+
+        override fun onAvailable(network: Network) {
+            Log.d(TAG, "onAvailable: $network")
+            connectivityManager.bindProcessToNetwork(network)
+            availableNetworks.add(network)
+        }
+
+        override fun onLost(network: Network) {
+            Log.d(TAG, "onLost: $network")
+            val activeNetwork = availableNetworks.last()
+            availableNetworks.remove(network)
+            if (network == activeNetwork) {
+                connectivityManager.bindProcessToNetwork(
+                    availableNetworks.lastOrNull(),
+                )
+            }
+        }
     }
 }
 

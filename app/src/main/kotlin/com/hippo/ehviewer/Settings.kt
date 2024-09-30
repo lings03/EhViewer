@@ -100,6 +100,8 @@ fun <T> PrefDelegate<T>.asMutableState(): MutableState<T> {
 
 object Settings : DataStorePreferences(null) {
     private const val KEY_SHOW_TAG_TRANSLATIONS = "show_tag_translations"
+    private const val KEY_BUILT_IN_HOSTS = "built_in_hosts_2"
+    private const val KEY_DOMAIN_FRONTING = "domain_fronting"
 
     @Suppress("ktlint:standard:backing-property-naming")
     private val _favFlow = MutableSharedFlow<Unit>()
@@ -160,7 +162,10 @@ object Settings : DataStorePreferences(null) {
     var needSignIn by boolPref("need_sign_in", true)
     var harmonizeCategoryColor by boolPref("harmonize_category_color", true)
     var preloadThumbAggressively by boolPref("preload_thumb_aggressively", false)
+    var dF by boolPref(KEY_DOMAIN_FRONTING, true)
     var downloadOriginImage by boolPref("download_origin_image", false)
+    var bypassVpn by boolPref("bypass_vpn", true)
+    var enableQuic by boolPref("enable_quic", false)
     var saveAsCbz by boolPref("save_as_cbz", false)
     var archiveMetadata by boolPref("archive_metadata", true)
     var desktopSite by boolPref("desktop_site", false)
@@ -173,6 +178,10 @@ object Settings : DataStorePreferences(null) {
     var lastDawnDays by intPref("last_dawn_days", 0)
     var recentToplist by stringPref("recent_toplist", "11")
     var defaultDownloadLabel by stringOrNullPref("default_download_label", null)
+    var dohUrl by stringOrNullPref("doh_url", null)
+    var cloudflareIp by stringOrNullPref("cloudflare_ip", "cdn.sstatic.net")
+    var cloudflareIpOverride by boolPref("cloudflare_ip_override", false)
+    var enableECH by boolPref("enable_ech", false)
     var lastUpdateTime by longPref("last_update_time", BuildConfig.COMMIT_TIME)
 
     // Reader
