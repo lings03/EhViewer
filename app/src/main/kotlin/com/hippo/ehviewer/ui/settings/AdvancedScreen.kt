@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.provider.Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS
-import android.util.Log
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
@@ -48,8 +47,8 @@ import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.asMutableState
 import com.hippo.ehviewer.client.EhEngine
+import com.hippo.ehviewer.client.builtInDoHUrls
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
-import com.hippo.ehviewer.client.getEffectiveDoHUrl
 import com.hippo.ehviewer.client.systemDns
 import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.ui.legacy.EditTextDialogBuilder
@@ -87,6 +86,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okio.Path.Companion.toOkioPath
 import splitties.init.appCtx
+import tech.relaycorp.doh.DoHClient
 
 @Destination<RootGraph>
 @Composable
@@ -420,6 +420,16 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
     }
 }
 
+private fun getEffectiveDoHUrl(): String {
+    val userDefinedUrl = Settings.dohUrl
+    if (!userDefinedUrl.isNullOrBlank()) {
+        return userDefinedUrl
+    }
+    val randomizedUrls = builtInDoHUrls.shuffled()
+    val selectedUrl = randomizedUrls.firstOrNull()
+    return selectedUrl ?: throw IllegalStateException("No DoH URLs available")
+}
+
 private fun buildDoHDNS(url: String): DnsOverHttps = DnsOverHttps.Builder().apply {
     client(EhApplication.okHttpClient)
     url(url.toHttpUrl())
@@ -427,10 +437,8 @@ private fun buildDoHDNS(url: String): DnsOverHttps = DnsOverHttps.Builder().appl
     systemDns(systemDns)
 }.build()
 
-private var doh: DnsOverHttps? = getEffectiveDoHUrl().runCatching {
-    Log.d("doh", "EffectiveDoHUrl is $this")
-    buildDoHDNS(this)
-}.getOrNull()
+private var doh: DnsOverHttps? = getEffectiveDoHUrl().runCatching { buildDoHDNS(this) }.getOrNull()
+var doh2 = getEffectiveDoHUrl().runCatching { DoHClient(this) }.getOrNull()
 
 object EhDoH {
     fun lookup(hostname: String): List<InetAddress>? = doh?.runCatching { lookup(hostname).takeIf { it.isNotEmpty() } }?.onFailure { it.printStackTrace() }?.getOrNull()

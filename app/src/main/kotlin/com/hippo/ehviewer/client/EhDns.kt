@@ -8,7 +8,6 @@ import java.net.InetAddress
 import okhttp3.AsyncDns
 import okhttp3.Dns
 import okhttp3.android.AndroidAsyncDns
-import tech.relaycorp.doh.DoHClient
 
 private typealias HostsMap = MutableMap<String, List<InetAddress>>
 
@@ -50,18 +49,6 @@ fun HostsMap.hosts(vararg hosts: String, builder: HostMapBuilder.() -> Unit) = a
 }
 
 val systemDns = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6) else Dns.SYSTEM
-
-val dohClient = DoHClient(getEffectiveDoHUrl())
-
-fun getEffectiveDoHUrl(): String {
-    val userDefinedUrl = Settings.dohUrl
-    if (!userDefinedUrl.isNullOrBlank()) {
-        return userDefinedUrl
-    }
-    val randomizedUrls = builtInDoHUrls.shuffled()
-    val selectedUrl = randomizedUrls.firstOrNull()
-    return selectedUrl ?: throw IllegalStateException("No DoH URLs available")
-}
 
 object EhDns : Dns {
     override fun lookup(hostname: String): List<InetAddress> = when {

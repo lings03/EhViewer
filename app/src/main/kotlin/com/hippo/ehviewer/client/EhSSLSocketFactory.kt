@@ -17,6 +17,7 @@
  */
 package com.hippo.ehviewer.client
 
+import android.util.Log
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.builtInHosts
 import java.net.InetAddress
@@ -52,7 +53,8 @@ object EhSSLSocketFactory : SSLSocketFactory() {
             if (host in echEnabledDomains && Conscrypt.getEchConfigList(socket) == null) {
                 if (cachedEchConfig == null) {
                     runBlocking {
-                        fetchAndCacheEchConfig(dohClient)
+                        Log.d("ECH", "No cache, fetching new ECH Config")
+                        fetchAndCacheEchConfig()
                     }
                 }
                 Conscrypt.setEchConfigList(socket, cachedEchConfig)
