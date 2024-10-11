@@ -96,9 +96,13 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
     val webview = remember { Atomic<WebView?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+
     class OkHttpWebViewClient : AccompanistWebViewClient() {
 
-        override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest): WebResourceResponse? {
+        override fun shouldInterceptRequest(
+            view: WebView,
+            request: android.webkit.WebResourceRequest,
+        ): WebResourceResponse? {
             val url = request.url.toString()
             val okHttpRequest = Request.Builder()
                 .url(url)
@@ -131,14 +135,17 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
                 null
             }
         }
+
         override fun onPageFinished(view: WebView, url: String?) {
             super.onPageFinished(view, url)
             view.evaluateJavascript(jsCode, null)
         }
     }
+
     val okHttpWebViewClient = remember {
         OkHttpWebViewClient()
     }
+
     fun handlePostRequest(
         webView: WebView,
         url: String,
@@ -180,6 +187,7 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
             }
         }
     }
+
     class WebAppInterface(
         private val webView: WebView,
         private val handler: (WebView, String, String, CoroutineScope) -> Unit,
@@ -196,7 +204,10 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
                 title = { Text(text = stringResource(id = R.string.u_config)) },
                 navigationIcon = {
                     IconButton(onClick = { navigator.popBackStack() }) {
-                        Icon(imageVector = Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = null,
+                        )
                     }
                 },
                 actions = {
@@ -216,7 +227,9 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
         val state = rememberWebViewState(url = url)
         WebView(
             state = state,
-            modifier = Modifier.padding(paddingValues).fillMaxSize(),
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize(),
             onCreated = {
                 it.setDefaultSettings()
                 it.settings.javaScriptEnabled = true
