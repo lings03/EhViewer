@@ -68,8 +68,6 @@ object EhCookieStore : CookiesStorage {
 
     fun flush() = manager.flush()
 
-    fun getCookieHeader(url: String): String? = manager.getCookie(url)
-
     // See https://github.com/Ehviewer-Overhauled/Ehviewer/issues/873
     override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
         val shouldIgnore = cookie.value == "0" || (cookie.name == "igneous" && cookie.value == "deleted") || cookie.name == KEY_UTMP_NAME
