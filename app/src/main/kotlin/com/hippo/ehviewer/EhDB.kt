@@ -175,7 +175,7 @@ object EhDB {
                 for (artist in artists) {
                     logcat("Inserting artist: ${artist.artist} with GID: $gid")
                 }
-                dao.insert(artists)
+                dao.insertOrIgnore(artists)
             } catch (e: SQLiteConstraintException) {
                 logcat("SQLite constraint failed: ${e.message}")
                 throw e
