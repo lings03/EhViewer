@@ -16,6 +16,7 @@
 package com.hippo.ehviewer
 
 import android.content.Context
+import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import arrow.fx.coroutines.release
 import arrow.fx.coroutines.resource
@@ -32,8 +33,11 @@ import com.hippo.ehviewer.dao.ProgressInfo
 import com.hippo.ehviewer.dao.QuickSearch
 import com.hippo.ehviewer.dao.Schema17to18
 import com.hippo.ehviewer.download.DownloadManager
+import com.hippo.ehviewer.util.AppConfig
 import com.hippo.ehviewer.util.sendTo
+import java.io.File
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Clock
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import splitties.arch.room.roomDb
@@ -146,8 +150,39 @@ object EhDB {
         dao.fill(raw.position)
     }
 
+    fun logcat(message: String) {
+        AppConfig.externalCrashDir?.let {
+            File(it, "log.txt").appendText("${Clock.System.now()}\t$message\n\n")
+        }
+    }
+
     suspend fun putDownloadArtist(gid: Long, artists: List<DownloadArtist>) {
+        logcat("Inserting GID: $gid, Artist count: ${artists.size}")
+
         if (artists.isNotEmpty()) {
+            try {
+                val dao = db.downloadArtistDao()
+
+                // logcat("Deleting previous records for GID: $gid")
+                dao.deleteByGid(gid)
+
+                val distinctArtists = artists.distinctBy { it.artist }
+                if (artists.size != distinctArtists.size) {
+                    logcat("Detected, GID: $gid, Artist count: ${artists.size}, Distinct artist count: ${distinctArtists.size}")
+                }
+                // logcat("Artist count: ${artists.size}")
+                // logcat("Distinct artist count: ${distinctArtists.size}")
+                for (artist in artists) {
+                    logcat("Inserting artist: ${artist.artist} with GID: $gid")
+                }
+                dao.insert(artists)
+            } catch (e: SQLiteConstraintException) {
+                logcat("SQLite constraint failed: ${e.message}")
+                throw e
+            } catch (e: Exception) {
+                logcat("Unexpected error: ${e.message}")
+                throw e
+            }
             val dao = db.downloadArtistDao()
             dao.deleteByGid(gid)
             dao.insertOrIgnore(artists)
