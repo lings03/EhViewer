@@ -146,8 +146,6 @@
     <string name="rate_successfully">Rate successfully</string>
     <string name="rate_failed">Rate failed</string>
     <string name="no_torrents">No torrents</string>
-    <string name="download_torrent_started">Torrent download started</string>
-    <string name="download_torrent_failure">Failed to download torrent</string>
     <string name="torrents">Torrents</string>
     <string name="not_favorited">Not favorited</string>
     <string name="add_favorites_dialog_title">Add to favorites</string>
@@ -453,8 +451,7 @@
     <string name="image_limits_summary">Used: %1$d / %2$d</string>
     <string name="image_limits_normal">No restrictions</string>
     <string name="image_limits_restricted">Image resolution restricted to 1280x</string>
-    <string name="reset_cost">Reset Cost: %d GP</string>
-    <string name="reset_limits_succeed">Image limit was successfully reset</string>
+    <string name="reset_cost">Spend %d GP to reset</string>
     <string name="reset">Reset</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_privacy_secure">Prevent screenshots</string>

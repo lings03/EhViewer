@@ -5,11 +5,11 @@ import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.google.accompanist.web.AccompanistWebViewClient
 import com.google.accompanist.web.WebView
@@ -22,18 +22,15 @@ import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
-import com.hippo.ehviewer.ui.StartDestination
-import com.hippo.ehviewer.ui.screen.popNavigate
+import com.hippo.ehviewer.ui.composing
+import com.hippo.ehviewer.util.bgWork
 import com.hippo.ehviewer.util.setDefaultSettings
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-import eu.kanade.tachiyomi.util.lang.launchIO
-import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
-import eu.kanade.tachiyomi.util.lang.withUIContext
 import java.io.IOException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Cookie
@@ -76,8 +73,7 @@ private val jsCode = """
 @SuppressLint("JavascriptInterface")
 @Destination<RootGraph>
 @Composable
-fun WebViewSignInScreen(navigator: DestinationsNavigator) {
-    val coroutineScope = rememberCoroutineScope()
+fun AnimatedVisibilityScope.WebViewSignInScreen(navigator: DestinationsNavigator) = composing(navigator) {
     val state = rememberWebViewState(url = EhUrl.URL_SIGN_IN)
     class OkHttpWebViewClient(
         private val jsCode: String,
@@ -131,31 +127,24 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
             }
         }
 
-        private var present = false
         override fun onPageFinished(view: WebView, url: String?) {
             super.onPageFinished(view, url)
             view.evaluateJavascript(jsCode, null)
-            if (present) {
-                view.destroy()
-                return
-            }
             if (EhCookieStore.hasSignedIn()) {
-                present = true
-                coroutineScope.launchIO {
-                    withNonCancellableContext { postLogin() }
-                    withUIContext { navigator.popNavigate(StartDestination) }
-                }
+                postLogin()
+                view.destroy()
+                launch { bgWork { awaitCancellation() } }
             }
         }
     }
     class WebAppInterface(
         private val webView: WebView,
-        private val handler: (WebView, String, String, CoroutineScope) -> Unit,
+        private val handler: (WebView, String, String) -> Unit,
     ) {
         @JavascriptInterface
         fun postFormData(url: String, formData: String) {
             Log.d("WebAppInterface", "Received form data: $formData")
-            handler(webView, url, formData, coroutineScope)
+            handler(webView, url, formData)
         }
     }
     SideEffect {
@@ -166,7 +155,7 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
             jsCode = jsCode,
         )
     }
-    fun handlePostRequest(webView: WebView, url: String, formData: String, scope: CoroutineScope) {
+    fun handlePostRequest(webView: WebView, url: String, formData: String) {
         val okHttpClient = okHttpClient.newBuilder().build()
 
         val formBodyBuilder = FormBody.Builder()
@@ -235,7 +224,7 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
             return null
         }
 
-        scope.launch {
+        launch {
             try {
                 val response = withContext(Dispatchers.IO) {
                     okHttpClient.newCall(request).execute()

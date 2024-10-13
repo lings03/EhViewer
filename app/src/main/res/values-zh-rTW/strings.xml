@@ -131,8 +131,6 @@
     <string name="rate_successfully">評分成功</string>
     <string name="rate_failed">評分失敗</string>
     <string name="no_torrents">沒有種子</string>
-    <string name="download_torrent_started">開始下載種子</string>
-    <string name="download_torrent_failure">無法下載種子</string>
     <string name="torrents">種子</string>
     <string name="not_favorited">未收藏</string>
     <string name="add_favorites_dialog_title">新增到收藏裡</string>
@@ -427,8 +425,7 @@
     <string name="insufficient_funds">餘額不足</string>
     <string name="image_limits">圖片配額</string>
     <string name="image_limits_summary">已用：%1$d / %2$d</string>
-    <string name="reset_cost">重置花費：%d GP</string>
-    <string name="reset_limits_succeed">成功重置圖片配額</string>
+    <string name="reset_cost">花費 %d GP 重置</string>
     <string name="reset">重置</string>
     <string name="settings_privacy">隱私</string>
     <string name="settings_privacy_secure">不允許螢幕擷取</string>

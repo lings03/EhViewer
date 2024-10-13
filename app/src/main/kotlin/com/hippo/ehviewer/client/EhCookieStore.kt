@@ -36,6 +36,8 @@ object EhCookieStore : CookiesStorage {
         )
     }
 
+    fun getUserId() = getCookies(EhUrl.HOST_E)?.get(KEY_IPB_MEMBER_ID)
+
     fun getIdentityCookies(): List<Pair<String, String?>> {
         val eCookies = getCookies(EhUrl.HOST_E)
         val exCookies = getCookies(EhUrl.HOST_EX)
