@@ -87,6 +87,7 @@ import logcat.LogPriority
 import logcat.LogcatLogger
 import logcat.asLog
 import okhttp3.AsyncDns
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Protocol
 import okhttp3.android.AndroidAsyncDns
 import okio.Path.Companion.toOkioPath
@@ -253,6 +254,7 @@ class EhApplication :
         }
 
         // Fallback to CIO when cronet unavailable after coil 3.0 release
+        @OptIn(ExperimentalOkHttpApi::class)
         private val baseOkHttpClient by lazy {
             httpClient {
                 if (isAtLeastQ) {
