@@ -8,6 +8,7 @@ import android.provider.DocumentsContract.Document
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import androidx.core.database.getLongOrNull
+import kotlinx.io.IOException
 import okio.FileHandle
 import okio.FileMetadata
 import okio.FileSystem

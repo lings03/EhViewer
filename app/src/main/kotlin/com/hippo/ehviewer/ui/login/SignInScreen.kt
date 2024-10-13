@@ -252,7 +252,7 @@ fun SignInScreen(navigator: DestinationsNavigator) {
 
                     TextButton(
                         onClick = {
-                            Settings.needSignIn = false
+                            Settings.needSignIn.value = false
                             Settings.gallerySite = EhUrl.SITE_E
                             navigator.popNavigate(StartDestination)
                         },
@@ -348,7 +348,7 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                         }
                         TextButton(
                             onClick = {
-                                Settings.needSignIn = false
+                                Settings.needSignIn.value = false
                                 Settings.gallerySite = EhUrl.SITE_E
                                 navigator.popNavigate(StartDestination)
                             },
