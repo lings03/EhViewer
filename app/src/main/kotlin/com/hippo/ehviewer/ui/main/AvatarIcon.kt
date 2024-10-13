@@ -1,6 +1,7 @@
 package com.hippo.ehviewer.ui.main
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +20,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,57 +30,55 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import arrow.core.Either
+import arrow.core.Some
 import arrow.core.left
 import arrow.core.none
 import arrow.core.right
-import arrow.core.some
 import coil3.compose.AsyncImage
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.parser.HomeParser
 import com.hippo.ehviewer.collectAsState
-import com.hippo.ehviewer.ui.login.refreshAccountInfo
 import com.hippo.ehviewer.ui.tools.DialogState
 import com.hippo.ehviewer.util.displayString
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.retryWhen
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import moe.tarsin.coroutines.runSuspendCatching
 
 private val limitScope = CoroutineScope(Dispatchers.IO)
 private val refreshEvent = MutableSharedFlow<Unit>()
+private suspend fun refresh() = refreshEvent.emit(Unit)
+private fun <T> Flow<T>.keepIf(predicate: (old: T, new: T) -> Boolean) = distinctUntilChanged(predicate)
 
-private val limitFlow = refreshEvent.map { EhEngine.getImageLimits().right() }
-    .retryWhen<Either<String, HomeParser.Result>> { cause, _ ->
-        emit(cause.displayString().left())
-        delay(15.seconds)
-        true
-    }.map { it.some() }.shareIn(limitScope, SharingStarted.Eagerly, replay = 1)
+private val limitFlow = refreshEvent.conflate().map { EhEngine.getImageLimits().right() }
+    .retryWhen<Either<String, HomeParser.Result>> { e, _ -> emit(e.displayString().left()).let { true } }
+    .map(::Some).let { merge(it, refreshEvent.map { none() }) }
+    .keepIf { o, n -> o.isSome { it.isRight() } && n.isNone() }
+    .stateIn(limitScope, SharingStarted.Eagerly, none())
 
 context(CoroutineScope, DialogState, SnackbarHostState)
 @Composable
 fun AvatarIcon() {
     val hasSignedIn by Settings.hasSignedIn.collectAsState()
-    val avatar by Settings.avatar.collectAsState()
     if (hasSignedIn) {
         val placeholder = stringResource(id = R.string.please_wait)
         val resetImageLimitSucceed = stringResource(id = R.string.reset_limits_succeed)
-        val result by limitFlow.collectAsState(none())
-        LaunchedEffect(Unit) {
-            refreshEvent.emit(Unit)
-            refreshAccountInfo()
-        }
+        val result by limitFlow.collectAsState()
         IconButton(
             onClick = {
                 launch {
+                    refresh()
                     awaitConfirmationOrCancel(
                         confirmText = R.string.reset,
                         title = R.string.image_limits,
@@ -102,8 +100,9 @@ fun AvatarIcon() {
                                 is Either.Right -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     val (limits, funds) = current.value
                                     if (limits.maximum > 0) {
+                                        val value by animateFloatAsState(limits.current.toFloat() / limits.maximum)
                                         LinearProgressIndicator(
-                                            progress = { limits.current.toFloat() / limits.maximum },
+                                            progress = { value },
                                             modifier = Modifier.height(12.dp).fillMaxWidth(),
                                         )
                                     }
@@ -138,12 +137,13 @@ fun AvatarIcon() {
                     runSuspendCatching {
                         EhEngine.resetImageLimits()
                     }.onSuccess {
-                        refreshEvent.emit(Unit)
+                        refresh()
                         showSnackbar(resetImageLimitSucceed)
                     }
                 }
             },
         ) {
+            val avatar by Settings.avatar.collectAsState()
             AnimatedContent(targetState = avatar == null) { noAvatar ->
                 if (noAvatar) {
                     Icon(imageVector = Icons.Default.Person, contentDescription = null)
