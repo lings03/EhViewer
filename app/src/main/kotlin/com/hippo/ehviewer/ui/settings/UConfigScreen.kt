@@ -88,7 +88,7 @@ private val jsCode = """
 val url = EhUrl.uConfigUrl
 val cookieHeader = EhCookieStore.getCookieHeader(url)
 
-@SuppressLint("JavascriptInterface")
+@SuppressLint("JavascriptInterface", "SetJavaScriptEnabled")
 @Destination<RootGraph>
 @Composable
 fun UConfigScreen(navigator: DestinationsNavigator) {
@@ -131,7 +131,7 @@ fun UConfigScreen(navigator: DestinationsNavigator) {
                     response.body.close()
                     null
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }

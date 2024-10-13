@@ -22,7 +22,6 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.ViewConfiguration
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * A Gesture detector that waits for pointer down and touch slop in the horizontal direction and
