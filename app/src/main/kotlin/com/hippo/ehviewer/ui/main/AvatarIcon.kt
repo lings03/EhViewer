@@ -19,7 +19,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,10 +32,10 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import arrow.core.Either
-import arrow.core.Some
-import arrow.core.left
+import arrow.core.Either.Companion.catch
+import arrow.core.Option
 import arrow.core.none
-import arrow.core.right
+import arrow.core.some
 import coil3.compose.AsyncImage
 import com.hippo.ehviewer.R
 import com.hippo.ehviewer.Settings
@@ -46,27 +48,31 @@ import com.hippo.ehviewer.util.displayString
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import moe.tarsin.coroutines.runSuspendCatching
+import moe.tarsin.coroutines.runSwallowingWithUI
 
 private val limitScope = CoroutineScope(Dispatchers.IO)
 private val refreshEvent = MutableSharedFlow<Unit>()
-private suspend fun refresh() = refreshEvent.emit(Unit)
-private fun <T> Flow<T>.keepIf(predicate: (old: T, new: T) -> Boolean) = distinctUntilChanged(predicate)
+private val invalidateEvent = MutableSharedFlow<Unit>()
 
-private val limitFlow = refreshEvent.conflate().map { EhEngine.getImageLimits().right() }
-    .retryWhen<Either<String, HomeParser.Result>> { e, _ -> emit(e.displayString().left()).let { true } }
-    .map(::Some).let { merge(it, refreshEvent.map { none() }) }
-    .keepIf { o, n -> o.isSome { it.isRight() } && n.isNone() }
+typealias Result = Option<Either<String, HomeParser.Result>>
+
+private val limitFlow: StateFlow<Result> = refreshEvent.conflate()
+    .onEach {
+        // If cached value is error, drop it when refresh
+        val isError = limitFlow.value.isSome { it.isLeft() }
+        if (isError) invalidateEvent.emit(Unit)
+    }
+    .map { catch { EhEngine.getImageLimits() }.mapLeft { e -> e.displayString() }.some() }
+    .let { src -> merge(src, invalidateEvent.map { none() }) }
     .stateIn(limitScope, SharingStarted.Eagerly, none())
 
 context(CoroutineScope, DialogState, SnackbarHostState, DestinationsNavigator)
@@ -80,13 +86,19 @@ fun AvatarIcon() {
         IconButton(
             onClick = {
                 launch {
-                    refresh()
+                    refreshEvent.emit(Unit)
                     awaitConfirmationOrCancel(
-                        confirmText = R.string.reset,
+                        confirmButton = {
+                            TextButton(onClick = it, enabled = result.isSome { it.isRight { it.limits.resetCost != 0 } }) {
+                                Text(text = stringResource(id = R.string.reset))
+                            }
+                        },
                         title = R.string.image_limits,
-                        confirmButtonEnabled = result.isSome { it.isRight { it.limits.resetCost != 0 } },
                     ) {
                         result.onNone {
+                            LaunchedEffect(Unit) {
+                                refreshEvent.emit(Unit)
+                            }
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -136,10 +148,9 @@ fun AvatarIcon() {
                             }
                         }
                     }
-                    runSuspendCatching {
+                    runSwallowingWithUI {
                         EhEngine.resetImageLimits()
-                    }.onSuccess {
-                        refresh()
+                        invalidateEvent.emit(Unit)
                         showSnackbar(resetImageLimitSucceed)
                     }
                 }
