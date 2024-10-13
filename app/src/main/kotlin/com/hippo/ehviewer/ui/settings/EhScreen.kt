@@ -41,9 +41,7 @@ import com.hippo.ehviewer.client.EhUtils
 import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.ui.destinations.FilterScreenDestination
 import com.hippo.ehviewer.ui.destinations.MyTagsScreenDestination
-import com.hippo.ehviewer.ui.destinations.SignInScreenDestination
 import com.hippo.ehviewer.ui.destinations.UConfigScreenDestination
-import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.ui.tools.rememberedAccessor
@@ -53,7 +51,6 @@ import com.jamal.composeprefs3.ui.prefs.SwitchPref
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-import eu.kanade.tachiyomi.util.lang.withUIContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
@@ -82,7 +79,6 @@ fun EhScreen(navigator: DestinationsNavigator) {
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
-        val guestMode = stringResource(id = R.string.settings_eh_identity_cookies_guest)
         val copiedToClipboard = stringResource(id = R.string.copied_to_clipboard)
         Column(
             modifier = Modifier
@@ -90,21 +86,21 @@ fun EhScreen(navigator: DestinationsNavigator) {
                 .verticalScroll(rememberScrollState())
                 .padding(paddingValues),
         ) {
-            val displayName by Settings.displayName.collectAsState()
-            Preference(
-                title = stringResource(id = R.string.account_name),
-                summary = displayName ?: guestMode,
-            ) {
-                coroutineScope.launch {
-                    val cookies = EhCookieStore.getIdentityCookies()
-                    dialogState.awaitConfirmationOrCancel(
-                        confirmText = R.string.settings_eh_sign_out,
-                        dismissText = R.string.settings_eh_clear_igneous,
-                        showCancelButton = cookies.last().second != null,
-                        onCancelButtonClick = { EhCookieStore.clearIgneous() },
-                        secure = hasSignedIn,
-                    ) {
-                        if (hasSignedIn) {
+            if (hasSignedIn) {
+                val displayName by Settings.displayName.collectAsState()
+                Preference(
+                    title = stringResource(id = R.string.account_name),
+                    summary = displayName ?: "???",
+                ) {
+                    coroutineScope.launch {
+                        val cookies = EhCookieStore.getIdentityCookies()
+                        dialogState.awaitConfirmationOrCancel(
+                            confirmText = R.string.settings_eh_sign_out,
+                            dismissText = R.string.settings_eh_clear_igneous,
+                            showCancelButton = cookies.last().second != null,
+                            onCancelButtonClick = { EhCookieStore.clearIgneous() },
+                            secure = true,
+                        ) {
                             Column {
                                 val warning = stringResource(id = R.string.settings_eh_identity_cookies_signed)
                                 val str = cookies.joinToString("\n") { (k, v) -> "$k: $v" }
@@ -125,17 +121,10 @@ fun EhScreen(navigator: DestinationsNavigator) {
                                     },
                                 )
                             }
-                        } else {
-                            Text(text = guestMode)
                         }
-                    }
-                    EhUtils.signOut()
-                    withUIContext {
-                        navigator.popNavigate(SignInScreenDestination)
+                        EhUtils.signOut()
                     }
                 }
-            }
-            if (hasSignedIn) {
                 SimpleMenuPreferenceInt(
                     title = stringResource(id = R.string.settings_eh_gallery_site),
                     entry = R.array.gallery_site_entries,

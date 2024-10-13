@@ -5,11 +5,11 @@ import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.google.accompanist.web.AccompanistWebViewClient
 import com.google.accompanist.web.WebView
@@ -22,12 +22,14 @@ import com.hippo.ehviewer.client.CHROME_ACCEPT_LANGUAGE
 import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
-import com.hippo.ehviewer.ui.StartDestination
-import com.hippo.ehviewer.ui.screen.popNavigate
+import com.hippo.ehviewer.ui.composing
+import com.hippo.ehviewer.util.bgWork
 import com.hippo.ehviewer.util.setDefaultSettings
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
@@ -76,10 +78,18 @@ private val jsCode = """
 @SuppressLint("JavascriptInterface")
 @Destination<RootGraph>
 @Composable
-fun WebViewSignInScreen(navigator: DestinationsNavigator) {
-    val coroutineScope = rememberCoroutineScope()
+fun AnimatedVisibilityScope.WebViewSignInScreen(navigator: DestinationsNavigator) = composing(navigator) {
     val state = rememberWebViewState(url = EhUrl.URL_SIGN_IN)
-    class OkHttpWebViewClient(
+    val client = remember {
+        object : AccompanistWebViewClient() {
+            override fun onPageFinished(view: WebView, url: String?) {
+                if (EhCookieStore.hasSignedIn()) {
+                    postLogin()
+                    view.destroy()
+                    launch { bgWork { awaitCancellation() } }
+                }
+            }
+    inner class OkHttpWebViewClient(
         private val jsCode: String,
     ) : AccompanistWebViewClient() {
 
@@ -275,14 +285,7 @@ fun WebViewSignInScreen(navigator: DestinationsNavigator) {
     WebView(
         state = state,
         modifier = Modifier.fillMaxSize(),
-        onCreated = { webView ->
-            webView.setDefaultSettings()
-            webView.settings.javaScriptEnabled = true
-            webView.addJavascriptInterface(
-                WebAppInterface(webView, ::handlePostRequest),
-                "Android",
-            )
-        },
+        onCreated = { it.setDefaultSettings() },
         client = okHttpWebViewClient,
     )
 }
