@@ -1,6 +1,5 @@
 package com.hippo.ehviewer.ui.screen
 
-import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -131,10 +130,7 @@ import com.hippo.ehviewer.ui.tools.rememberInVM
 import com.hippo.ehviewer.util.FavouriteStatusRouter
 import com.hippo.ehviewer.util.addTextToClipboard
 import com.hippo.ehviewer.util.bgWork
-import com.hippo.ehviewer.util.displayString
 import com.hippo.ehviewer.util.flattenForEach
-import com.hippo.ehviewer.util.isAtLeastQ
-import com.hippo.ehviewer.util.requestPermission
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.launchUI
@@ -142,6 +138,7 @@ import eu.kanade.tachiyomi.util.lang.withIOContext
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.http.encodeURLParameter
+import kotlin.coroutines.resume
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -150,6 +147,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import moe.tarsin.coroutines.runSuspendCatching
+import moe.tarsin.coroutines.runSwallowingWithUI
 
 context(CoroutineScope, DestinationsNavigator, DialogState, MainActivity, SnackbarHostState, SharedTransitionScope, TransitionsVisibilityScope)
 @Composable
@@ -542,7 +540,6 @@ fun BelowHeader(galleryDetail: GalleryDetail) {
             },
         )
         val torrentText = stringResource(R.string.torrent_count, galleryDetail.torrentCount)
-        val permissionDenied = stringResource(R.string.permission_denied)
         val noTorrents = stringResource(R.string.no_torrents)
         val torrentResult = remember(galleryDetail) {
             async(Dispatchers.IO + Job(), CoroutineStart.LAZY) {
@@ -561,7 +558,7 @@ fun BelowHeader(galleryDetail: GalleryDetail) {
                 val selected = showNoButton(false) {
                     TorrentList(
                         items = torrentList,
-                        onItemClick = { dismissWith(it) },
+                        onItemClick = { resume(it) },
                     )
                 }
                 val hash = selected.url.dropLast(8).takeLast(40)
@@ -581,19 +578,9 @@ fun BelowHeader(galleryDetail: GalleryDetail) {
             text = torrentText,
             onClick = {
                 launchIO {
-                    if (galleryDetail.torrentCount > 0) {
-                        val granted = isAtLeastQ || requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        if (granted) {
-                            runSuspendCatching {
-                                showTorrentDialog()
-                            }.onFailure {
-                                showSnackbar(it.displayString())
-                            }
-                        } else {
-                            showSnackbar(permissionDenied)
-                        }
-                    } else {
-                        showSnackbar(noTorrents)
+                    when {
+                        galleryDetail.torrentCount <= 0 -> showSnackbar(noTorrents)
+                        else -> runSwallowingWithUI { showTorrentDialog() }
                     }
                 }
             },

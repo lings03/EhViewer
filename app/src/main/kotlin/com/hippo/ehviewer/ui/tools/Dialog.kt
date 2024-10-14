@@ -51,6 +51,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,6 +78,7 @@ import arrow.core.raise.either
 import arrow.core.right
 import com.jamal.composeprefs3.ui.ifNotNullThen
 import com.jamal.composeprefs3.ui.ifTrueThen
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.flow.collectLatest
@@ -91,22 +93,19 @@ interface DialogScope<R> {
     var expectedValue: R
 }
 
-fun interface DismissDialogScope<R> {
-    fun dismissWith(value: R)
-}
+typealias MutableComposable = MutableState<(@Composable () -> Unit)?>
 
-class DialogState {
-    var content: (@Composable () -> Unit)? by mutableStateOf(null)
-
+@JvmInline
+value class DialogState(val field: MutableComposable = mutableStateOf(null)) : MutableComposable by field {
     @Composable
-    fun Intercept() = content?.invoke()
+    fun Intercept() = value?.invoke()
 
     fun dismiss() {
-        content = null
+        value = null
     }
 
     suspend inline fun <R> dialog(crossinline block: @Composable (CancellableContinuation<R>) -> Unit) = try {
-        suspendCancellableCoroutine { cont -> content = { block(cont) } }
+        suspendCancellableCoroutine { cont -> value = { block(cont) } }
     } finally {
         dismiss()
     }
@@ -272,32 +271,12 @@ class DialogState {
         )
     }
 
+
     suspend fun awaitConfirmationOrCancel(
         @StringRes confirmText: Int = android.R.string.ok,
         @StringRes dismissText: Int = android.R.string.cancel,
         @StringRes title: Int? = null,
-        showCancelButton: Boolean = true,
-        onCancelButtonClick: () -> Unit = {},
-        secure: Boolean = false,
-        text: @Composable (() -> Unit)? = null,
-    ) = awaitConfirmationOrCancel(
-        confirmButton = {
-            TextButton(onClick = it) {
-                Text(text = stringResource(id = confirmText))
-            }
-        },
-        dismissText = dismissText,
-        title = title,
-        showCancelButton = showCancelButton,
-        onCancelButtonClick = onCancelButtonClick,
-        secure = secure,
-        text = text,
-    )
-
-    suspend fun awaitConfirmationOrCancel(
-        confirmButton: @Composable (() -> Unit) -> Unit,
-        @StringRes dismissText: Int = android.R.string.cancel,
-        @StringRes title: Int? = null,
+        showConfirmButton: Boolean = true,
         showCancelButton: Boolean = true,
         onCancelButtonClick: () -> Unit = {},
         secure: Boolean = false,
@@ -305,7 +284,13 @@ class DialogState {
     ) = dialog { cont ->
         AlertDialog(
             onDismissRequest = { cont.cancel() },
-            confirmButton = { confirmButton { cont.resume(Unit) } },
+            confirmButton = {
+                if (showConfirmButton) {
+                    TextButton(onClick = { cont.resume(Unit) }) {
+                        Text(text = stringResource(id = confirmText))
+                    }
+                }
+            },
             dismissButton = showCancelButton.ifTrueThen {
                 TextButton(onClick = {
                     onCancelButtonClick()
@@ -366,12 +351,7 @@ class DialogState {
         }
     }
 
-    suspend fun <R> showNoButton(respectDefaultWidth: Boolean = true, block: @Composable DismissDialogScope<R>.() -> Unit): R = dialog { cont ->
-        val impl = remember(cont) {
-            DismissDialogScope<R> {
-                cont.resume(it)
-            }
-        }
+    suspend fun <R> showNoButton(respectDefaultWidth: Boolean = true, block: @Composable Continuation<R>.() -> Unit): R = dialog { cont ->
         BasicAlertDialog(
             onDismissRequest = { cont.cancel() },
             properties = DialogProperties(usePlatformDefaultWidth = respectDefaultWidth),
@@ -381,7 +361,7 @@ class DialogState {
                     shape = AlertDialogDefaults.shape,
                     color = AlertDialogDefaults.containerColor,
                     tonalElevation = AlertDialogDefaults.TonalElevation,
-                    content = { block(impl) },
+                    content = { block(cont) },
                 )
             },
         )
@@ -444,11 +424,10 @@ class DialogState {
             }
             items.forEachIndexed { index, text ->
                 Row(
-                    modifier = Modifier.clickable { dismissWith(index) }.fillMaxWidth()
-                        .padding(horizontal = 8.dp),
+                    modifier = Modifier.clickable { resume(index) }.fillMaxWidth().padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    RadioButton(selected = index == selected, onClick = { dismissWith(index) })
+                    RadioButton(selected = index == selected, onClick = { resume(index) })
                     Text(text = text)
                 }
             }
@@ -481,7 +460,7 @@ class DialogState {
                     CheckableItem(
                         text = text,
                         checked = index == selected,
-                        modifier = Modifier.fillMaxWidth().clickable { dismissWith(index) }.padding(horizontal = 8.dp),
+                        modifier = Modifier.fillMaxWidth().clickable { resume(index) }.padding(horizontal = 8.dp),
                     )
                 }
             }
@@ -493,7 +472,7 @@ class DialogState {
         selected: Int = -1,
         builder: ActionScope.() -> Unit,
     ): suspend () -> Unit {
-        val (items, actions) = buildList { builder(ActionScope { action, that -> add(action to that) }) }.unzip()
+        val (items, actions) = buildList { builder { action, that -> add(action to that) } }.unzip()
         val index = awaitSelectItem(items, title, selected)
         return actions[index]
     }
@@ -517,7 +496,7 @@ class DialogState {
                     CheckableItem(
                         text = text,
                         checked = index == selected,
-                        modifier = Modifier.fillMaxWidth().clickable { dismissWith(index to checked) }.padding(horizontal = 8.dp),
+                        modifier = Modifier.fillMaxWidth().clickable { resume(index to checked) }.padding(horizontal = 8.dp),
                     )
                 }
             }
@@ -540,13 +519,9 @@ class DialogState {
             }
             itemsIndexed(items) { index, (icon, text) ->
                 ListItem(
-                    headlineContent = {
-                        Text(text = stringResource(id = text), style = MaterialTheme.typography.titleMedium)
-                    },
-                    modifier = Modifier.clickable { dismissWith(index) }.padding(horizontal = 8.dp),
-                    leadingContent = {
-                        Icon(imageVector = icon, contentDescription = null, tint = AlertDialogDefaults.iconContentColor)
-                    },
+                    headlineContent = { Text(text = stringResource(id = text), style = MaterialTheme.typography.titleMedium) },
+                    modifier = Modifier.clickable { resume(index) }.padding(horizontal = 8.dp),
+                    leadingContent = { Icon(imageVector = icon, contentDescription = null, tint = AlertDialogDefaults.iconContentColor) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
@@ -594,8 +569,7 @@ class DialogState {
                 )
                 items.forEachIndexed { index, (icon, text) ->
                     Column(
-                        modifier = Modifier.clip(IconWithTextCorner).clickable { dismissWith(index to note) }
-                            .fillMaxWidth(0.2F),
+                        modifier = Modifier.clip(IconWithTextCorner).clickable { resume(index to note) }.fillMaxWidth(0.2F),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(imageVector = icon, contentDescription = null, tint = AlertDialogDefaults.iconContentColor)

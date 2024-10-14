@@ -3,6 +3,7 @@ package com.hippo.ehviewer.ui.main
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,20 +14,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NoAccounts
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -46,6 +49,7 @@ import com.hippo.ehviewer.collectAsState
 import com.hippo.ehviewer.ui.tools.DialogState
 import com.hippo.ehviewer.util.displayString
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import eu.kanade.tachiyomi.util.lang.launchIO
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -81,24 +85,18 @@ fun AvatarIcon() {
     val hasSignedIn by Settings.hasSignedIn.collectAsState()
     if (hasSignedIn) {
         val placeholder = stringResource(id = R.string.please_wait)
-        val resetImageLimitSucceed = stringResource(id = R.string.reset_limits_succeed)
         val result by limitFlow.collectAsState()
         IconButton(
             onClick = {
                 launch {
                     refreshEvent.emit(Unit)
                     awaitConfirmationOrCancel(
-                        confirmButton = {
-                            TextButton(onClick = it, enabled = result.isSome { it.isRight { it.limits.resetCost != 0 } }) {
-                                Text(text = stringResource(id = R.string.reset))
-                            }
-                        },
                         title = R.string.image_limits,
+                        showConfirmButton = false,
+                        showCancelButton = false,
                     ) {
+                        val animatedAlpha by animateFloatAsState(if (remember { result } == result) 0.5f else 1f)
                         result.onNone {
-                            LaunchedEffect(Unit) {
-                                refreshEvent.emit(Unit)
-                            }
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -109,49 +107,63 @@ fun AvatarIcon() {
                             }
                         }
                         result.onSome { current ->
-                            when (current) {
-                                is Either.Left -> Text(text = current.value)
-                                is Either.Right -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    val (limits, funds) = current.value
-                                    if (limits.maximum > 0) {
-                                        val value by animateFloatAsState(limits.current.toFloat() / limits.maximum)
-                                        LinearProgressIndicator(
-                                            progress = { value },
-                                            modifier = Modifier.height(12.dp).fillMaxWidth(),
+                            Box(modifier = Modifier.graphicsLayer { alpha = animatedAlpha }) {
+                                when (current) {
+                                    is Either.Left -> Text(text = current.value)
+                                    is Either.Right -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        val (limits, funds) = current.value
+                                        if (limits.maximum > 0) {
+                                            val value by animateFloatAsState(limits.current.toFloat() / limits.maximum)
+                                            LinearProgressIndicator(
+                                                progress = { value },
+                                                modifier = Modifier.height(12.dp).fillMaxWidth(),
+                                            )
+                                        }
+                                        Text(
+                                            text = when (limits.maximum) {
+                                                -1 -> stringResource(id = R.string.image_limits_restricted)
+                                                0 -> stringResource(id = R.string.image_limits_normal)
+                                                else -> stringResource(id = R.string.image_limits_summary, limits.current, limits.maximum)
+                                            },
                                         )
-                                    }
-                                    Text(
-                                        text = when (limits.maximum) {
-                                            -1 -> stringResource(id = R.string.image_limits_restricted)
-                                            0 -> stringResource(id = R.string.image_limits_normal)
-                                            else -> stringResource(id = R.string.image_limits_summary, limits.current, limits.maximum)
-                                        },
-                                    )
-                                    if (limits.resetCost > 0) {
-                                        Text(text = stringResource(id = R.string.reset_cost, limits.resetCost))
-                                    }
-                                    Text(text = stringResource(id = R.string.current_funds))
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceAround,
-                                    ) {
-                                        FundsItem(
-                                            type = "GP",
-                                            amount = funds.gp,
-                                        )
-                                        FundsItem(
-                                            type = "C",
-                                            amount = funds.credit,
-                                        )
+                                        Text(text = stringResource(id = R.string.current_funds))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceAround,
+                                        ) {
+                                            FundsItem(
+                                                type = "GP",
+                                                amount = funds.gp,
+                                            )
+                                            FundsItem(
+                                                type = "C",
+                                                amount = funds.credit,
+                                            )
+                                        }
+                                        if (limits.resetCost > 0) {
+                                            Button(
+                                                onClick = {
+                                                    launchIO {
+                                                        runSwallowingWithUI {
+                                                            invalidateEvent.emit(Unit)
+                                                            EhEngine.resetImageLimits()
+                                                            refreshEvent.emit(Unit)
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.RestartAlt,
+                                                    contentDescription = stringResource(id = R.string.reset),
+                                                )
+                                                Text(text = stringResource(id = R.string.reset_cost, limits.resetCost))
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    runSwallowingWithUI {
-                        EhEngine.resetImageLimits()
-                        invalidateEvent.emit(Unit)
-                        showSnackbar(resetImageLimitSucceed)
                     }
                 }
             },
