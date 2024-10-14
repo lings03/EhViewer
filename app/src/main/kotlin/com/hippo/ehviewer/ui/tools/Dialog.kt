@@ -271,7 +271,6 @@ value class DialogState(val field: MutableComposable = mutableStateOf(null)) : M
         )
     }
 
-
     suspend fun awaitConfirmationOrCancel(
         @StringRes confirmText: Int = android.R.string.ok,
         @StringRes dismissText: Int = android.R.string.cancel,
