@@ -111,8 +111,6 @@ data class TokenArgs(
 
 @Destination<RootGraph>
 @Composable
-fun AnimatedVisibilityScope.GalleryDetailScreen(args: GalleryDetailScreenArgs, navigator: DestinationsNavigator) = composing(navigator) {
-    val (gid, token) = remember(args) {
 fun AnimatedVisibilityScope.GalleryDetailScreen(
     args: GalleryDetailScreenArgs,
     navigator: DestinationsNavigator,
@@ -129,11 +127,6 @@ fun AnimatedVisibilityScope.GalleryDetailScreen(
     }
     val galleryDetailUrl = remember(gid, token) { EhUrl.getGalleryDetailUrl(gid, token, 0, false) }
     ProvideAssistContent(galleryDetailUrl)
-
-    var galleryInfo by rememberInVM {
-        val casted = args as? GalleryInfoArgs
-        mutableStateOf<GalleryInfo?>(casted?.galleryInfo)
-    }
 
     var getDetailError by rememberSaveable { mutableStateOf("") }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()

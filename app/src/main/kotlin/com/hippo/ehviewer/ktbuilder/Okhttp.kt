@@ -6,8 +6,7 @@ import okhttp3.OkHttpClient
 import okio.FileSystem
 import okio.Path
 
-inline fun httpClient(builder: OkHttpClient.Builder.() -> Unit): OkHttpClient =
-    OkHttpClient.Builder().apply(builder).build()
+inline fun httpClient(builder: OkHttpClient.Builder.() -> Unit): OkHttpClient = OkHttpClient.Builder().apply(builder).build()
 
 inline fun httpClient(
     client: OkHttpClient,

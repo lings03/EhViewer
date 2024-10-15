@@ -24,27 +24,26 @@ import kotlinx.coroutines.launch
 
 @Destination<RootGraph>
 @Composable
-fun AnimatedVisibilityScope.WebViewSignInScreen(navigator: DestinationsNavigator) =
-    composing(navigator) {
-        val state = rememberWebViewState(url = EhUrl.URL_SIGN_IN)
-        val client = remember {
-            object : AccompanistWebViewClient() {
-                override fun onPageFinished(view: WebView, url: String?) {
-                    if (EhCookieStore.hasSignedIn()) {
-                        postLogin()
-                        view.destroy()
-                        launch { bgWork { awaitCancellation() } }
-                    }
+fun AnimatedVisibilityScope.WebViewSignInScreen(navigator: DestinationsNavigator) = composing(navigator) {
+    val state = rememberWebViewState(url = EhUrl.URL_SIGN_IN)
+    val client = remember {
+        object : AccompanistWebViewClient() {
+            override fun onPageFinished(view: WebView, url: String?) {
+                if (EhCookieStore.hasSignedIn()) {
+                    postLogin()
+                    view.destroy()
+                    launch { bgWork { awaitCancellation() } }
                 }
             }
         }
-        SideEffect {
-            EhUtils.signOut()
-        }
-        WebView(
-            state = state,
-            modifier = Modifier.fillMaxSize(),
-            onCreated = { it.setDefaultSettings() },
-            client = client,
-        )
     }
+    SideEffect {
+        EhUtils.signOut()
+    }
+    WebView(
+        state = state,
+        modifier = Modifier.fillMaxSize(),
+        onCreated = { it.setDefaultSettings() },
+        client = client,
+    )
+}
