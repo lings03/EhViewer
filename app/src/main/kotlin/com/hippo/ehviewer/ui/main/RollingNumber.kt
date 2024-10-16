@@ -13,6 +13,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,56 +48,48 @@ fun RollingNumber(number: Int, style: TextStyle = LocalTextStyle.current) {
         },
         horizontalArrangement = Arrangement.End,
     ) {
-        val from = transition.currentState
-        val fromLen = from.length
-        val to = transition.targetState
-        val toLen = to.length
-        val max = max(fromLen, toLen)
-        repeat(max) { where ->
-            val rotate by transition.animateOffset { str ->
-                val len = str.length
-                val absent = max - len
-                val v = if (where < absent) null else str[where - absent].digitToInt()
-                mapSimplyConnectedElementToEuclideanPartialCircle(v)
-            }
-            Column(
-                modifier = Modifier.offset {
-                    val degree = atan2(rotate.y, rotate.x)
-                    val normalized = normalize(degree - zeroDegree)
-                    val number = if (normalized > 9 * gap) {
-                        val reNormalized = normalized - 9 * gap - gap / 2
-                        if (reNormalized > 0) {
-                            // 9 side
-                            9 + reNormalized / gap * 2
-                        } else {
-                            // 0 side
-                            reNormalized / gap * 2
-                        }
-                    } else {
-                        normalized / gap
-                    }
-                    numberToOffset(size, 9 - number)
-                },
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = " ",
-                    style = style,
-                )
-                repeat(10) { i ->
-                    Text(
-                        text = "${9 - i}",
-                        style = style,
-                    )
+        val content = remember {
+            val meta = @Composable { reversed: Int ->
+                val max = with(transition) { max(currentState.length, targetState.length) }
+                val rotate by transition.animateOffset { str ->
+                    val len = str.length
+                    val absent = max - len
+                    val where = max - reversed - 1
+                    val v = if (where < absent) null else str[where - absent].digitToInt()
+                    mapSimplyConnectedElementToEuclideanPartialCircle(v)
                 }
-                Text(
-                    text = " ",
-                    style = style,
-                )
+                Column(
+                    modifier = Modifier.offset {
+                        val number = partialCircleToLinearUIOffset(rotate)
+                        numberToOffset(size, 9 - number)
+                    },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    repeat(10) { i ->
+                        Text(
+                            text = "${9 - i}",
+                            style = style,
+                        )
+                        Text(
+                            text = " ",
+                            style = style,
+                        )
+                    }
+                }
             }
+            (0 until maxNumber).map {
+                movableContentOf { meta(it) }
+            }
+        }
+        val max = with(transition) { max(currentState.length, targetState.length) }
+        check(max <= maxNumber)
+        repeat(max) { index ->
+            content[max - index - 1]()
         }
     }
 }
+
+private const val maxNumber = 5
 
 // This factor controls animation speed
 private const val factor = 10f
@@ -110,10 +103,28 @@ private const val zeroDegree = -(PI / 2 + gap / 2).toFloat()
 // but null is always mapped to (0, 2 * factor), and keep same norm (distance) with 0 and 9
 private fun mapSimplyConnectedElementToEuclideanPartialCircle(value: Int?): Offset {
     if (value != null) {
-        val theta = zeroDegree + value * gap
+        val theta = zeroDegree - value * gap
         return Offset(cos(theta), sin(theta)) * factor
     } else {
         return Offset(0f, -2f) * factor
+    }
+}
+
+// Output: -1 ~ 10, where -1 and 10 shows nothing
+private fun partialCircleToLinearUIOffset(circleOffset: Offset): Float {
+    val degree = atan2(circleOffset.y, circleOffset.x)
+    val normalized = normalize(zeroDegree - degree)
+    return if (normalized > 9 * gap) {
+        val reNormalized = normalized - 9 * gap - gap / 2
+        if (reNormalized > 0) {
+            // 0 side
+            reNormalized / gap * 2 - 1
+        } else {
+            // 9 side
+            10 + reNormalized / gap * 2
+        }
+    } else {
+        normalized / gap
     }
 }
 
@@ -121,4 +132,4 @@ private fun mapSimplyConnectedElementToEuclideanPartialCircle(value: Int?): Offs
 private fun normalize(degree: Float) = (degree - 2 * PI * floor(degree / (2 * PI))).toFloat()
 
 // Convert 2d euclidean space partial circle to UI Offset
-private fun numberToOffset(size: IntSize, number: Float) = IntOffset(0, -(size.height * (number + 1)).toInt())
+private fun numberToOffset(size: IntSize, number: Float) = IntOffset(0, -(size.height * 2 * number).toInt())
