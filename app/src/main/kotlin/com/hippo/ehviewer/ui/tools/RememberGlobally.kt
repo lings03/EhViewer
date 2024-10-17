@@ -1,5 +1,6 @@
 package com.hippo.ehviewer.ui.tools
 
+import androidx.collection.mutableIntObjectMapOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.DisposableEffect
@@ -36,17 +37,17 @@ val dataStore = PreferenceDataStoreFactory.create { appCtx.dataStoreFile("Rememb
 val dataStateFlow = dataStore.data.stateIn(dataStoreScope, SharingStarted.Eagerly, emptyPreferences())
 
 class StateMapViewModel : ViewModel() {
-    val statesMap = mutableMapOf<Int, ArrayDeque<Any>>()
+    val statesMap = mutableIntObjectMapOf<ArrayDeque<Any>>()
 }
 
 @Composable
 inline fun <reified T : Any> rememberInVM(
-    vararg inputs: Any?,
+    userKey: Any? = null,
     crossinline init: @DisallowComposableCalls ViewModel.() -> T,
 ) = with(viewModel<StateMapViewModel>()) {
     val key = currentCompositeKeyHash
-    remember(*inputs) {
-        val states = statesMap.getOrPut(key) { ArrayDeque() }
+    remember(userKey) {
+        val states = statesMap.getOrPut(key, ::ArrayDeque)
         states.removeLastOrNull() as T? ?: init()
     }.also { value ->
         val valueState by rememberUpdatedState(value)

@@ -21,7 +21,6 @@ import android.content.Context
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.collection.LruCache
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.coroutineScope
 import coil3.EventListener
@@ -39,7 +38,6 @@ import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhDns
 import com.hippo.ehviewer.client.EhSSLSocketFactory
 import com.hippo.ehviewer.client.EhTagDatabase
-import com.hippo.ehviewer.client.data.GalleryDetail
 import com.hippo.ehviewer.client.install
 import com.hippo.ehviewer.coil.CropBorderInterceptor
 import com.hippo.ehviewer.coil.DetectBorderInterceptor
@@ -58,15 +56,16 @@ import com.hippo.ehviewer.ktbuilder.diskCache
 import com.hippo.ehviewer.ktbuilder.httpClient
 import com.hippo.ehviewer.ktbuilder.imageLoader
 import com.hippo.ehviewer.ktor.Cronet
-import com.hippo.ehviewer.legacy.cleanObsoleteCache
 import com.hippo.ehviewer.ui.keepNoMediaFileStatus
 import com.hippo.ehviewer.ui.lockObserver
+import com.hippo.ehviewer.ui.screen.detailCache
 import com.hippo.ehviewer.ui.tools.dataStateFlow
 import com.hippo.ehviewer.ui.tools.initSETConnection
 import com.hippo.ehviewer.util.AppConfig
-import com.hippo.ehviewer.util.Crash
+import com.hippo.ehviewer.util.CrashHandler
 import com.hippo.ehviewer.util.FavouriteStatusRouter
 import com.hippo.ehviewer.util.FileUtils
+import com.hippo.ehviewer.util.OSUtils
 import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastP
 import com.hippo.ehviewer.util.isAtLeastQ
@@ -74,6 +73,7 @@ import com.hippo.ehviewer.util.isAtLeastS
 import com.hippo.ehviewer.util.isCronetAvailable
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
+import eu.kanade.tachiyomi.util.lang.launchUI
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
@@ -115,22 +115,15 @@ class EhApplication :
             }
         }
         lifecycle.addObserver(lockObserver)
-        val handler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { t, e ->
-            try {
-                if (Settings.saveCrashLog) {
-                    Crash.saveCrashLog(e)
-                }
-            } catch (ignored: Throwable) {
-            }
-            handler?.uncaughtException(t, e)
-        }
+        CrashHandler.install()
         super.onCreate()
         System.loadLibrary("ehviewer")
         lifecycleScope.launchIO {
+            launchUI { FavouriteStatusRouter.collect { (gid, slot) -> detailCache[gid]?.favoriteSlot = slot } }
             launch { EhTagDatabase }
             launch { EhDB }
-            dataStateFlow.value
+            launchIO { dataStateFlow.value }
+            launchIO { OSUtils.totalMemory }
             launch {
                 if (DownloadManager.labelList.isNotEmpty() && Settings.downloadFilterMode.key !in Settings.prefs) {
                     Settings.downloadFilterMode.value = DownloadsFilterMode.CUSTOM.flag
@@ -141,16 +134,9 @@ class EhApplication :
                 FileUtils.cleanupDirectory(AppConfig.externalCrashDir)
                 FileUtils.cleanupDirectory(AppConfig.externalParseErrorDir)
             }
-            launch {
-                cleanupDownload()
-            }
+            launch { cleanupDownload() }
             if (Settings.requestNews) {
-                launch {
-                    checkDawn()
-                }
-            }
-            launch {
-                cleanObsoleteCache()
+                launch { checkDawn() }
             }
         }
         if (BuildConfig.DEBUG) {
@@ -280,14 +266,6 @@ class EhApplication :
                     appCtx.cacheDir.toOkioPath() / "http_cache",
                     20L * 1024L * 1024L,
                 )
-            }
-        }
-
-        val galleryDetailCache by lazy {
-            LruCache<Long, GalleryDetail>(25).also {
-                lifecycleScope.launch {
-                    FavouriteStatusRouter.globalFlow.collect { (gid, slot) -> it[gid]?.favoriteSlot = slot }
-                }
             }
         }
 

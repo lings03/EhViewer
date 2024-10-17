@@ -1,23 +1,23 @@
 [versions]
 aboutlibraries = "11.2.3"
 accompanist = "0.36.0"
-agp = "8.8.0-alpha05"
+agp = "8.8.0-alpha06"
 androidx-activity = "1.10.0-alpha02"
 androidx-appcompat = "1.7.0"
 androidx-biometric = "1.4.0-alpha02"
 androidx-browser = "1.8.0"
-androidx-constraintlayout-compose = "1.1.0-beta01"
-androidx-core = "1.15.0-beta01"
+androidx-constraintlayout-compose = "1.1.0-rc01"
+androidx-core = "1.15.0-rc01"
 androidx-core-splashscreen = "1.2.0-alpha02"
 androidx-datastore = "1.1.1"
 androidx-graphics-path = "1.0.1"
-androidx-lifecycle = "2.9.0-alpha04"
+androidx-lifecycle = "2.9.0-alpha05"
 androidx-paging = "3.3.2"
-androidx-room = "2.7.0-alpha09"
+androidx-room = "2.7.0-alpha10"
 androidx-work = "2.10.0-beta01"
 arrow = "1.2.4"
 coil = "3.0.0-rc01"
-compose-bom = "2024.09.03"
+compose-bom = "2024.10.00"
 compose-destinations = "2.1.0-beta13"
 google-android-material = "1.12.0"
 kotlin = "2.1.0-Beta1"
@@ -31,10 +31,10 @@ okio = "3.9.1"
 runner = "1.6.2"
 splitties = "3.0.0"
 telephoto = "0.13.0"
-xmlutil = "0.90.1"
+xmlutil = "0.90.2"
 junit = "1.2.1"
 uiautomator = "2.4.0-alpha01"
-benchmark = "1.4.0-alpha02"
+benchmark = "1.4.0-alpha03"
 profileinstaller = "1.4.1"
 testng = "6.9.6"
 
@@ -74,8 +74,7 @@ coil-network = { module = "io.coil-kt.coil3:coil-network-ktor3" }
 compose-bom = { module = "androidx.compose:compose-bom-alpha", version.ref = "compose-bom" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
-# https://issuetracker.google.com/363892346
-compose-material3 = { module = "androidx.compose.material3:material3-android", version = { strictly = "1.3.0" } }
+compose-material3 = { module = "androidx.compose.material3:material3" }
 compose-material3-adaptive = { module = "androidx.compose.material3.adaptive:adaptive" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
@@ -111,7 +110,7 @@ okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp
 okhttp-dnsoverhttps = { module = "com.squareup.okhttp3:okhttp-dnsoverhttps" }
 okio-jvm = { module = "com.squareup.okio:okio-jvm", version.ref = "okio" }
 
-reorderable = "sh.calvin.reorderable:reorderable:2.4.0-beta01"
+reorderable = "sh.calvin.reorderable:reorderable:2.4.0"
 
 serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor", version.ref = "kotlinx-serialization" }
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
