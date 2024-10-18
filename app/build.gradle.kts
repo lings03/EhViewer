@@ -230,7 +230,6 @@ dependencies {
     implementation(libs.androidx.room.paging)
 
     implementation(libs.androidx.work.runtime)
-    implementation(libs.material)
     implementation(libs.material.motion.core)
 
     implementation(libs.bundles.splitties)

@@ -1,7 +1,6 @@
 package com.hippo.ehviewer.ui.settings
 
 import android.annotation.SuppressLint
-import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
@@ -51,7 +50,6 @@ import com.hippo.ehviewer.client.builtInDoHUrls
 import com.hippo.ehviewer.client.data.FavListUrlBuilder
 import com.hippo.ehviewer.client.systemDns
 import com.hippo.ehviewer.collectAsState
-import com.hippo.ehviewer.ui.legacy.EditTextDialogBuilder
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.observed
 import com.hippo.ehviewer.ui.tools.rememberedAccessor
@@ -264,26 +262,27 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                     }
                 }
             }
+            var dohUrl by Settings::dohUrl.observed
             AnimatedVisibility(visible = enableDf) {
                 Preference(title = stringResource(id = R.string.settings_advanced_dns_over_http_title)) {
-                    val builder = EditTextDialogBuilder(
-                        context,
-                        Settings.dohUrl,
-                        context.getString(R.string.settings_advanced_dns_over_http_hint),
-                    )
-                    builder.setTitle(R.string.settings_advanced_dns_over_http_title)
-                    builder.setPositiveButton(android.R.string.ok, null)
-                    val dialog = builder.create().apply { show() }
-                    dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener {
-                        val text = builder.text.trim()
-                        runCatching {
-                            doh = if (text.isNotBlank()) buildDoHDNS(text) else null
-                        }.onFailure {
-                            builder.setError("Invalid URL!")
-                        }.onSuccess {
-                            Settings.dohUrl = text
-                            dialog.dismiss()
-                        }
+                    coroutineScope.launch {
+                        val newDoHUrl = dialogState.awaitInputText(
+                            initial = Settings.dohUrl?.toString() ?: "",
+                            title = context.getString(R.string.settings_advanced_dns_over_http_title),
+                            hint = context.getString(R.string.settings_advanced_dns_over_http_hint),
+                            invalidator = { input ->
+                                if (input.isNotEmpty()) {
+                                    runCatching {
+                                        if (input.isNotBlank()) {
+                                            buildDoHDNS(input)
+                                        }
+                                    }.onFailure {
+                                        raise("Invalid URL!")
+                                    }
+                                }
+                            },
+                        )
+                        dohUrl = newDoHUrl
                     }
                 }
             }
