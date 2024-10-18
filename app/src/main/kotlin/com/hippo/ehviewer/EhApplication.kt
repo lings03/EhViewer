@@ -48,7 +48,6 @@ import com.hippo.ehviewer.coil.HardwareBitmapInterceptor
 import com.hippo.ehviewer.coil.MapExtraInfoInterceptor
 import com.hippo.ehviewer.coil.MergeInterceptor
 import com.hippo.ehviewer.coil.QrCodeInterceptor
-import com.hippo.ehviewer.cronet.cronetHttpClient
 import com.hippo.ehviewer.dailycheck.checkDawn
 import com.hippo.ehviewer.dao.SearchDatabase
 import com.hippo.ehviewer.download.DownloadManager
@@ -73,18 +72,15 @@ import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastP
 import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
-import com.hippo.ehviewer.util.isCronetAvailable
-import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import com.hippo.ehviewer.util.isAtLeastSExtension7
+import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.launchUI
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache5.Apache5
-import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
-import java.security.Security
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import logcat.AndroidLogcatLogger
@@ -96,7 +92,6 @@ import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Protocol
 import okhttp3.android.AndroidAsyncDns
 import okio.Path.Companion.toOkioPath
-import org.conscrypt.Conscrypt
 import splitties.arch.room.roomDb
 import splitties.init.appCtx
 
