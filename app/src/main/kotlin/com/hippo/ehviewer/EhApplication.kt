@@ -71,7 +71,6 @@ import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastP
 import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
-import com.hippo.ehviewer.util.isAtLeastSExtension7
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.launchUI
@@ -210,7 +209,7 @@ class EhApplication :
     companion object {
         val ktorClient by lazy {
             Security.insertProviderAt(Conscrypt.newProvider(), 1)
-            if (isAtLeastSExtension7 && Settings.enableQuic) {
+            if (Settings.enableQuic) {
                 HttpClient(Cronet) {
                     engine {
                         client = cronetHttpClient
