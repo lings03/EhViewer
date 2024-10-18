@@ -137,6 +137,13 @@ android {
         dex {
             useLegacyPackaging = false
         }
+        resources {
+            excludes += listOf(
+                "META-INF/DEPENDENCIES",
+                "com", // Compose Destination
+                "org", // Apache 5 HC version info
+            )
+        }
     }
 
     dependenciesInfo.includeInApk = false
@@ -260,6 +267,7 @@ dependencies {
     implementation(libs.bundles.ktor)
 
     implementation("com.google.guava:guava:32.0.1-android")
+    implementation(libs.bundles.http.client)
 
     implementation(libs.bundles.kotlinx.serialization)
 

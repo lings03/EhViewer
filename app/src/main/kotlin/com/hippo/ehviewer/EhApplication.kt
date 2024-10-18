@@ -58,6 +58,7 @@ import com.hippo.ehviewer.ktbuilder.diskCache
 import com.hippo.ehviewer.ktbuilder.httpClient
 import com.hippo.ehviewer.ktbuilder.imageLoader
 import com.hippo.ehviewer.ktor.Cronet
+import com.hippo.ehviewer.ktor.configureClient
 import com.hippo.ehviewer.ui.keepNoMediaFileStatus
 import com.hippo.ehviewer.ui.lockObserver
 import com.hippo.ehviewer.ui.screen.detailCache
@@ -74,11 +75,13 @@ import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
 import com.hippo.ehviewer.util.isCronetAvailable
 import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
+import com.hippo.ehviewer.util.isAtLeastSExtension7
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.launchUI
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
 import java.security.Security
@@ -210,23 +213,22 @@ class EhApplication :
 
     companion object {
         val ktorClient by lazy {
-            Security.insertProviderAt(Conscrypt.newProvider(), 1)
-            if (Settings.enableQuic && isCronetAvailable) {
+            if (isAtLeastSExtension7 && Settings.enableCronet) {
                 HttpClient(Cronet) {
                     engine {
-                        client = cronetHttpClient
+                        configureClient()
                     }
                     install(HttpCookies) {
                         storage = EhCookieStore
                     }
                 }
             } else {
-                HttpClient(OkHttp) {
+                HttpClient(Apache5) {
+                    engine {
+                        configureClient()
+                    }
                     install(HttpCookies) {
                         storage = EhCookieStore
-                    }
-                    engine {
-                        preconfigured = nonCacheOkHttpClient
                     }
                 }
             }
