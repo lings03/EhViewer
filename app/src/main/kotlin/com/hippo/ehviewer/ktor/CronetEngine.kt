@@ -28,9 +28,10 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.job
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.chromium.net.CronetException
+import org.chromium.net.UploadDataProvider
+import org.chromium.net.UploadDataSink
 import org.chromium.net.UrlRequest
 import org.chromium.net.UrlResponseInfo
-import org.chromium.net.apihelpers.UploadDataProviders
 
 class CronetEngine(override val config: CronetConfig) : HttpClientEngineBase("Cronet") {
     // Limit thread to 1 since we are async & non-blocking
@@ -94,6 +95,8 @@ class CronetEngine(override val config: CronetConfig) : HttpClientEngineBase("Cr
                     chunkChan.close(error)
                 }
             }
+
+            override fun onCanceled(request: UrlRequest, info: UrlResponseInfo?) = Unit
         }
 
         client.newUrlRequestBuilder(data.url.toString(), callback, executor).apply {
@@ -133,6 +136,17 @@ private fun UrlResponseInfo.toHttpResponseData(
 
 private fun OutgoingContent.toUploadDataProvider() = when (this) {
     is OutgoingContent.NoContent -> null
-    is OutgoingContent.ByteArrayContent -> UploadDataProviders.create(bytes())
+    is OutgoingContent.ByteArrayContent -> object : UploadDataProvider() {
+        val buffer = ByteBuffer.wrap(bytes()).slice()
+        override fun getLength() = buffer.limit().toLong()
+        override fun read(uploadDataSink: UploadDataSink, byteBuffer: ByteBuffer) {
+            byteBuffer.put(buffer)
+            uploadDataSink.onReadSucceeded(false)
+        }
+        override fun rewind(uploadDataSink: UploadDataSink) {
+            buffer.position(0)
+            uploadDataSink.onRewindSucceeded()
+        }
+    }
     else -> error("UnsupportedContentType $this")
 }

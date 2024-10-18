@@ -1,7 +1,7 @@
 [versions]
 aboutlibraries = "11.2.3"
 accompanist = "0.36.0"
-agp = "8.8.0-alpha06"
+agp = "8.8.0-alpha07"
 androidx-activity = "1.10.0-alpha02"
 androidx-appcompat = "1.7.0"
 androidx-biometric = "1.4.0-alpha02"
@@ -100,6 +100,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 ktlint = "com.pinterest:ktlint:1.4.0-kotlin-dev-SNAPSHOT"
 
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-apache5 = { module = "io.ktor:ktor-client-apache5", version.ref = "ktor" }
 
 logcat = "com.squareup.logcat:logcat:0.1"
 
@@ -135,8 +136,8 @@ testng = { group = "org.testng", name = "testng", version.ref = "testng" }
 [bundles]
 coil = ["coil-compose", "coil-gif", "coil-network"]
 compose = ["compose-foundation", "compose-material-icons-extended", "compose-material3", "compose-material3-adaptive", "compose-ui-util"]
+http-client = ["conscrypt", "ktor-client-apache5", "ktor-client-okhttp"]
 kotlinx-serialization = ["serialization-cbor", "serialization-json", "serialization-json-okio", "serialization-xml"]
-ktor = ["ktor-client-okhttp"]
 okhttp = ["okhttp-android", "okhttp-dnsoverhttps"]
 splitties = ["splitties-appctx", "splitties-arch-room", "splitties-preferences", "splitties-systemservices"]
 

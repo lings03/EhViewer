@@ -62,7 +62,6 @@ import com.hippo.ehviewer.util.displayPath
 import com.hippo.ehviewer.util.getAppLanguage
 import com.hippo.ehviewer.util.getLanguages
 import com.hippo.ehviewer.util.isAtLeastO
-import com.hippo.ehviewer.util.isCronetAvailable
 import com.hippo.ehviewer.util.sendTo
 import com.hippo.ehviewer.util.setAppLanguage
 import com.hippo.files.delete
@@ -231,7 +230,6 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                                         enableDf = false
                                     },
                                     shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                                    enabled = isCronetAvailable,
                                 ) {
                                     Text("Cronet")
                                 }
