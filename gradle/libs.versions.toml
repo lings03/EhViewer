@@ -35,7 +35,7 @@ junit = "1.2.1"
 uiautomator = "2.4.0-alpha01"
 benchmark = "1.4.0-alpha03"
 profileinstaller = "1.4.1"
-testng = "6.9.6"
+testng = "7.10.2"
 
 [libraries]
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
