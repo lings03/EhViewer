@@ -14,10 +14,6 @@
 # Ktor logger
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 
-# Conscrypt
--dontwarn com.android.org.conscrypt.SSLParametersImpl
--dontwarn org.apache.harmony.xnet.provider.jsse.SSLParametersImpl
-
 # https://issuetracker.google.com/222232895
 -dontwarn androidx.window.extensions.**
 -dontwarn androidx.window.sidecar.Sidecar*
@@ -41,3 +37,8 @@
 -dontwarn lombok.Generated
 -dontwarn org.xbill.DNS.spi.DnsjavaInetAddressResolverProvider
 -dontwarn sun.net.spi.nameservice.NameServiceDescriptor
+
+# cronet-api
+
+-dontwarn android.support.annotation.Nullable
+-dontwarn android.support.annotation.VisibleForTesting

@@ -85,8 +85,8 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 180060
-        versionName = "1.13.0"
-        versionNameSuffix = "-SNAPSHOT"
+        versionName = "1.12.1.3"
+        versionNameSuffix = "-cc"
         buildConfigField("String", "RAW_VERSION_NAME", "\"$versionName${versionNameSuffix.orEmpty()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
         buildConfigField("long", "COMMIT_TIME", commitTime)
@@ -138,10 +138,16 @@ android {
             useLegacyPackaging = false
         }
         resources {
+            // Required by Layout Inspector
+            pickFirsts += "/META-INF/androidx.compose.ui_ui.version"
+
             excludes += listOf(
-                "META-INF/DEPENDENCIES",
-                "com", // Compose Destination
-                "org", // Apache 5 HC version info
+                "/META-INF/**",
+                "/kotlin/**",
+                "**.txt",
+                "**.bin",
+                "**.{html,mmd}", // Compose Destination
+                // "/okhttp3/**", // Okhttp public suffix
             )
         }
     }
@@ -157,9 +163,6 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
-            lint {
-                abortOnError = false
-            }
         }
         create("benchmarkRelease") {
             initWith(buildTypes.getByName("release"))
@@ -180,17 +183,6 @@ android {
 
 composeCompiler {
     featureFlags = setOf(ComposeFeatureFlag.OptimizeNonSkippingGroups)
-}
-
-androidComponents {
-    onVariants(selector().withBuildType("release")) {
-        it.packaging.resources.excludes.addAll(
-            "/META-INF/**",
-            "/kotlin/**",
-            "**.txt",
-            "**.bin",
-        )
-    }
 }
 
 baselineProfile {
@@ -233,8 +225,8 @@ dependencies {
     implementation(libs.androidx.room.paging)
 
     implementation(libs.androidx.work.runtime)
-    implementation(libs.material)
     implementation(libs.material.motion.core)
+    implementation(libs.material.kolor)
 
     implementation(libs.bundles.splitties)
 
@@ -264,10 +256,7 @@ dependencies {
 
     implementation(libs.telephoto.zoomable)
 
-    implementation(libs.bundles.ktor)
-
-    implementation("com.google.guava:guava:32.0.1-android")
-    implementation(libs.bundles.http.client)
+    implementation(libs.ktor.client.okhttp)
 
     implementation(libs.bundles.kotlinx.serialization)
 
@@ -277,7 +266,7 @@ dependencies {
 
     coreLibraryDesugaring(libs.desugar)
 
-    implementation(libs.cronet.embedded)
+    implementation(libs.bundles.cronet)
     implementation(libs.conscrypt)
     implementation(libs.doh)
 

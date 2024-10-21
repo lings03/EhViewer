@@ -19,7 +19,7 @@ package com.hippo.ehviewer.client
 
 import android.util.Log
 import com.hippo.ehviewer.Settings
-import com.hippo.ehviewer.builtInHosts
+import com.hippo.ehviewer.dFEnabledDomains
 import java.net.InetAddress
 import java.net.Socket
 import java.security.KeyStore
@@ -68,7 +68,7 @@ object EhSSLSocketFactory : SSLSocketFactory() {
         host
     } else {
         socket.inetAddress.hostAddress.takeIf {
-            host in builtInHosts || EXCEPTIONAL_DOMAIN in host || Settings.dohUrl?.contains(host) == true
+            host in dFEnabledDomains || EXCEPTIONAL_DOMAIN in host || Settings.dohUrl?.contains(host) == true
         } ?: host
     }
 }

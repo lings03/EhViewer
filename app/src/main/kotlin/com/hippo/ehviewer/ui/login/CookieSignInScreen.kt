@@ -55,8 +55,6 @@ import com.hippo.ehviewer.client.EhCookieStore
 import com.hippo.ehviewer.client.EhEngine
 import com.hippo.ehviewer.client.EhUrl
 import com.hippo.ehviewer.client.EhUtils
-import com.hippo.ehviewer.ui.StartDestination
-import com.hippo.ehviewer.ui.screen.popNavigate
 import com.hippo.ehviewer.ui.tools.LocalDialogState
 import com.hippo.ehviewer.ui.tools.LocalWindowSizeClass
 import com.hippo.ehviewer.util.ExceptionUtils
@@ -65,7 +63,6 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.withNonCancellableContext
-import eu.kanade.tachiyomi.util.lang.withUIContext
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -124,7 +121,6 @@ fun CookieSignInScene(navigator: DestinationsNavigator) {
                 EhEngine.getProfile()
             }.onSuccess {
                 withNonCancellableContext { postLogin() }
-                withUIContext { navigator.popNavigate(StartDestination) }
             }.onFailure {
                 EhCookieStore.removeAllCookies()
                 dialogState.awaitConfirmationOrCancel(

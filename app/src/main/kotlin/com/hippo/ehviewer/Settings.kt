@@ -169,7 +169,6 @@ object Settings : DataStorePreferences(null) {
     var enableQuic by boolPref("enable_quic", false)
     var saveAsCbz by boolPref("save_as_cbz", false)
     var archiveMetadata by boolPref("archive_metadata", true)
-    var enableCronet by boolPref("enable_cronet", true)
     var desktopSite by boolPref("desktop_site", false)
     var recentFavCat by intPref("recent_fav_cat", FavListUrlBuilder.FAV_CAT_LOCAL)
     var defaultFavSlot by intPref("default_favorite_slot", -2)
@@ -221,6 +220,7 @@ object Settings : DataStorePreferences(null) {
     val showNavigationOverlayNewUser = boolPref("reader_navigation_overlay_new_user", true)
     val showNavigationOverlayOnStart = boolPref("reader_navigation_overlay_on_start", false)
     val stripExtraneousAds = boolPref("strip_extraneous_ads", false)
+    var thumbConcurrency by intPref("thumb_concurrency", 4)
 
     val userAgent
         get() = if (desktopSite) CHROME_USER_AGENT else CHROME_MOBILE_USER_AGENT
