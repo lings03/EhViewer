@@ -28,7 +28,7 @@ import coil3.SingletonImageLoader
 import coil3.asImage
 import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
-import coil3.network.ktor3.KtorNetworkFetcherFactory
+import coil3.network.NetworkFetcher
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -46,6 +46,7 @@ import com.hippo.ehviewer.coil.HardwareBitmapInterceptor
 import com.hippo.ehviewer.coil.MapExtraInfoInterceptor
 import com.hippo.ehviewer.coil.MergeInterceptor
 import com.hippo.ehviewer.coil.QrCodeInterceptor
+import com.hippo.ehviewer.coil.limitConcurrency
 import com.hippo.ehviewer.cronet.cronetHttpClient
 import com.hippo.ehviewer.dailycheck.checkDawn
 import com.hippo.ehviewer.dao.SearchDatabase
@@ -57,6 +58,7 @@ import com.hippo.ehviewer.ktbuilder.httpClient
 import com.hippo.ehviewer.ktbuilder.imageLoader
 import com.hippo.ehviewer.ktor.Cronet
 import com.hippo.ehviewer.ktor.configureClient
+import com.hippo.ehviewer.ktor.configureCommon
 import com.hippo.ehviewer.ui.keepNoMediaFileStatus
 import com.hippo.ehviewer.ui.lockObserver
 import com.hippo.ehviewer.ui.screen.detailCache
@@ -69,29 +71,22 @@ import com.hippo.ehviewer.util.FileUtils
 import com.hippo.ehviewer.util.OSUtils
 import com.hippo.ehviewer.util.isAtLeastO
 import com.hippo.ehviewer.util.isAtLeastP
-import com.hippo.ehviewer.util.isAtLeastQ
 import com.hippo.ehviewer.util.isAtLeastS
-import eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor
 import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.launchUI
 import eu.kanade.tachiyomi.util.lang.withUIContext
 import eu.kanade.tachiyomi.util.system.logcat
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache5.Apache5
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.HttpCookies
-import java.security.Security
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import logcat.AndroidLogcatLogger
 import logcat.LogPriority
 import logcat.LogcatLogger
 import logcat.asLog
-import okhttp3.AsyncDns
 import okhttp3.Protocol
-import okhttp3.android.AndroidAsyncDns
 import okio.Path.Companion.toOkioPath
-import org.conscrypt.Conscrypt
 import splitties.arch.room.roomDb
 import splitties.init.appCtx
 
@@ -173,7 +168,7 @@ class EhApplication :
         interceptorCoroutineContext(Dispatchers.Default)
         components {
             serviceLoaderEnabled(false)
-            add(KtorNetworkFetcherFactory(httpClient = { ktorClient }))
+            add(NetworkFetcher.Factory({ ktorClient.limitConcurrency() }))
             add(MergeInterceptor)
             add(DownloadThumbInterceptor)
             if (isAtLeastO) {
@@ -208,33 +203,19 @@ class EhApplication :
 
     companion object {
         val ktorClient by lazy {
-            Security.insertProviderAt(Conscrypt.newProvider(), 1)
             if (Settings.enableQuic) {
                 HttpClient(Cronet) {
                     engine {
                         client = cronetHttpClient
                     }
-                    install(HttpCookies) {
-                        storage = EhCookieStore
-                    }
-                }
-            } else if (Settings.dF) {
-                HttpClient(OkHttp) {
-                    install(HttpCookies) {
-                        storage = EhCookieStore
-                    }
-                    engine {
-                        preconfigured = nonCacheOkHttpClient
-                    }
+                    configureCommon()
                 }
             } else {
-                HttpClient(Apache5) {
+                HttpClient(OkHttp) {
                     engine {
                         configureClient()
                     }
-                    install(HttpCookies) {
-                        storage = EhCookieStore
-                    }
+                    configureCommon()
                 }
             }
         }
@@ -248,18 +229,8 @@ class EhApplication :
             }
         }
 
-        // Fallback to CIO when cronet unavailable after coil 3.0 release
-        private val baseOkHttpClient by lazy {
-            httpClient {
-                if (isAtLeastQ) {
-                    dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
-                }
-                addInterceptor(UncaughtExceptionInterceptor())
-            }
-        }
-
         val nonCacheOkHttpClient by lazy {
-            httpClient(baseOkHttpClient) {
+            httpClient {
                 dns(EhDns)
                 install(EhSSLSocketFactory)
             }

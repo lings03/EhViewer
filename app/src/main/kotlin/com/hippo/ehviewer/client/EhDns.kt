@@ -7,6 +7,7 @@ import com.hippo.ehviewer.ui.settings.EhDoH
 import java.net.InetAddress
 import okhttp3.AsyncDns
 import okhttp3.Dns
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.android.AndroidAsyncDns
 
 private typealias HostsMap = MutableMap<String, List<InetAddress>>
@@ -48,6 +49,7 @@ fun HostsMap.hosts(vararg hosts: String, builder: HostMapBuilder.() -> Unit) = a
     }
 }
 
+@OptIn(ExperimentalOkHttpApi::class)
 val systemDns = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6) else Dns.SYSTEM
 
 object EhDns : Dns {

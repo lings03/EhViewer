@@ -147,6 +147,7 @@ fun RollingNumber(
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     style: TextStyle = LocalTextStyle.current,
+    separator: Boolean = false,
     length: Int? = null,
 ) {
     val isNegative = number < 0
@@ -157,7 +158,7 @@ fun RollingNumber(
     val size = rememberTextStyleNumberMaxSize(styleNoSpacing)
     LazyRow(
         modifier = modifier.clipToBounds().padding(horizontal = spacing).layout { measurable, constraints ->
-            val placeable = measurable.measure(constraints)
+            val placeable = measurable.measure(constraints.copy(maxHeight = Int.MAX_VALUE))
             layout(width = placeable.width, height = size.height.roundToPx()) {
                 placeable.place(0, 0)
             }
@@ -173,6 +174,14 @@ fun RollingNumber(
                 val where = max - reversed - 1
                 val v = if (where < absent) null else str[where - absent].digitToInt()
                 conceptSpaceToIntermediate(v)
+            }
+            if (reversed != 0 && reversed % 3 == 0 && separator) {
+                Text(
+                    text = ",",
+                    modifier = Modifier.size(size),
+                    style = styleNoSpacing,
+                    textAlign = TextAlign.Center,
+                )
             }
             Column(
                 modifier = Modifier.animateItem().offset {
