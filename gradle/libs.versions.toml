@@ -87,7 +87,7 @@ material-motion-core = "io.github.fornewid:material-motion-compose-core:2.0.1"
 cronet-api = "org.chromium.net:cronet-api:119.6045.31"
 cronet-gms = "com.google.android.gms:play-services-cronet:18.1.0"
 conscrypt = "info.guardianproject.conscrypt:conscrypt-android:2.6.alpha1647601986.job2220801545"
-doh = "tech.relaycorp:doh:1.0.61"
+doh = "tech.relaycorp:doh:1.0.64"
 material-kolor = "com.materialkolor:material-kolor:2.0.0"
 
 desugar = "com.android.tools:desugar_jdk_libs_nio:2.1.2"
