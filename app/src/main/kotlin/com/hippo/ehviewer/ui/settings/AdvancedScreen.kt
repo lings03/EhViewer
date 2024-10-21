@@ -294,12 +294,6 @@ fun AdvancedScreen(navigator: DestinationsNavigator) {
                     value = Settings::enableECH,
                 )
             }
-            IntSliderPreference(
-                maxValue = 16,
-                minValue = 2,
-                title = "Thumb Concurrency (Restart required)",
-                value = Settings::thumbConcurrency,
-            )
             if (isAtLeastO) {
                 IntSliderPreference(
                     maxValue = 16384,
