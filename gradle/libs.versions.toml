@@ -84,7 +84,7 @@ compose-destinations-compiler = { module = "io.github.raamcosta.compose-destinat
 
 material-motion-core = "io.github.fornewid:material-motion-compose-core:2.0.1"
 
-cronet-embedded = "org.greatfire.envoy:cronet:107.0.5304.150-1"
+cronet-embedded = "org.chromium.net:cronet-embedded:119.6045.31"
 conscrypt = "info.guardianproject.conscrypt:conscrypt-android:2.6.alpha1647601986.job2220801545"
 doh = "tech.relaycorp:doh:1.0.61"
 material-kolor = "com.materialkolor:material-kolor:2.0.0"
