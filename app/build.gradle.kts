@@ -85,7 +85,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 180060
-        versionName = "1.12.1.2"
+        versionName = "1.12.1.3"
         versionNameSuffix = "-cc"
         buildConfigField("String", "RAW_VERSION_NAME", "\"$versionName${versionNameSuffix.orEmpty()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
