@@ -266,7 +266,7 @@ dependencies {
 
     coreLibraryDesugaring(libs.desugar)
 
-    implementation(libs.cronet.embedded)
+    implementation(libs.bundles.cronet)
     implementation(libs.conscrypt)
     implementation(libs.doh)
 

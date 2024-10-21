@@ -84,7 +84,8 @@ compose-destinations-compiler = { module = "io.github.raamcosta.compose-destinat
 
 material-motion-core = "io.github.fornewid:material-motion-compose-core:2.0.1"
 
-cronet-embedded = "org.chromium.net:cronet-embedded:119.6045.31"
+cronet-api = "org.chromium.net:cronet-api:119.6045.31"
+cronet-gms = "com.google.android.gms:play-services-cronet:18.1.0"
 conscrypt = "info.guardianproject.conscrypt:conscrypt-android:2.6.alpha1647601986.job2220801545"
 doh = "tech.relaycorp:doh:1.0.61"
 material-kolor = "com.materialkolor:material-kolor:2.0.0"
@@ -133,6 +134,7 @@ testng = { group = "org.testng", name = "testng", version.ref = "testng" }
 [bundles]
 coil = ["coil-compose", "coil-gif", "coil-network"]
 compose = ["compose-foundation", "compose-material-icons-extended", "compose-material3", "compose-material3-adaptive", "compose-ui-util"]
+cronet = ["cronet-api", "cronet-gms"]
 kotlinx-serialization = ["serialization-cbor", "serialization-json", "serialization-json-okio", "serialization-xml"]
 okhttp = ["okhttp-android", "okhttp-dnsoverhttps"]
 splitties = ["splitties-appctx", "splitties-arch-room", "splitties-preferences", "splitties-systemservices"]
