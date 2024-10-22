@@ -252,7 +252,7 @@ fun SignInScreen(navigator: DestinationsNavigator) {
 
                     TextButton(
                         onClick = {
-                            Settings.gallerySite = EhUrl.SITE_E
+                            Settings.gallerySite.value = EhUrl.SITE_E
                             Settings.needSignIn.value = false
                         },
                     ) {
@@ -347,7 +347,7 @@ fun SignInScreen(navigator: DestinationsNavigator) {
                         }
                         TextButton(
                             onClick = {
-                                Settings.gallerySite = EhUrl.SITE_E
+                                Settings.gallerySite.value = EhUrl.SITE_E
                                 Settings.needSignIn.value = false
                             },
                             modifier = Modifier.padding(horizontal = 4.dp),
